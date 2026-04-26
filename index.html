@@ -211,14 +211,14 @@ function padNum(n){
 
 // セット別インクコード生成
 function getInkCode(card, info) {
-  if(info.suffixX) return (INK_CODE[card.ink] ?? 'A') + 'X';
+  const inks = card.inks ?? (card.ink ? [card.ink] : []);
+  const codes = inks.map(i => INK_CODE[i] ?? '').join('');
+  if(info.suffixX) return codes + 'X';
   if(info.dualInk) {
-    const inks = card.inks ?? (card.ink ? [card.ink] : []);
-    return inks.map(i => INK_CODE[i] ?? '').join('');
+    return inks.length > 1 ? codes : codes + 'X';
   }
-  return INK_CODE[card.ink] ?? 'A';
+  return codes;
 }
-
 function buildImageUrls(card){
   const setCode = card.set?.code ?? '1';
   const info = SET_INFO[setCode];
@@ -240,9 +240,9 @@ function buildImageUrls(card){
   const rarity  = RARITY_CODE[card.rarity] ?? 'C';
   const inkC    = getInkCode(card, info);
   const typeC   = TYPE_CODE[card.type?.[0]] ?? 'C';
-  const prefix  = info.dualInk
-　  ? `${num}_${info.code}_${rarity}${typeC}${inkC}`
-　  : `${num}_${info.code}_${rarity}${inkC}${typeC}`;
+const prefix  = (info.dualInk || info.suffixX)
+  ? `${num}_${info.code}_${rarity}${typeC}${inkC}`
+  : `${num}_${info.code}_${rarity}${inkC}${typeC}`;
   const nameS   = slug(card.name);
   const verS    = slug(card.version);
 
