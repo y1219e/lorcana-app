@@ -405,7 +405,12 @@ function buildImageUrls(card){
 
   // 例外マップ
   const exKey = `${setCode}_${card.collector_number}`;
-  if(EXCEPTION_IMG[exKey]) return [base + EXCEPTION_IMG[exKey]];
+  if(EXCEPTION_IMG[exKey]) {
+    const base2 = info.month2 ? IMG_HOST + info.month2 + '/' : null;
+    const urls = [base + EXCEPTION_IMG[exKey]];
+    if(base2) urls.push(base2 + EXCEPTION_IMG[exKey]);
+    return urls;
+  }
 
   // 第3〜6弾：新パターン {slug}_ja_{num}.webp
   if(info.newPattern){
