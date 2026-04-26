@@ -240,7 +240,9 @@ function buildImageUrls(card){
   const rarity  = RARITY_CODE[card.rarity] ?? 'C';
   const inkC    = getInkCode(card, info);
   const typeC   = TYPE_CODE[card.type?.[0]] ?? 'C';
-  const prefix  = `${num}_${info.code}_${rarity}${inkC}${typeC}`;
+  const prefix  = info.dualInk
+　  ? `${num}_${info.code}_${rarity}${typeC}${inkC}`
+　  : `${num}_${info.code}_${rarity}${inkC}${typeC}`;
   const nameS   = slug(card.name);
   const verS    = slug(card.version);
 
