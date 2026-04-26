@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>URLデバッグ</title>
+<style>
+  body { background:#111; color:#eee; font-family:monospace; font-size:0.7rem; padding:12px; }
+  .row { padding:4px 0; border-bottom:1px solid #222; display:flex; gap:8px; align-items:center; }
+  .num { color:#888; min-width:30px; }
+  .ok  { color:#2ecc71; }
+  .ng  { color:#e74c3c; }
+  img  { width:30px; height:42px; object-fit:cover; background:#333; flex-shrink:0; }
+</style>
+</head>
+<body>
+<div id="list">読み込み中…</div>
+<script>
+const RARITY_CODE = { Common:'C', Uncommon:'U', Rare:'R', Super_rare:'S', Legendary:'L', Enchanted:'E', Promo:'P' };
+const INK_CODE    = { Amber:'A', Amethyst:'M', Emerald:'E', Ruby:'R', Sapphire:'S', Steel:'T' };
+const TYPE_CODE   = { Character:'C', Action:'A', Item:'I', Location:'L' };
+
+function buildUrl(card) {
+  const num  = String(card.collector_number).padStart(3,'0');
+  const r    = RARITY_CODE[card.rarity] ?? '?';
+  const i    = INK_CODE[card.ink]       ?? '?';
+  const t    = TYPE_CODE[card.type?.[0]] ?? '?';
+  const name = (card.name    ?? '').replace(/[^a-zA-Z0-9]/g,'');
+  const ver  = (card.version ?? '').replace(/[^a-zA-Z0-9]/g,'');
+  return `https://disneylorcana.jp/wp-content/uploads/2025/01/${num}_DLCS1_${r}${i}${t}_${name}_${ver}_JA-429x600.webp`;
+}
+
+async function run() {
+  const list = document.getElementById('list');
+  list.textContent = '';
+  const res  = await fetch('https://api.lorcast.com/v0/cards/search?q=set:1&unique=prints');
+  const data = await res.json();
+  const cards = (data.results ?? []).sort((a,b)=>Number(a.collector_number)-Number(b.collector_number));
+
+  // #20〜#40だけ表示
+  cards.filter(c => Number(c.collector_number) >= 20 && Number(c.collector_number) <= 40).forEach(card => {
+    const url = buildUrl(card);
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML = `<img src="${url}"><span class="num">#${card.collector_number}</span><span>${card.name} - ${card.version ?? ''} [${card.rarity}/${card.ink}/${card.type?.[0]}]</span>`;
+    const img = row.querySelector('img');
+    const label = document.createElement('span');
+    img.onload  = () => { if(img.naturalWidth>5){label.className='ok';label.textContent='✅';}else{label.className='ng';label.textContent='❌';} };
+    img.onerror = () => { label.className='ng'; label.textContent='❌'; };
+    row.appendChild(label);
+    list.appendChild(row);
+  });
+}
+run();
+</script>
+</body>
+</html>
