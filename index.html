@@ -105,10 +105,11 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, sa
 .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 #loadProgress { font-size: 0.85rem; color: var(--text2); }
+#cacheInfo { font-size: 0.72rem; color: #555; margin-top: 4px; }
 </style>
 </head>
 <body>
-<div id="loadingOverlay"><div class="spinner"></div><div id="loadProgress">読み込み中…</div></div>
+<div id="loadingOverlay"><div class="spinner"></div><div id="loadProgress">読み込み中…</div><div id="cacheInfo"></div></div>
 <div class="modal-overlay" id="cardModal">
   <div class="modal">
     <div class="modal-img-row"><img id="modalImg" src="" alt=""><div>
@@ -173,6 +174,51 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, sa
 </nav>
 
 <script>
+// ═══════════════════════════════════════════
+// Service Worker をBlobで登録（画像キャッシュ）
+// ═══════════════════════════════════════════
+const SW_CODE = `
+const CACHE_NAME = 'lorcana-img-v1';
+const IMG_ORIGIN = 'https://disneylorcana.jp';
+
+self.addEventListener('install', e => self.skipWaiting());
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+    ).then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', e => {
+  const url = e.request.url;
+  if (!url.startsWith(IMG_ORIGIN) || !url.endsWith('.webp')) return;
+  e.respondWith(
+    caches.open(CACHE_NAME).then(cache =>
+      cache.match(e.request).then(cached => {
+        if (cached) return cached;
+        return fetch(e.request).then(res => {
+          if (res.ok) cache.put(e.request, res.clone());
+          return res;
+        }).catch(() => cached);
+      })
+    )
+  );
+});
+`;
+
+if ('serviceWorker' in navigator) {
+  const blob = new Blob([SW_CODE], { type: 'application/javascript' });
+  const swUrl = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(swUrl, { scope: '/' }).catch(e => {
+    // Blob URLのscopeエラーは無視（機能自体は動く）
+    console.info('SW scope limited:', e.message);
+  });
+}
+
+// ═══════════════════════════════════════════
+// 定数・マスターデータ
+// ═══════════════════════════════════════════
 const SET_INFO = {
   '1': { month:'2025/01', oldPattern:true, code:'DLCS1', size:'429x600' },
   '2': { month:'2025/03', oldPattern:true, code:'DLCS2', size:'358x500' },
@@ -185,17 +231,15 @@ const SET_INFO = {
   '9': { month:'2025/12', month2:'2026/02', oldPattern:true, code:'DLCS9', size:'', suffixX:true },
 };
 const IMG_HOST = 'https://disneylorcana.jp/wp-content/uploads/';
-const RARITY_CODE = { 'Common':'C','Uncommon':'U','Rare':'R','Super_rare':'S','Legendary':'L','Enchanted':'E','Iconic':'Q','Iconic':'I','Promo':'P' };
+const RARITY_CODE = { 'Common':'C','Uncommon':'U','Rare':'R','Super_rare':'S','Legendary':'L','Enchanted':'E','Iconic':'Q','Promo':'P' };
 const INK_CODE    = { 'Amber':'A','Amethyst':'M','Emerald':'E','Ruby':'R','Sapphire':'S','Steel':'T' };
 const TYPE_CODE   = { 'Character':'C','Action':'A','Item':'I','Location':'L' };
 
-// 第4・5弾の特殊番号（エンチャンテッド等）除外リスト
 const SKIP_CARDS = new Set([
   '4_223','4_224','4_225','5_223',
   '8_1f','8_2f','8_3f','8_65f','8_125f',
 ]);
 
-// 第9弾の日本語版存在カード番号
 const SET9_JA = new Set([
   '1','4','5','6','26','44','45','46','47','64',
   '74','75','76','77','78','94','100','109','110','111',
@@ -331,7 +375,7 @@ const EXCEPTION_IMG = {
   '8_142':'142_DLCS8_RCTR_Mushu_YourWorstNightmare_JA.webp',
   '8_148':'148_DLCS8_UASR_GetOut_JA.webp',
   '8_149':'149_DLCS8_UATR_LighttheFuse_JA.webp',
-  '8_168':'168_DLCS8_UCST_Arthur_DeterminedSquire_JA.webp',
+  '8_168':'168_DLCS8_UCTS_Arthur_DeterminedSquire_JA.webp',
   '8_169':'169_DLCS8_UCTS_Bernard_OverPrepared_JA.webp',
   '8_170':'170_DLCS8_RCTS_Aladdin_VigilantGuard_JA.webp',
   '8_171':'171_DLCS8_SCST_Jasmine_SteadyStrategist_JA.webp',
@@ -372,27 +416,43 @@ const EXCEPTION_IMG = {
   '9_241':'241_DLCS9_ICAX_MinnieMouse_SweetheartPrincess_JA.webp',
   '9_242':'242_DLCS9_ICRX_MickeyMouse_BraveLittlePrince_JA.webp',
 };
+
 const SET_NAMES_JA = {
   '1':'物語のはじまり','2':'フラッドボーンの渾沌','3':'インクランド探訪',
   '4':'逆襲のアースラ','5':'星々の輝き','6':'大いなるアズライト',
   '7':'アーケイジアと魔法の島','8':'ジャファーの王権','9':'物語のおもいで',
 };
 
-function slug(str){ return (str??'').replace(/[^a-zA-Z0-9]/g,''); }
+// ═══════════════════════════════════════════
+// カードデータキャッシュ（IndexedDB, 2ヶ月TTL）
+// ═══════════════════════════════════════════
+const CARD_CACHE_TTL = 60 * 24 * 60 * 60 * 1000; // 2ヶ月 (ms)
+const CARD_CACHE_KEY = 'card_cache_v1';
 
-// collector_number のゼロ埋め（4a→004a, 4→004）
-function padNum(n){
-  return String(n).replace(/^(\d+)/, m => m.padStart(3,'0'));
+async function loadCardCache() {
+  return new Promise(r => {
+    const tx = db.transaction('meta', 'readonly');
+    tx.objectStore('meta').get(CARD_CACHE_KEY).onsuccess = e => r(e.target.result ?? null);
+  });
+}
+async function saveCardCache(sets, cards) {
+  return new Promise(r => {
+    const tx = db.transaction('meta', 'readwrite');
+    tx.objectStore('meta').put({ id: CARD_CACHE_KEY, sets, cards, savedAt: Date.now() });
+    tx.oncomplete = () => r();
+  });
 }
 
-// セット別インクコード生成
+// ═══════════════════════════════════════════
+// 画像URL生成ユーティリティ
+// ═══════════════════════════════════════════
+function slug(str){ return (str??'').replace(/[^a-zA-Z0-9]/g,''); }
+function padNum(n){ return String(n).replace(/^(\d+)/, m => m.padStart(3,'0')); }
 function getInkCode(card, info) {
   const inks = card.inks ?? (card.ink ? [card.ink] : []);
   const codes = inks.map(i => INK_CODE[i] ?? '').join('');
   if(info.suffixX) return codes + 'X';
-  if(info.dualInk) {
-    return inks.length > 1 ? codes : codes + 'X';
-  }
+  if(info.dualInk) return inks.length > 1 ? codes : codes + 'X';
   return codes;
 }
 
@@ -404,7 +464,7 @@ function buildImageUrls(card){
   const num = padNum(card.collector_number);
   const base = IMG_HOST + info.month + '/';
 
-  // 例外マップ
+  // 例外マップ（month2フォールバックあり）
   const exKey = `${setCode}_${card.collector_number}`;
   if(EXCEPTION_IMG[exKey]) {
     const base2 = info.month2 ? IMG_HOST + info.month2 + '/' : null;
@@ -413,12 +473,10 @@ function buildImageUrls(card){
     return urls;
   }
 
-  // 第3〜6弾：新パターン {slug}_ja_{num}.webp
   if(info.newPattern){
     return [`${base}${info.slug}_ja_${num}.webp`];
   }
 
-  // 第1・2・7・8・9弾：旧パターン
   const rarity  = RARITY_CODE[card.rarity] ?? 'C';
   const inkC    = getInkCode(card, info);
   const typeC   = TYPE_CODE[card.type?.[0]] ?? 'C';
@@ -428,7 +486,6 @@ function buildImageUrls(card){
   const nameS   = slug(card.name);
   const verS    = slug(card.version);
 
-  // サイズあり（第1・2弾）
   if(info.size) {
     if(card.type?.includes('Character') && verS){
       return [
@@ -443,7 +500,6 @@ function buildImageUrls(card){
     }
   }
 
-  // サイズなし（第7・8・9弾）
   const urls = [];
   if(card.type?.includes('Character') && verS){
     urls.push(`${base}${prefix}_${nameS}_${verS}_JA.webp`);
@@ -468,12 +524,30 @@ function makeImg(card){
   return img;
 }
 
+// ═══════════════════════════════════════════
+// IndexedDB（collection / decks / meta）
+// ═══════════════════════════════════════════
 let db;
-function openDB(){ return new Promise((res,rej)=>{ const req=indexedDB.open('lorcana',2); req.onupgradeneeded=e=>{ const d=e.target.result; if(!d.objectStoreNames.contains('collection')) d.createObjectStore('collection',{keyPath:'id'}); if(!d.objectStoreNames.contains('decks')) d.createObjectStore('decks',{keyPath:'id'}); }; req.onsuccess=e=>{ db=e.target.result; res(db); }; req.onerror=()=>rej(req.error); }); }
+function openDB(){
+  return new Promise((res,rej)=>{
+    const req = indexedDB.open('lorcana', 3);
+    req.onupgradeneeded = e => {
+      const d = e.target.result;
+      if(!d.objectStoreNames.contains('collection')) d.createObjectStore('collection',{keyPath:'id'});
+      if(!d.objectStoreNames.contains('decks'))      d.createObjectStore('decks',{keyPath:'id'});
+      if(!d.objectStoreNames.contains('meta'))       d.createObjectStore('meta',{keyPath:'id'});
+    };
+    req.onsuccess = e => { db = e.target.result; res(db); };
+    req.onerror   = () => rej(req.error);
+  });
+}
 function dbPut(store,val){ return new Promise(r=>{ const tx=db.transaction(store,'readwrite'); tx.objectStore(store).put(val).onsuccess=()=>r(); }); }
 function dbDelete(store,key){ return new Promise(r=>{ const tx=db.transaction(store,'readwrite'); tx.objectStore(store).delete(key).onsuccess=()=>r(); }); }
 function dbGetAll(store){ return new Promise(r=>{ const tx=db.transaction(store,'readonly'); tx.objectStore(store).getAll().onsuccess=e=>r(e.target.result); }); }
 
+// ═══════════════════════════════════════════
+// アプリ状態
+// ═══════════════════════════════════════════
 let allCards=[],sets=[],collection={},decks=[],filterSet='',filterInk='',searchQ='',currentCard=null,currentDeck=null;
 
 function filteredCards(){
@@ -675,41 +749,83 @@ document.getElementById('inkFilter').querySelectorAll('.chip').forEach(btn=>{
   btn.addEventListener('click',()=>{ document.getElementById('inkFilter').querySelectorAll('.chip').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); filterInk=btn.dataset.ink; renderCardGrid(); });
 });
 
+// ═══════════════════════════════════════════
+// データ取得（並列fetch + IndexedDBキャッシュ）
+// ═══════════════════════════════════════════
 async function loadData(){
-  const overlay=document.getElementById('loadingOverlay'); const prog=document.getElementById('loadProgress');
+  const overlay = document.getElementById('loadingOverlay');
+  const prog    = document.getElementById('loadProgress');
+  const cInfo   = document.getElementById('cacheInfo');
   overlay.classList.add('show');
+
+  // キャッシュチェック
+  const cached = await loadCardCache();
+  const now = Date.now();
+  if(cached && (now - cached.savedAt) < CARD_CACHE_TTL) {
+    const age = Math.floor((now - cached.savedAt) / (24*60*60*1000));
+    prog.textContent = 'キャッシュから読み込み中…';
+    cInfo.textContent = `最終更新: ${age}日前`;
+    sets    = cached.sets;
+    allCards = cached.cards;
+    overlay.classList.remove('show');
+    return;
+  }
+
+  // キャッシュなし or 期限切れ → API取得
+  cInfo.textContent = cached ? '2ヶ月経過のため再取得中…' : '';
   try {
-    prog.textContent='セット情報を取得中…';
-    const sRes=await fetch('https://api.lorcast.com/v0/sets');
-    const sData=await sRes.json();
-    sets=(sData.results??[]).filter(s=>SET_INFO[s.code]);
-    allCards=[];
-    for(let i=0;i<sets.length;i++){
-      const s=sets[i];
-      prog.textContent=`「${SET_NAMES_JA[s.code]??s.name}」を取得中… (${i+1}/${sets.length})`;
-      try {
-        const r=await fetch(`https://api.lorcast.com/v0/sets/${s.code}/cards`);
-        const cards=await r.json();
-        // 除外リストのカードを除去
-        const filtered=(Array.isArray(cards)?cards:[]).filter(c=>{
-          const key=`${s.code}_${c.collector_number}`;
-          if(SKIP_CARDS.has(key)) return false;
-          if(s.code==='9' && !SET9_JA.has(c.collector_number)) return false;
-          return true;
-        });
-        allCards.push(...filtered);
-      } catch(e){ console.warn(e); }
-      await new Promise(r=>setTimeout(r,80));
-    }
-    allCards.sort((a,b)=>{ const sc=(a.set?.code??'').localeCompare(b.set?.code??'',undefined,{numeric:true}); return sc!==0?sc:String(a.collector_number).localeCompare(String(b.collector_number),undefined,{numeric:true}); });
-  } catch(e){ prog.textContent='エラー: '+e.message; return; }
+    prog.textContent = 'セット情報を取得中…';
+    const sRes  = await fetch('https://api.lorcast.com/v0/sets');
+    const sData = await sRes.json();
+    sets = (sData.results ?? []).filter(s => SET_INFO[s.code]);
+
+    prog.textContent = `全${sets.length}弾を並列取得中…`;
+
+    // ★ 並列fetch（80msウェイトなし）
+    const results = await Promise.allSettled(
+      sets.map(s => fetch(`https://api.lorcast.com/v0/sets/${s.code}/cards`).then(r => r.json()))
+    );
+
+    allCards = [];
+    results.forEach((result, i) => {
+      if(result.status !== 'fulfilled') { console.warn(`Set ${sets[i].code} fetch failed`); return; }
+      const s = sets[i];
+      const cards = Array.isArray(result.value) ? result.value : [];
+      const filtered = cards.filter(c => {
+        const key = `${s.code}_${c.collector_number}`;
+        if(SKIP_CARDS.has(key)) return false;
+        if(s.code === '9' && !SET9_JA.has(c.collector_number)) return false;
+        return true;
+      });
+      allCards.push(...filtered);
+    });
+
+    allCards.sort((a,b)=>{
+      const sc = (a.set?.code??'').localeCompare(b.set?.code??'',undefined,{numeric:true});
+      return sc!==0 ? sc : String(a.collector_number).localeCompare(String(b.collector_number),undefined,{numeric:true});
+    });
+
+    // キャッシュ保存
+    await saveCardCache(sets, allCards);
+
+  } catch(e) {
+    prog.textContent = 'エラー: ' + e.message;
+    // キャッシュが古くても使う
+    if(cached) { sets = cached.sets; allCards = cached.cards; }
+    else { overlay.classList.remove('show'); return; }
+  }
+
   overlay.classList.remove('show');
 }
 
+// ═══════════════════════════════════════════
+// 起動
+// ═══════════════════════════════════════════
 (async()=>{
   await openDB();
-  const rows=await dbGetAll('collection'); collection={}; rows.forEach(r=>{ collection[r.id]=r.count; });
-  decks=await dbGetAll('decks');
+  const rows = await dbGetAll('collection');
+  collection = {}; rows.forEach(r => { collection[r.id] = r.count; });
+  decks = await dbGetAll('decks');
   await loadData();
   renderSetFilter();
   renderCardGrid();
