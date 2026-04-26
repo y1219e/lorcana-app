@@ -190,7 +190,20 @@ const INK_CODE    = { 'Amber':'A','Amethyst':'M','Emerald':'E','Ruby':'R','Sapph
 const TYPE_CODE   = { 'Character':'C','Action':'A','Item':'I','Location':'L' };
 
 // 第4・5弾の特殊番号（エンチャンテッド等）除外リスト
-const SKIP_CARDS = new Set(['4_223','4_224','4_225','5_223']);
+const SKIP_CARDS = new Set([
+  '4_223','4_224','4_225','5_223',
+]);
+
+// 第9弾の日本語版存在カード番号
+const SET9_JA = new Set([
+  '1','4','5','6','26','44','45','46','47','64',
+  '74','75','76','77','78','94','100','109','110','111',
+  '112','113','114','117','130','141','142','143','173','174',
+  '175','176','178','205','206','207','208','209','210','211',
+  '212','213','214','215','216','217','218','219','220','221',
+  '222','223','224','225','226','227','228','229','230','231',
+  '232','233','234','235','236','237','238','239','240','241','242',
+]);
 
 const EXCEPTION_IMG = {
   '1_126':'126_DLCS1_SRC_TeKﾄ＼TheBurningOne_JA.webp',
@@ -653,7 +666,9 @@ async function loadData(){
         // 除外リストのカードを除去
         const filtered=(Array.isArray(cards)?cards:[]).filter(c=>{
           const key=`${s.code}_${c.collector_number}`;
-          return !SKIP_CARDS.has(key);
+          if(SKIP_CARDS.has(key)) return false;
+          if(s.code==='9' && !SET9_JA.has(c.collector_number)) return false;
+          return true;
         });
         allCards.push(...filtered);
       } catch(e){ console.warn(e); }
