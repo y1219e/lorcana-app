@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ロルカナ 第一弾テスト</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0f0f1a;
+    color: #eee;
+    font-family: sans-serif;
+    min-height: 100vh;
+  }
+
+  header {
+    background: #1a1a2e;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    border-bottom: 1px solid #333;
+  }
+  header h1 { font-size: 1rem; flex: 1; }
+  #status { font-size: 0.75rem; color: #aaa; }
+
+  #grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .card {
+    background: #1a1a2e;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+  .card:active { transform: scale(0.97); }
+
+  .card img {
+    width: 100%;
+    aspect-ratio: 429 / 600;
+    object-fit: cover;
+    display: block;
+    background: #16213e;
+  }
+
+  .card-info {
+    padding: 5px 6px;
+  }
+  .card-name {
+    font-size: 0.7rem;
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .card-num {
+    font-size: 0.6rem;
+    color: #888;
+  }
+
+  .ink-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+  .ink-Amber     { background: #f5a623; }
+  .ink-Amethyst  { background: #9b59b6; }
+  .ink-Emerald   { background: #27ae60; }
+  .ink-Ruby      { background: #e74c3c; }
+  .ink-Sapphire  { background: #2980b9; }
+  .ink-Steel     { background: #95a5a6; }
+
+  #loading {
+    text-align: center;
+    padding: 60px 20px;
+    color: #aaa;
+    font-size: 0.9rem;
+  }
+  #error {
+    display: none;
+    text-align: center;
+    padding: 40px 20px;
+    color: #e74c3c;
+    font-size: 0.85rem;
+  }
+
+  .img-placeholder {
+    width: 100%;
+    aspect-ratio: 429 / 600;
+    background: #16213e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    color: #555;
+    text-align: center;
+    padding: 8px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🏰 ロルカナ 第一弾テスト</h1>
+  <span id="status">読み込み中…</span>
+</header>
+
+<div id="loading">カードデータを取得中…</div>
+<div id="error"></div>
+<div id="grid"></div>
+
+<script>
+const SET_NUMBER = 1;
+const SET_CODE   = 'DLCS1';
+const IMG_BASE   = 'https://disneylorcana.jp/wp-content/uploads/2025/01/';
+const IMG_SIZE   = '429x600';
+
+const RARITY_CODE = {
+  'Common':     'C',
+  'Uncommon':   'U',
+  'Rare':       'R',
+  'Super_rare': 'S',
+  'Legendary':  'L',
+  'Enchanted':  'E',
+  'Promo':      'P',
+};
+
+const INK_CODE = {
+  'Amber':    'A',
+  'Amethyst': 'M',
+  'Emerald':  'E',
+  'Ruby':     'R',
+  'Sapphire': 'S',
+  'Steel':    'T',
+};
+
+const TYPE_CODE = {
+  'Character': 'C',
+  'Action':    'A',
+  'Item':      'I',
+  'Location':  'L',
+};
+
+function buildImageUrl(card) {
+  const num     = String(card.collector_number).padStart(3, '0');
+  const rarity  = RARITY_CODE[card.rarity] ?? 'C';
+  const ink     = INK_CODE[card.ink]       ?? 'A';
+  const type    = TYPE_CODE[card.type?.[0]] ?? 'C';
+  const nameSlug    = (card.name    ?? '').replace(/[^a-zA-Z0-9]/g, '');
+  const versionSlug = (card.version ?? '').replace(/[^a-zA-Z0-9]/g, '');
+  const filename = `${num}_${SET_CODE}_${rarity}${ink}${type}_${nameSlug}_${versionSlug}_JA-${IMG_SIZE}.webp`;
+  return IMG_BASE + filename;
+}
+
+function renderCard(card) {
+  const imgUrl = buildImageUrl(card);
+  const div = document.createElement('div');
+  div.className = 'card';
+  div.innerHTML = `
+    <img src="${imgUrl}" alt="${card.name}" loading="lazy">
+    <div class="card-info">
+      <div class="card-name">
+        <span class="ink-dot ink-${card.ink}"></span>${card.name}
+      </div>
+      <div class="card-num">#${card.collector_number} · ${card.rarity}</div>
+    </div>
+  `;
+  const img = div.querySelector('img');
+  img.onerror = () => {
+    const ph = document.createElement('div');
+    ph.className = 'img-placeholder';
+    ph.textContent = `#${card.collector_number} ${card.name}`;
+    img.replaceWith(ph);
+  };
+  return div;
+}
+
+async function loadCards() {
+  const statusEl  = document.getElementById('status');
+  const loadingEl = document.getElementById('loading');
+  const errorEl   = document.getElementById('error');
+  const gridEl    = document.getElementById('grid');
+
+  try {
+    const url = `https://api.lorcast.com/v0/cards/search?q=set:${SET_NUMBER}&unique=prints`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const cards = (data.results ?? []).sort(
+      (a, b) => Number(a.collector_number) - Number(b.collector_number)
+    );
+
+    if (cards.length === 0) throw new Error('カードが見つかりません');
+
+    loadingEl.style.display = 'none';
+    statusEl.textContent = `${cards.length}枚取得`;
+
+    cards.forEach(card => gridEl.appendChild(renderCard(card)));
+
+  } catch (e) {
+    loadingEl.style.display = 'none';
+    errorEl.style.display = 'block';
+    errorEl.innerHTML = `❌ エラー: ${e.message}<br><br>
+      <small>API: api.lorcast.com へのアクセスが必要です</small>`;
+    statusEl.textContent = 'エラー';
+  }
+}
+
+loadCards();
+</script>
+</body>
+</html>
