@@ -182,19 +182,174 @@ const SET_INFO = {
   '6': { month:'2025/10', newPattern:true, slug:'azurite-sea' },
   '7': { month:'2025/12', oldPattern:true, code:'DLCS7', size:'', dualInk:true },
   '8': { month:'2026/02', oldPattern:true, code:'DLCS8', size:'', suffixX:true },
-  '9': { month:'2025/12', oldPattern:true, code:'DLCS9', size:'', suffixX:true },
+  '9': { month:'2025/12', month2:'2026/02', oldPattern:true, code:'DLCS9', size:'', suffixX:true },
 };
 const IMG_HOST = 'https://disneylorcana.jp/wp-content/uploads/';
-const RARITY_CODE = { 'Common':'C','Uncommon':'U','Rare':'R','Super_rare':'S','Legendary':'L','Enchanted':'E','Promo':'P' };
+const RARITY_CODE = { 'Common':'C','Uncommon':'U','Rare':'R','Super_rare':'S','Legendary':'L','Enchanted':'E','Iconic':'Q','Promo':'P' };
 const INK_CODE    = { 'Amber':'A','Amethyst':'M','Emerald':'E','Ruby':'R','Sapphire':'S','Steel':'T' };
 const TYPE_CODE   = { 'Character':'C','Action':'A','Item':'I','Location':'L' };
 
 // 第4・5弾の特殊番号（エンチャンテッド等）除外リスト
-const SKIP_CARDS = new Set(['4_223','4_224','4_225','5_223']);
+const SKIP_CARDS = new Set([
+  '4_223','4_224','4_225','5_223',
+]);
+
+// 第9弾の日本語版存在カード番号
+const SET9_JA = new Set([
+  '1','4','5','6','26','44','45','46','47','64',
+  '74','75','76','77','78','94','100','109','110','111',
+  '112','113','114','117','130','141','142','143','173','174',
+  '175','176','178','205','206','207','208','209','210','211',
+  '212','213','214','215','216','217','218','219','220','221',
+  '222','223','224','225','226','227','228','229','230','231',
+  '232','233','234','235','236','237','238','239','240','241','242',
+]);
 
 const EXCEPTION_IMG = {
   '1_126':'126_DLCS1_SRC_TeKﾄ＼TheBurningOne_JA.webp',
   '1_192':'192_DLCS1_LTC_TeKﾄ＼Heartless_JA.webp',
+  '7_10' :'010_DLCS7_RCEA_Tramp_StreetSmartDog_JA.webp',
+  '7_19' :'019_DLCS7_UCMA_Pascal_GardenChameleon_JA.webp',
+  '7_21' :'021_DLCS7_UCTA_Penny_BoltsPerson_JA.webp',
+  '7_22' :'022_DLCS7_UCRA_FixItFelixJr_PintSizedHero_JA.webp',
+  '7_26' :'026_DLCS7_RCRA_Calhoun_CourageousRescuer_JA.webp',
+  '7_29' :'029_DLCS7_SCSA_Pongo_DearOldDad_JA.webp',
+  '7_32' :'032_DLCS7_UCEA_Perla_NimbleSeamstress_JA.webp',
+  '7_35' :'035_DLCS7_SCMA_MirabelMadrigal_MusicallyTalented_JA.webp',
+  '7_39' :'039_DLCS7_UASA_RestoringtheHeart_JA.webp',
+  '7_40' :'040_DLCS7_RAMA_TheFamilyMadrigal_JA.webp',
+  '7_52' :'052_DLCS7_RCMR_Hades_FastTalker_JA.webp',
+  '7_53' :'053_DLCS7_UCRM_MadameMedusa_DiamondLover_JA.webp',
+  '7_54' :'054_DLCS7_SCRM_TeKﾄ＼ElementalTerror_JA.webp',
+  '7_57' :'057_DLCS7_UCMT_GiantCobra_GhostlySerpent_JA.webp',
+  '7_58' :'058_DLCS7_CCMX_TeKﾄ＼LavaMonster_JA.webp',
+  '7_63' :'063_DLCS7_RCME_Kronk_LaidBack_JA.webp',
+  '7_64' :'064_DLCS7_UCMR_MotherGothel_VainSorceress_JA.webp',
+  '7_65' :'065_DLCS7_UCSM_Sven_KeenEyedReindeer_JA.webp',
+  '7_66' :'066_DLCS7_UCME_Diablo_SpitefulRaven_JA.webp',
+  '7_67' :'067_DLCS7_RCSM_Merlin_CleverClairvoyant_JA.webp',
+  '7_68' :'068_DLCS7_SCEM_Yzma_AboveItAll_JA.webp',
+  '7_69' :'069_DLCS7_SCSM_Elsa_IceMaker_JA.webp',
+  '7_71' :'071_DLCS7_UCEM_Kuzco_PanickedLlama_JA.webp',
+  '7_72' :'072_DLCS7_UCMS_Anna_IceBreaker_JA.webp',
+  '7_79' :'079_DLCS7_UCTM_Mufasa_AmongtheStars_JA.webp',
+  '7_83' :'083_DLCS7_RATM_RestoringtheCrown_JA.webp',
+  '7_94' :'094_DLCS7_RCER_MadHatter_UnrulyEccentric_JA.webp',
+  '7_95' :'095_DLCS7_SCRE_QueenofHearts_UnpredictableBully_JA.webp',
+  '7_96' :'096_DLCS7_SCES_HiroHamada_ArmorDesigner_JA.webp',
+  '7_97' :'097_DLCS7_UCES_Yokai_IntellectualSchemer_JA.webp',
+  '7_103':'103_DLCS7_UCER_TweedledeeTweedledum_StrangeStorytellers_JA.webp',
+  '7_104':'104_DLCS7_UCSE_Baymax_GiantRobot_JA.webp',
+  '7_105':'105_DLCS7_UCTE_Gizmoduck_SuitedUp_JA.webp',
+  '7_106':'106_DLCS7_UCRE_Fidget_SneakyBat_JA.webp',
+  '7_107':'107_DLCS7_UCET_MrSmee_EfficientCaptain_JA.webp',
+  '7_109':'109_DLCS7_RCTE_JohnSilver_VengefulPirate_JA.webp',
+  '7_117':'117_DLCS7_CAEX_HesaTramp_JA.webp',
+  '7_119':'119_DLCS7_RASE_InkGeyser_JA.webp',
+  '7_124':'124_DLCS7_UCRT_Denahi_ImpatientHunter_JA.webp',
+  '7_126':'126_DLCS7_SCSR_Belle_MechanicExtraordinaire_JA.webp',
+  '7_132':'132_DLCS7_UCRS_BeagleBoys_SmallTimeCrooks_JA.webp',
+  '7_133':'133_DLCS7_UCTR_LiShang_NewlyPromoted_JA.webp',
+  '7_136':'136_DLCS7_RCRS_Beast_FrustratedDesigner_JA.webp',
+  '7_137':'137_DLCS7_RCRT_Mushu_MajesticDragon_JA.webp',
+  '7_141':'141_DLCS7_SCTR_Mulan_ImperialGeneral_JA.webp',
+  '7_151':'151_DLCS7_UISR_MauricesMachine_JA.webp',
+  '7_154':'154_DLCS7_LCSX_ScroogeMcDuck_ResourcefulMiser_JA.webp',
+  '7_163':'163_DLCS7_UCTS_Heihei_ExpandedConsciousness_JA.webp',
+  '7_172':'172_DLCS7_UCST_LadyKluck_ProtectiveConfidant_JA.webp',
+  '7_173':'173_DLCS7_RCTS_Jasmine_InspiredResearcher_JA.webp',
+  '7_176':'176_DLCS7_SCTS_MaidMarian_BadmintonAce_JA.webp',
+  '7_206':'206_DLCS7_ECMA_MirabelMadrigal_MusicallyTalented_JA.webp',
+  '7_207':'207_DLCS7_ECTA_Bolt_Superdog_JA.webp',
+  '7_210':'210_DLCS7_ECTM_Jafar_NewlyCrowned_JA.webp',
+  '7_211':'211_DLCS7_EAMX_ShowMeMore_JA.webp',
+  '7_213':'213_DLCS7_ECRE_MadHatter_UnrulyEccentric_JA.webp',
+  '7_214':'214_DLCS7_ECSE_HiroHamada_ArmorDesigner_JA.webp',
+  '7_216':'216_DLCS7_ECRX_Ratigan_NefariousCriminal_JA.webp',
+  '7_217':'217_DLCS7_ECSR_Belle_MechanicExtraordinaire_JA.webp',
+  '7_220':'220_DLCS7_EASX_AllIsFound_JA.webp',
+  '7_221':'221_DLCS7_ECTX_MickeyMouse_InspirationalWarrior_JA.webp',
+  '7_222':'222_DLCS7_EATX_RestoringAtlantis_JA.webp',
+  '8_5'  :'005_DLCS8_RCMA_AntonioMadrigal_FriendtoAll_JA.webp',
+  '8_6'  :'006_DLCS8_RCAR_MinnieMouse_DaringDefender_JA.webp',
+  '8_7'  :'007_DLCS8_RCAS_LudwigVonDrake_AllAroundExpert_JA.webp',
+  '8_19' :'019_DLCS8_UCAM_Pua_ProtectivePig_JA.webp',
+  '8_20' :'020_DLCS8_SCMA_BrunoMadrigal_SingingSeer_JA.webp',
+  '8_21' :'021_DLCS8_UCAE_Kaa_HypnotizingPython_JA.webp',
+  '8_22' :'022_DLCS8_SCEA_Tramp_DapperRascal_JA.webp',
+  '8_23' :'023_DLCS8_UCAR_KingCandy_SugarRushNightmare_JA.webp',
+  '8_24' :'024_DLCS8_SCRA_WreckItRalph_BigLug_JA.webp',
+  '8_25' :'025_DLCS8_UCAS_Patch_PlayfulPup_JA.webp',
+  '8_26' :'026_DLCS8_UCSA_Rolly_ChubbyPuppy_JA.webp',
+  '8_27' :'027_DLCS8_SCAS_Perdita_DeterminedMother_JA.webp',
+  '8_28' :'028_DLCS8_UCAT_Pluto_TriedandTrue_JA.webp',
+  '8_29' :'029_DLCS8_RCAT_Bolt_DownbutNotOut_JA.webp',
+  '8_30' :'030_DLCS8_SCAT_Rhino_PowerHamster_JA.webp',
+  '8_33' :'033_DLCS8_RCEA_Lady_DecisiveDog_JA.webp',
+  '8_34' :'034_DLCS8_UCMA_AlmaMadrigal_AcceptingGrandmother_JA.webp',
+  '8_39' :'039_DLCS8_UARA_CandyDrift_JA.webp',
+  '8_40' :'040_DLCS8_UATA_ShesYourPerson_JA.webp',
+  '8_41' :'041_DLCS8_UAEA_OnlySoMuchRoom_JA.webp',
+  '8_47' :'047_DLCS8_UCMR_MadameMedusa_DeceivingPartner_JA.webp',
+  '8_48' :'048_DLCS8_SCRM_Hades_RuthlessTyrant_JA.webp',
+  '8_49' :'049_DLCS8_UCMT_LenaSabrewing_PureEnergy_JA.webp',
+  '8_50' :'050_DLCS8_UCTM_Abu_IllusoryPachyderm_JA.webp',
+  '8_66' :'066_DLCS8_UCME_MagicaDeSpell_ShadowForm_JA.webp',
+  '8_67' :'067_DLCS8_RCEM_Kuzco_ImpulsiveLlama_JA.webp',
+  '8_68' :'068_DLCS8_SCME_Yzma_OnEdge_JA.webp',
+  '8_69' :'069_DLCS8_UCRM_MadamMim_Rhino_JA.webp',
+  '8_70' :'070_DLCS8_RCRM_MotherGothel_KnowsWhatsBest_JA.webp',
+  '8_71' :'071_DLCS8_UCMS_BlueFairy_GuidingLight_JA.webp',
+  '8_72' :'072_DLCS8_RCSM_Anna_MagicalMission_JA.webp',
+  '8_73' :'073_DLCS8_RCMT_TheSultan_RoyalApparition_JA.webp',
+  '8_74' :'074_DLCS8_SCTM_Jafar_HighSultanofLorcana_JA.webp',
+  '8_77' :'077_DLCS8_UAMX_ForestDuel_JA.webp',
+  '8_78' :'078_DLCS8_UAMX_TheyNeverComeBack_JA.webp',
+  '8_79' :'079_DLCS8_RAMX_FantasticalandMagical_JA.webp',
+  '8_80' :'080_DLCS8_UAEM_PulltheLever_JA.webp',
+  '8_81' :'081_DLCS8_SAMS_IntotheUnknown_JA.webp',
+  '8_82' :'082_DLCS8_RAMX_EverybodysGotaWeakness_JA.webp',
+  '8_84' :'084_DLCS8_UISM_IceSpikes_JA.webp',
+  '8_103':'103_DLCS8_UCER_Dormouse_EasilyAgitated_JA.webp',
+  '8_104':'104_DLCS8_RCRE_Alice_ClumsyasCanBe_JA.webp',
+  '8_105':'105_DLCS8_SCRE_QueenofHearts_HaughtyMonarch_JA.webp',
+  '8_106':'106_DLCS8_UCES_HiroHamada_IntuitiveThinker_JA.webp',
+  '8_107':'107_DLCS8_SCES_GoGoTomago_CuttingEdge_JA.webp',
+  '8_108':'108_DLCS8_UCET_DonKarnage_AirPirateLeader_JA.webp',
+  '8_109':'109_DLCS8_RCET_CaptainHook_ThePirateKing_JA.webp',
+  '8_110':'110_DLCS8_SCTE_Maui_StubbornTrickster_JA.webp',
+  '8_111':'111_DLCS8_RCSE_HoneyLemon_CostumedCatalyst_JA.webp',
+  '8_117':'117_DLCS8_UARE_Undermine_JA.webp',
+  '8_118':'118_DLCS8_UATE_WalkthePlank_JA.webp',
+  '8_120':'120_DLCS8_UISE_JeweledCollar_JA.webp',
+  '8_123':'123_DLCS8_RCSR_GyroGearloose_EccentricInventor_JA.webp',
+  '8_138':'138_DLCS8_UCRS_LeFou_CakeThief_JA.webp',
+  '8_139':'139_DLCS8_SCSR_Lumiere_FiredUp_JA.webp',
+  '8_140':'140_DLCS8_UCRT_TheCoachman_GreedyDeceiver_JA.webp',
+  '8_141':'141_DLCS8_SCTR_Mulan_ChargingAhead_JA.webp',
+  '8_142':'142_DLCS8_RCTR_Mushu_YourWorstNightmare_JA.webp',
+  '8_148':'148_DLCS8_UASR_GetOut_JA.webp',
+  '8_149':'149_DLCS8_UATR_LighttheFuse_JA.webp',
+  '8_168':'168_DLCS8_UCST_Arthur_DeterminedSquire_JA.webp',
+  '8_169':'169_DLCS8_UCTS_Bernard_OverPrepared_JA.webp',
+  '8_170':'170_DLCS8_RCTS_Aladdin_VigilantGuard_JA.webp',
+  '8_171':'171_DLCS8_SCST_Jasmine_SteadyStrategist_JA.webp',
+  '8_175':'175_DLCS8_RASX_HeadsHeldHigh_JA.webp',
+  '8_176':'176_DLCS8_UASX_PouncingPractice_JA.webp',
+  '8_177':'177_DLCS8_SASX_DowninNewOrleans_JA.webp',
+  '8_178':'178_DLCS8_CISX_TelevisionSet_JA.webp',
+  '8_179':'179_DLCS8_RISX_BellesFavoriteBook_JA.webp',
+  '8_180':'180_DLCS8_RISX_AtlanteanCrystal_JA.webp',
+  '8_205':'205_DLCS8_ECEA_Lady_DecisiveDog_JA.webp',
+  '8_206':'206_DLCS8_ECRA_WreckItRalph_BigLug_JA.webp',
+  '8_207':'207_DLCS8_ECAS_Perdita_DeterminedMother_JA.webp',
+  '8_210':'210_DLCS8_ECEM_Kuzco_ImpulsiveLlama_JA.webp',
+  '8_211':'211_DLCS8_ECRM_MotherGothel_KnowsWhatsBest_JA.webp',
+  '8_212':'212_DLCS8_EAMX_FantasticalandMagical_JA.webp',
+  '8_213':'213_DLCS8_EASM_IntotheUnknown_JA.webp',
+  '8_215':'215_DLCS8_ECET_CaptainHook_ThePirateKing_JA.webp',
+  '8_218':'218_DLCS8_ECTR_Mushu_YourWorstNightmare_JA.webp',
+  '8_221':'221_DLCS8_ECST_Jasmine_SteadyStrategist_JA.webp',
 };
 const SET_NAMES_JA = {
   '1':'物語のはじまり','2':'フラッドボーンの渾沌','3':'インクランド探訪',
@@ -211,12 +366,13 @@ function padNum(n){
 
 // セット別インクコード生成
 function getInkCode(card, info) {
-  if(info.suffixX) return (INK_CODE[card.ink] ?? 'A') + 'X';
+  const inks = card.inks ?? (card.ink ? [card.ink] : []);
+  const codes = inks.map(i => INK_CODE[i] ?? '').join('');
+  if(info.suffixX) return codes + 'X';
   if(info.dualInk) {
-    const inks = card.inks ?? (card.ink ? [card.ink] : []);
-    return inks.map(i => INK_CODE[i] ?? '').join('');
+    return inks.length > 1 ? codes : codes + 'X';
   }
-  return INK_CODE[card.ink] ?? 'A';
+  return codes;
 }
 
 function buildImageUrls(card){
@@ -240,7 +396,9 @@ function buildImageUrls(card){
   const rarity  = RARITY_CODE[card.rarity] ?? 'C';
   const inkC    = getInkCode(card, info);
   const typeC   = TYPE_CODE[card.type?.[0]] ?? 'C';
-  const prefix  = `${num}_${info.code}_${rarity}${inkC}${typeC}`;
+  const prefix  = (info.dualInk || info.suffixX)
+    ? `${num}_${info.code}_${rarity}${typeC}${inkC}`
+    : `${num}_${info.code}_${rarity}${inkC}${typeC}`;
   const nameS   = slug(card.name);
   const verS    = slug(card.version);
 
@@ -260,11 +418,15 @@ function buildImageUrls(card){
   }
 
   // サイズなし（第7・8・9弾）
+  const urls = [];
   if(card.type?.includes('Character') && verS){
-    return [`${base}${prefix}_${nameS}_${verS}_JA.webp`];
+    urls.push(`${base}${prefix}_${nameS}_${verS}_JA.webp`);
+    if(info.month2) urls.push(`${IMG_HOST}${info.month2}/${prefix}_${nameS}_${verS}_JA.webp`);
   } else {
-    return [`${base}${prefix}_${nameS}_JA.webp`];
+    urls.push(`${base}${prefix}_${nameS}_JA.webp`);
+    if(info.month2) urls.push(`${IMG_HOST}${info.month2}/${prefix}_${nameS}_JA.webp`);
   }
+  return urls;
 }
 
 function makeImg(card){
@@ -505,7 +667,9 @@ async function loadData(){
         // 除外リストのカードを除去
         const filtered=(Array.isArray(cards)?cards:[]).filter(c=>{
           const key=`${s.code}_${c.collector_number}`;
-          return !SKIP_CARDS.has(key);
+          if(SKIP_CARDS.has(key)) return false;
+          if(s.code==='9' && !SET9_JA.has(c.collector_number)) return false;
+          return true;
         });
         allCards.push(...filtered);
       } catch(e){ console.warn(e); }
