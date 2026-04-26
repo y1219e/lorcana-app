@@ -404,11 +404,15 @@ const prefix  = (info.dualInk || info.suffixX)
   }
 
   // サイズなし（第7・8・9弾）
+  const urls = [];
   if(card.type?.includes('Character') && verS){
-    return [`${base}${prefix}_${nameS}_${verS}_JA.webp`];
+    urls.push(`${base}${prefix}_${nameS}_${verS}_JA.webp`);
+    if(info.month2) urls.push(`${IMG_HOST}${info.month2}/${prefix}_${nameS}_${verS}_JA.webp`);
   } else {
-    return [`${base}${prefix}_${nameS}_JA.webp`];
+    urls.push(`${base}${prefix}_${nameS}_JA.webp`);
+    if(info.month2) urls.push(`${IMG_HOST}${info.month2}/${prefix}_${nameS}_JA.webp`);
   }
+  return urls;
 }
 
 function makeImg(card){
