@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -117,10 +118,15 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, sa
       <div class="modal-card-sub" id="modalSub"></div>
       <div class="modal-card-meta" id="modalMeta"></div>
     </div></div>
-    <div class="count-row"><label>所持枚数</label><div class="count-btns">
-      <button class="count-btn" id="countDec">－</button>
-      <span class="count-val" id="countVal">0</span>
-      <button class="count-btn" id="countInc">＋</button>
+    <div class="count-row"><label>ノーマル</label><div class="count-btns">
+      <button class="count-btn" id="countDecN">－</button>
+      <span class="count-val" id="countValN">0</span>
+      <button class="count-btn" id="countIncN">＋</button>
+    </div></div>
+    <div class="count-row"><label>✨ ホイル</label><div class="count-btns">
+      <button class="count-btn" id="countDecF">－</button>
+      <span class="count-val" id="countValF">0</span>
+      <button class="count-btn" id="countIncF">＋</button>
     </div></div>
     <button class="modal-close" id="modalClose">閉じる</button>
   </div>
@@ -559,6 +565,10 @@ function filteredCards(){
   });
 }
 
+// collection[id] は {normal, foil} 形式。旧形式(数値)はnormalとして扱う
+function getOwned(id){ const c=collection[id]; if(!c) return {normal:0,foil:0}; if(typeof c==='number') return {normal:c,foil:0}; return {normal:c.normal??0,foil:c.foil??0}; }
+function ownedTotal(id){ const o=getOwned(id); return o.normal+o.foil; }
+
 function renderCardGrid(){
   const grid=document.getElementById('cardGrid');
   const badge=document.getElementById('cardCountBadge');
@@ -566,15 +576,15 @@ function renderCardGrid(){
   badge.textContent=cards.length;
   grid.innerHTML='';
   cards.forEach(card=>{
-    const owned=collection[card.id]??0;
+    const total=ownedTotal(card.id);
     const item=document.createElement('div');
-    item.className='card-item'+(owned>0?' owned':'');
+    item.className='card-item'+(total>0?' owned':'');
     item.appendChild(makeImg(card));
     const info=document.createElement('div'); info.className='card-info';
     const inkClass = card.ink ? `ink-${card.ink}` : 'ink-null';
     info.innerHTML=`<div class="card-name"><span class="ink-dot ${inkClass}"></span>${card.name}</div><div class="card-sub">#${card.collector_number} ${card.rarity}</div>`;
     item.appendChild(info);
-    if(owned>0){ const b=document.createElement('div'); b.className='own-badge'; b.textContent=owned; item.appendChild(b); }
+    if(total>0){ const o=getOwned(card.id); const b=document.createElement('div'); b.className='own-badge'; b.textContent=o.foil>0?`${o.normal}+${o.foil}✨`:o.normal; item.appendChild(b); }
     item.addEventListener('click',()=>openCardModal(card));
     grid.appendChild(item);
   });
@@ -589,46 +599,50 @@ function renderSetFilter(){
 
 function openCardModal(card){
   currentCard=card;
-  const owned=collection[card.id]??0;
+  const o=getOwned(card.id);
   const urls=buildImageUrls(card);
   const mi=document.getElementById('modalImg'); mi.src=urls[0]; let i=0; mi.onerror=()=>{ i++; if(i<urls.length) mi.src=urls[i]; };
   document.getElementById('modalName').textContent=card.name;
   document.getElementById('modalSub').textContent=card.version??'';
   const inks = card.inks ?? (card.ink ? [card.ink] : []);
   document.getElementById('modalMeta').textContent=`${inks.join('/')} · ${card.type?.join(', ')??''} · ${card.rarity} · #${card.collector_number} · 第${card.set?.code}弾`;
-  document.getElementById('countVal').textContent=owned;
-  document.getElementById('countDec').disabled=owned<=0;
-  document.getElementById('countInc').disabled=owned>=4;
+  document.getElementById('countValN').textContent=o.normal;
+  document.getElementById('countValF').textContent=o.foil;
+  document.getElementById('countDecN').disabled=o.normal<=0;
+  document.getElementById('countDecF').disabled=o.foil<=0;
   document.getElementById('cardModal').classList.add('open');
 }
 function closeCardModal(){ document.getElementById('cardModal').classList.remove('open'); currentCard=null; }
 document.getElementById('modalClose').addEventListener('click',closeCardModal);
 document.getElementById('cardModal').addEventListener('click',e=>{ if(e.target===document.getElementById('cardModal')) closeCardModal(); });
 
-async function setOwned(cardId,count){ if(count<=0){ await dbDelete('collection',cardId); delete collection[cardId]; } else { await dbPut('collection',{id:cardId,count}); collection[cardId]=count; } }
+async function setOwned(cardId, normal, foil){
+  if(normal<=0 && foil<=0){ await dbDelete('collection',cardId); delete collection[cardId]; }
+  else { const val={id:cardId,normal,foil}; await dbPut('collection',val); collection[cardId]=val; }
+}
 
-document.getElementById('countDec').addEventListener('click',async()=>{
+async function updateCount(type, delta){
   if(!currentCard) return;
-  const v=Math.max(0,(collection[currentCard.id]??0)-1);
-  await setOwned(currentCard.id,v);
-  document.getElementById('countVal').textContent=v;
-  document.getElementById('countDec').disabled=v<=0; document.getElementById('countInc').disabled=v>=4;
+  const o=getOwned(currentCard.id);
+  const normal = type==='normal' ? Math.max(0, o.normal+delta) : o.normal;
+  const foil   = type==='foil'   ? Math.max(0, o.foil+delta)   : o.foil;
+  await setOwned(currentCard.id, normal, foil);
+  document.getElementById('countValN').textContent=normal;
+  document.getElementById('countValF').textContent=foil;
+  document.getElementById('countDecN').disabled=normal<=0;
+  document.getElementById('countDecF').disabled=foil<=0;
   renderCardGrid(); renderProgress();
-});
-document.getElementById('countInc').addEventListener('click',async()=>{
-  if(!currentCard) return;
-  const v=Math.min(4,(collection[currentCard.id]??0)+1);
-  await setOwned(currentCard.id,v);
-  document.getElementById('countVal').textContent=v;
-  document.getElementById('countDec').disabled=v<=0; document.getElementById('countInc').disabled=v>=4;
-  renderCardGrid(); renderProgress();
-});
+}
+document.getElementById('countDecN').addEventListener('click',()=>updateCount('normal',-1));
+document.getElementById('countIncN').addEventListener('click',()=>updateCount('normal',+1));
+document.getElementById('countDecF').addEventListener('click',()=>updateCount('foil',-1));
+document.getElementById('countIncF').addEventListener('click',()=>updateCount('foil',+1));
 
 function renderProgress(){
   const section=document.getElementById('progressSection'); section.innerHTML='';
-  const total=allCards.length; const owned=allCards.filter(c=>(collection[c.id]??0)>0).length;
+  const total=allCards.length; const owned=allCards.filter(c=>ownedTotal(c.id)>0).length;
   addProg(section,'全セット合計',owned,total);
-  sets.forEach(s=>{ const sc=allCards.filter(c=>c.set?.code===s.code); const so=sc.filter(c=>(collection[c.id]??0)>0).length; addProg(section,`第${s.code}弾 ${SET_NAMES_JA[s.code]??s.name}`,so,sc.length); });
+  sets.forEach(s=>{ const sc=allCards.filter(c=>c.set?.code===s.code); const so=sc.filter(c=>ownedTotal(c.id)>0).length; addProg(section,`第${s.code}弾 ${SET_NAMES_JA[s.code]??s.name}`,so,sc.length); });
 }
 function addProg(parent,label,owned,total){
   const pct=total>0?Math.round(owned/total*100):0;
@@ -831,5 +845,6 @@ async function loadData(){
   renderCardGrid();
 })();
 </script>
+
 </body>
 </html>
