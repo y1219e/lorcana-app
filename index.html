@@ -446,15 +446,16 @@ function buildImageUrls(card, setCode) {
   // 第9弾アイコニックはQコード
   if (setCode === '9' && SET9_ICONIC_Q.has(card.collector_number)) rarCode = 'Q';
 
-  // インクコード
+    // インクコード
   let inkStr = '';
   if (info.dualInk) {
-    // 第7弾: {R}{Type}{Ink}順
+    // 第7弾: デュアルインクのみX付き、シングルはそのまま
     if (inks.length >= 2) {
-      inkStr = (INK_CODE[inks[0]]||'') + (INK_CODE[inks[1]]||'');
+      inkStr = (INK_CODE[inks[0]]||'') + (INK_CODE[inks[1]]||'') + 'X';
     } else {
       inkStr = INK_CODE[inks[0]] || '';
     }
+  } else if (info.suffixX) {
     inkStr += 'X'; // suffixX
   } else if (info.suffixX) {
     // 第8・9弾: シングルもX付き
