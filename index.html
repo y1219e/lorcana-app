@@ -60,10 +60,10 @@ const TYPE_CODE = {
   'Character':'C','Action':'A','Item':'I','Location':'L',
 };
 
-// 特殊文字を含むカードの例外マップ（collector_number → 画像ファイル名）
+// 特殊文字を含むカードの例外マップ
 const EXCEPTION_MAP = {
-  '126': '126_DLCS1_SRC_TeK\u30A2_TheBurningOne_JA.webp',
-  '192': '192_DLCS1_LTC_TeK\u30A2_Heartless_JA.webp',
+  '126': '126_DLCS1_SRC_TeKﾄ＼TheBurningOne_JA.webp',
+  '192': '192_DLCS1_LTC_TeKﾄ＼Heartless_JA.webp',
 };
 
 function slug(str) {
@@ -77,7 +77,6 @@ function isCharacter(card) {
 function buildImageUrls(card) {
   const num = String(card.collector_number).padStart(3, '0');
 
-  // 例外マップに登録されている場合
   if (EXCEPTION_MAP[card.collector_number]) {
     return [IMG_BASE + EXCEPTION_MAP[card.collector_number]];
   }
