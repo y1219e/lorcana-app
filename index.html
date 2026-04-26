@@ -60,6 +60,12 @@ const TYPE_CODE = {
   'Character':'C','Action':'A','Item':'I','Location':'L',
 };
 
+// 特殊文字を含むカードの例外マップ（collector_number → 画像ファイル名）
+const EXCEPTION_MAP = {
+  '126': '126_DLCS1_SRC_TeK\u30A2_TheBurningOne_JA.webp',
+  '192': '192_DLCS1_LTC_TeK\u30A2_Heartless_JA.webp',
+};
+
 function slug(str) {
   return (str ?? '').replace(/[^a-zA-Z0-9]/g, '');
 }
@@ -69,7 +75,13 @@ function isCharacter(card) {
 }
 
 function buildImageUrls(card) {
-  const num    = String(card.collector_number).padStart(3, '0');
+  const num = String(card.collector_number).padStart(3, '0');
+
+  // 例外マップに登録されている場合
+  if (EXCEPTION_MAP[card.collector_number]) {
+    return [IMG_BASE + EXCEPTION_MAP[card.collector_number]];
+  }
+
   const rarity = RARITY_CODE[card.rarity]   ?? 'C';
   const ink    = INK_CODE[card.ink]          ?? 'A';
   const type   = TYPE_CODE[card.type?.[0]]  ?? 'C';
@@ -78,13 +90,11 @@ function buildImageUrls(card) {
   const verS   = slug(card.version);
 
   if (isCharacter(card) && verS) {
-    // キャラクターはversion付き、サイズあり→なしの順で試す
     return [
       `${IMG_BASE}${prefix}_${nameS}_${verS}_JA-429x600.webp`,
       `${IMG_BASE}${prefix}_${nameS}_${verS}_JA.webp`,
     ];
   } else {
-    // アクション・アイテム・ロケーションはversion抜き、サイズなし→ありの順
     return [
       `${IMG_BASE}${prefix}_${nameS}_JA.webp`,
       `${IMG_BASE}${prefix}_${nameS}_JA-429x600.webp`,
