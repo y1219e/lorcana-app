@@ -45,8 +45,8 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, sa
 .card-item .card-sub { font-size: 0.55rem; color: var(--text2); }
 .card-item .own-badge { position: absolute; top: 4px; right: 4px; background: var(--accent); color: #fff; font-size: 0.65rem; font-weight: bold; padding: 1px 5px; border-radius: 8px; }
 .img-placeholder { width: 100%; aspect-ratio: 429/600; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 0.55rem; color: #555; text-align: center; padding: 6px; }
-.ink-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 3px; vertical-align: middle; }
-.ink-Amber{background:var(--amber);} .ink-Amethyst{background:var(--amethyst);} .ink-Emerald{background:var(--emerald);} .ink-Ruby{background:var(--ruby);} .ink-Sapphire{background:var(--sapphire);} .ink-Steel{background:var(--steel);} .ink-null{background:#666;}
+.ink-dot { display: inline-block; width: 14px; height: 14px; margin-right: 3px; vertical-align: middle; flex-shrink: 0; }
+.ink-dot svg { width: 100%; height: 100%; }
 .modal-overlay { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.7); align-items: flex-end; }
 .modal-overlay.open { display: flex; }
 .modal { background: var(--surface); width: 100%; border-radius: 16px 16px 0 0; padding: 20px; max-height: 60vh; overflow-y: auto; }
@@ -155,12 +155,12 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, sa
   <div class="filter-bar" id="setFilter"></div>
   <div class="filter-bar" id="inkFilter">
     <button class="chip active" data-ink="">全て</button>
-    <button class="chip amber" data-ink="Amber">🟠 アンバー</button>
-    <button class="chip amethyst" data-ink="Amethyst">🟣 アメジスト</button>
-    <button class="chip emerald" data-ink="Emerald">🟢 エメラルド</button>
-    <button class="chip ruby" data-ink="Ruby">🔴 ルビー</button>
-    <button class="chip sapphire" data-ink="Sapphire">🔵 サファイア</button>
-    <button class="chip steel" data-ink="Steel">⚪ スティール</button>
+    <button class="chip" data-ink="Amber"></button>
+    <button class="chip" data-ink="Amethyst"></button>
+    <button class="chip" data-ink="Emerald"></button>
+    <button class="chip" data-ink="Ruby"></button>
+    <button class="chip" data-ink="Sapphire"></button>
+    <button class="chip" data-ink="Steel"></button>
   </div>
   <div class="card-grid" id="cardGrid"></div>
 </div>
@@ -430,6 +430,108 @@ const SET_NAMES_JA = {
 };
 
 // ═══════════════════════════════════════════
+// インクシンボル SVG
+// ═══════════════════════════════════════════
+const INK_SVG = {
+  Amber: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="50,2 93,26 93,74 50,98 7,74 7,26" fill="#1a2040" stroke="#c8a84b" stroke-width="4"/>
+    <!-- shield outer -->
+    <path d="M50,18 L72,28 L72,55 Q72,72 50,82 Q28,72 28,55 L28,28 Z" fill="none" stroke="#f5a623" stroke-width="3.5"/>
+    <!-- shield inner top -->
+    <path d="M50,24 L66,32 L66,52 Q66,66 50,75 Q34,66 34,52 L34,32 Z" fill="none" stroke="#f5a623" stroke-width="2"/>
+    <!-- celtic knot lines horizontal -->
+    <path d="M36,40 Q43,36 50,40 Q57,44 64,40" fill="none" stroke="#f5a623" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M36,50 Q43,46 50,50 Q57,54 64,50" fill="none" stroke="#f5a623" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M36,60 Q43,56 50,60 Q57,64 64,60" fill="none" stroke="#f5a623" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- crown top -->
+    <path d="M42,28 L42,24 M50,26 L50,21 M58,28 L58,24" fill="none" stroke="#f5a623" stroke-width="2.5" stroke-linecap="round"/>
+  </svg>`,
+
+  Amethyst: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="50,2 93,26 93,74 50,98 7,74 7,26" fill="#1a2040" stroke="#c8a84b" stroke-width="4"/>
+    <!-- swirl 1 -->
+    <path d="M50,50 C50,35 62,28 68,35 C74,42 68,55 55,58 C42,61 30,54 32,42 C34,30 48,25 58,30" fill="none" stroke="#9b59b6" stroke-width="4" stroke-linecap="round"/>
+    <!-- swirl 2 -->
+    <path d="M50,50 C50,65 38,72 32,65 C26,58 32,45 45,42 C58,39 70,46 68,58 C66,70 52,75 42,70" fill="none" stroke="#9b59b6" stroke-width="4" stroke-linecap="round"/>
+    <!-- swirl 3 -->
+    <path d="M50,50 C35,50 28,38 35,32 C42,26 55,32 58,45 C61,58 54,70 42,68 C30,66 25,52 30,42" fill="none" stroke="#7d3c98" stroke-width="3" stroke-linecap="round"/>
+  </svg>`,
+
+  Emerald: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="50,2 93,26 93,74 50,98 7,74 7,26" fill="#1a2040" stroke="#c8a84b" stroke-width="4"/>
+    <!-- center diamond/star -->
+    <path d="M50,22 L54,36 L68,36 L57,45 L61,59 L50,51 L39,59 L43,45 L32,36 L46,36 Z" fill="#27ae60" stroke="none"/>
+    <!-- left wave petal -->
+    <path d="M50,52 C40,52 28,44 26,34 C24,24 34,20 40,28 C44,33 42,42 50,48" fill="#27ae60" stroke="none"/>
+    <!-- right wave petal -->
+    <path d="M50,52 C60,52 72,60 74,70 C76,80 66,84 60,76 C56,71 58,62 50,56" fill="#27ae60" stroke="none"/>
+    <!-- bottom left -->
+    <path d="M50,52 C42,60 28,60 24,70 C20,78 30,84 38,76 C44,70 44,60 50,56" fill="#1e8449" stroke="none"/>
+    <!-- top right -->
+    <path d="M50,52 C58,44 72,44 76,34 C80,26 70,20 62,28 C56,34 56,44 50,48" fill="#1e8449" stroke="none"/>
+  </svg>`,
+
+  Ruby: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="50,2 93,26 93,74 50,98 7,74 7,26" fill="#1a2040" stroke="#c8a84b" stroke-width="4"/>
+    <!-- main flame body -->
+    <path d="M50,78 C36,78 24,66 24,52 C24,40 34,34 38,28 C40,24 40,18 38,14 C44,20 46,28 44,36 C50,28 52,18 50,10 C58,18 62,30 58,42 C64,36 66,26 64,18 C72,28 76,42 72,54 C76,50 78,44 76,38 C82,48 80,62 72,70 C66,76 58,78 50,78 Z" fill="#e74c3c"/>
+    <!-- inner flame highlight -->
+    <path d="M50,68 C42,68 36,60 38,52 C40,46 46,42 46,36 C50,42 52,50 48,58 C54,52 56,44 54,36 C60,44 60,56 54,64 C52,66 51,68 50,68 Z" fill="#c0392b"/>
+  </svg>`,
+
+  Sapphire: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="50,2 93,26 93,74 50,98 7,74 7,26" fill="#1a2040" stroke="#c8a84b" stroke-width="4"/>
+    <!-- center eye/diamond -->
+    <ellipse cx="50" cy="50" rx="10" ry="14" fill="#2980b9"/>
+    <ellipse cx="50" cy="50" rx="5" ry="8" fill="#1a5276"/>
+    <!-- top arrow -->
+    <polygon points="50,18 54,30 50,26 46,30" fill="#2980b9"/>
+    <!-- bottom arrow -->
+    <polygon points="50,82 54,70 50,74 46,70" fill="#2980b9"/>
+    <!-- orbit ring 1 -->
+    <ellipse cx="50" cy="50" rx="22" ry="10" fill="none" stroke="#2980b9" stroke-width="3" transform="rotate(-35 50 50)"/>
+    <!-- orbit ring 2 -->
+    <ellipse cx="50" cy="50" rx="22" ry="10" fill="none" stroke="#2980b9" stroke-width="3" transform="rotate(35 50 50)"/>
+    <!-- left/right dots -->
+    <circle cx="28" cy="50" r="3" fill="#2980b9"/>
+    <circle cx="72" cy="50" r="3" fill="#2980b9"/>
+  </svg>`,
+
+  Steel: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="50,2 93,26 93,74 50,98 7,74 7,26" fill="#1a2040" stroke="#c8a84b" stroke-width="4"/>
+    <!-- left tower -->
+    <rect x="24" y="32" width="16" height="42" fill="#95a5a6"/>
+    <rect x="24" y="26" width="5" height="10" fill="#95a5a6"/>
+    <rect x="31" y="26" width="5" height="10" fill="#95a5a6"/>
+    <rect x="38" y="26" width="2" height="10" fill="#95a5a6"/>
+    <!-- right tower -->
+    <rect x="60" y="32" width="16" height="42" fill="#95a5a6"/>
+    <rect x="60" y="26" width="5" height="10" fill="#95a5a6"/>
+    <rect x="67" y="26" width="5" height="10" fill="#95a5a6"/>
+    <rect x="73" y="26" width="3" height="10" fill="#95a5a6"/>
+    <!-- center gate arch -->
+    <path d="M40,74 L40,50 Q40,36 50,36 Q60,36 60,50 L60,74 Z" fill="#7f8c8d"/>
+    <!-- arrow/chevron pointing down in gate -->
+    <polygon points="50,72 42,58 46,58 46,48 54,48 54,58 58,58" fill="#1a2040"/>
+    <!-- battlements center top -->
+    <rect x="44" y="26" width="4" height="8" fill="#95a5a6"/>
+    <rect x="52" y="26" width="4" height="8" fill="#95a5a6"/>
+  </svg>`,
+
+  null: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="50,2 93,26 93,74 50,98 7,74 7,26" fill="#333" stroke="#555" stroke-width="4"/>
+    <circle cx="50" cy="50" r="15" fill="#666"/>
+  </svg>`,
+};
+
+function makeInkDot(ink) {
+  const span = document.createElement('span');
+  span.className = 'ink-dot';
+  span.innerHTML = INK_SVG[ink] ?? INK_SVG['null'];
+  return span;
+}
+
+// ═══════════════════════════════════════════
 // カードデータキャッシュ（IndexedDB, 2ヶ月TTL）
 // ═══════════════════════════════════════════
 const CARD_CACHE_TTL = 60 * 24 * 60 * 60 * 1000; // 2ヶ月 (ms)
@@ -581,8 +683,10 @@ function renderCardGrid(){
     item.className='card-item'+(total>0?' owned':'');
     item.appendChild(makeImg(card));
     const info=document.createElement('div'); info.className='card-info';
-    const inkClass = card.ink ? `ink-${card.ink}` : 'ink-null';
-    info.innerHTML=`<div class="card-name"><span class="ink-dot ${inkClass}"></span>${card.name}</div><div class="card-sub">#${card.collector_number} ${card.rarity}</div>`;
+    const nameDiv=document.createElement('div'); nameDiv.className='card-name';
+    nameDiv.appendChild(makeInkDot(card.ink)); nameDiv.appendChild(document.createTextNode(card.name));
+    const subDiv=document.createElement('div'); subDiv.className='card-sub'; subDiv.textContent=`#${card.collector_number} ${card.rarity}`;
+    info.appendChild(nameDiv); info.appendChild(subDiv);
     item.appendChild(info);
     if(total>0){ const o=getOwned(card.id); const b=document.createElement('div'); b.className='own-badge'; b.textContent=o.foil>0?`${o.normal}+${o.foil}✨`:o.normal; item.appendChild(b); }
     item.addEventListener('click',()=>openCardModal(card));
@@ -657,7 +761,14 @@ function renderDeckList(){
     const total=Object.values(deck.cards??{}).reduce((a,b)=>a+b,0);
     const inks=[...new Set(Object.keys(deck.cards??{}).filter(id=>(deck.cards[id]??0)>0).flatMap(id=>{ const c=allCards.find(x=>x.id===id); return c?.inks ?? (c?.ink?[c.ink]:[]); }).filter(Boolean))];
     const div=document.createElement('div'); div.className='deck-card';
-    div.innerHTML=`<div><h3>${deck.name||'名称未設定'}</h3><div class="deck-meta">${inks.map(i=>`<span class="ink-dot ink-${i}"></span>`).join('')} ${inks.length}色</div></div><div class="deck-count">${total}/60</div>`;
+    const left=document.createElement('div');
+    const h3=document.createElement('h3'); h3.textContent=deck.name||'名称未設定';
+    const meta=document.createElement('div'); meta.className='deck-meta';
+    inks.forEach(i=>meta.appendChild(makeInkDot(i)));
+    meta.appendChild(document.createTextNode(` ${inks.length}色`));
+    left.appendChild(h3); left.appendChild(meta);
+    const cnt=document.createElement('div'); cnt.className='deck-count'; cnt.textContent=`${total}/60`;
+    div.appendChild(left); div.appendChild(cnt);
     div.addEventListener('click',()=>openDeckEditor(deck));
     list.appendChild(div);
   });
@@ -721,8 +832,10 @@ function renderEditorCardList(){
     const row=document.createElement('div'); row.className='deck-card-row';
     row.appendChild(makeImg(card));
     const di=document.createElement('div'); di.className='dc-info';
-    const inkClass=card.ink?`ink-${card.ink}`:'ink-null';
-    di.innerHTML=`<div class="dc-name"><span class="ink-dot ${inkClass}"></span>${card.name}</div><div class="dc-sub">${card.version??''} · #${card.collector_number}</div>`;
+    const dn=document.createElement('div'); dn.className='dc-name';
+    dn.appendChild(makeInkDot(card.ink)); dn.appendChild(document.createTextNode(card.name));
+    const ds=document.createElement('div'); ds.className='dc-sub'; ds.textContent=`${card.version??''} · #${card.collector_number}`;
+    di.appendChild(dn); di.appendChild(ds);
     row.appendChild(di);
     const db2=document.createElement('div'); db2.className='dc-btns';
     const ab=document.createElement('button'); ab.className='dc-btn add'; ab.textContent='＋'; ab.disabled=!canAdd; ab.style.opacity=canAdd?'1':'0.3';
@@ -759,8 +872,16 @@ document.querySelectorAll('.nav-btn').forEach(btn=>{
   });
 });
 document.getElementById('cardSearch').addEventListener('input',e=>{ searchQ=e.target.value; renderCardGrid(); });
-document.getElementById('inkFilter').querySelectorAll('.chip').forEach(btn=>{
-  btn.addEventListener('click',()=>{ document.getElementById('inkFilter').querySelectorAll('.chip').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); filterInk=btn.dataset.ink; renderCardGrid(); });
+
+// インクフィルターチップにSVGアイコン＋名前を挿入
+const INK_NAMES_JA = { Amber:'アンバー', Amethyst:'アメジスト', Emerald:'エメラルド', Ruby:'ルビー', Sapphire:'サファイア', Steel:'スティール' };
+document.getElementById('inkFilter').querySelectorAll('.chip[data-ink]').forEach(btn=>{
+  const ink = btn.dataset.ink;
+  if(ink) {
+    btn.appendChild(makeInkDot(ink));
+    btn.appendChild(document.createTextNode(INK_NAMES_JA[ink]??ink));
+  }
+  btn.addEventListener('click',()=>{ document.getElementById('inkFilter').querySelectorAll('.chip').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); filterInk=ink; renderCardGrid(); });
 });
 
 // ═══════════════════════════════════════════
