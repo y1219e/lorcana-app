@@ -14,10 +14,7 @@
   }
   header h1 { font-size: 1rem; flex: 1; }
   #status { font-size: 0.75rem; color: #aaa; }
-  #grid {
-    display: grid; grid-template-columns: repeat(3, 1fr);
-    gap: 8px; padding: 12px;
-  }
+  #grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 12px; }
   .card { background: #1a1a2e; border-radius: 8px; overflow: hidden; cursor: pointer; transition: transform 0.15s; }
   .card:active { transform: scale(0.97); }
   .card img { width: 100%; aspect-ratio: 429/600; object-fit: cover; display: block; background: #16213e; }
@@ -25,9 +22,9 @@
   .card-name { font-size: 0.7rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .card-num { font-size: 0.6rem; color: #888; }
   .ink-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
-  .ink-Amber { background: #f5a623; } .ink-Amethyst { background: #9b59b6; }
-  .ink-Emerald { background: #27ae60; } .ink-Ruby { background: #e74c3c; }
-  .ink-Sapphire { background: #2980b9; } .ink-Steel { background: #95a5a6; }
+  .ink-Amber{background:#f5a623;} .ink-Amethyst{background:#9b59b6;}
+  .ink-Emerald{background:#27ae60;} .ink-Ruby{background:#e74c3c;}
+  .ink-Sapphire{background:#2980b9;} .ink-Steel{background:#95a5a6;}
   #loading { text-align: center; padding: 60px 20px; color: #aaa; font-size: 0.9rem; }
   #error { display: none; text-align: center; padding: 40px 20px; color: #e74c3c; font-size: 0.85rem; }
   .img-placeholder {
@@ -38,12 +35,10 @@
 </style>
 </head>
 <body>
-
 <header>
   <h1>🏰 ロルカナ 第一弾テスト</h1>
   <span id="status">読み込み中…</span>
 </header>
-
 <div id="loading">カードデータを取得中…</div>
 <div id="error"></div>
 <div id="grid"></div>
@@ -69,23 +64,27 @@ function slug(str) {
   return (str ?? '').replace(/[^a-zA-Z0-9]/g, '');
 }
 
-function buildImageUrls(card) {
-  const num     = String(card.collector_number).padStart(3, '0');
-  const rarity  = RARITY_CODE[card.rarity]    ?? 'C';
-  const ink     = INK_CODE[card.ink]           ?? 'A';
-  const type    = TYPE_CODE[card.type?.[0]]    ?? 'C';
-  const prefix  = `${num}_${SET_CODE}_${rarity}${ink}${type}`;
-  const nameS   = slug(card.name);
-  const verS    = slug(card.version);
+function isCharacter(card) {
+  return card.type?.includes('Character');
+}
 
-  // versionがある場合（キャラクターなど）→ サイズあり・なし両方試す
-  // versionがない場合（アクション・アイテムなど）→ 名前のみ・サイズなし
-  if (verS) {
+function buildImageUrls(card) {
+  const num    = String(card.collector_number).padStart(3, '0');
+  const rarity = RARITY_CODE[card.rarity]   ?? 'C';
+  const ink    = INK_CODE[card.ink]          ?? 'A';
+  const type   = TYPE_CODE[card.type?.[0]]  ?? 'C';
+  const prefix = `${num}_${SET_CODE}_${rarity}${ink}${type}`;
+  const nameS  = slug(card.name);
+  const verS   = slug(card.version);
+
+  if (isCharacter(card) && verS) {
+    // キャラクターはversion付き、サイズあり→なしの順で試す
     return [
       `${IMG_BASE}${prefix}_${nameS}_${verS}_JA-429x600.webp`,
       `${IMG_BASE}${prefix}_${nameS}_${verS}_JA.webp`,
     ];
   } else {
+    // アクション・アイテム・ロケーションはversion抜き、サイズなし→ありの順
     return [
       `${IMG_BASE}${prefix}_${nameS}_JA.webp`,
       `${IMG_BASE}${prefix}_${nameS}_JA-429x600.webp`,
@@ -109,7 +108,7 @@ function renderCard(card) {
   img.onerror = () => {
     urlIndex++;
     if (urlIndex < urls.length) {
-      img.src = urls[urlIndex]; // 次のURLを試す
+      img.src = urls[urlIndex];
     } else {
       const ph = document.createElement('div');
       ph.className = 'img-placeholder';
