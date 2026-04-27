@@ -148,11 +148,11 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 </div>
 <div id="deckEditor">
   <div class="editor-header">
-    <button class="btn-sm btn-back" id="editorBack">← 戻る</button>
+    <button class="btn-sm btn-back" id="editorBack" style="background:#16213e;color:#eee;border:1px solid #2a2a4a;white-space:nowrap;">← 戻る</button>
     <input type="text" id="deckNameInput" placeholder="デッキ名">
-    <button class="btn-sm" id="sleevePickerBtn" style="padding:4px 8px;font-size:0.75rem;" onclick="document.getElementById('sleevePicker').classList.toggle('open')">🖼️ 画像</button>
-    <button class="btn-sm btn-save" id="editorSave">保存</button>
-    <button class="btn-sm btn-del" id="editorDel" style="display:none">削除</button>
+    <button class="btn-sm" id="sleevePickerBtn" style="padding:4px 8px;font-size:0.75rem;background:#16213e;color:#eee;" onclick="document.getElementById('sleevePicker').classList.toggle('open')">🖼️ 画像</button>
+    <button class="btn-sm btn-save" id="editorSave" style="background:#7c6dfa;color:#fff;">保存</button>
+    <button class="btn-sm btn-del" id="editorDel" style="display:none;background:#e74c3c;color:#fff;">削除</button>
   </div>
   <div id="sleevePicker" style="padding:8px 12px;background:var(--surface2);border-bottom:1px solid var(--border);">
     <div style="font-size:0.7rem;color:var(--text2);margin-bottom:6px;">スリーブ画像を選択</div>
@@ -986,7 +986,7 @@ function renderDeckEditor(){
     di.innerHTML=`<div class="dc-name">${card.name}</div><div class="dc-sub">${card.version??''} · ${(card.inks??[card.ink]).join('/')}</div>`;
     row.appendChild(di);
     const db2=document.createElement('div'); db2.className='dc-btns';
-    db2.innerHTML=`<button class="dc-btn rem">－</button><span class="dc-count">${count}</span><button class="dc-btn add">＋</button>`;
+    db2.innerHTML=`<button class="dc-btn rem" style="background:#e74c3c;color:#fff;">－</button><span class="dc-count">${count}</span><button class="dc-btn add" style="background:#7c6dfa;color:#fff;">＋</button>`;
     db2.querySelector('.rem').addEventListener('click',()=>{ currentDeck.cards[cardId]=Math.max(0,count-1); renderDeckEditor(); });
     db2.querySelector('.add').addEventListener('click',()=>{
       if(total>=60||count>=4) return;
@@ -1020,7 +1020,7 @@ function renderEditorCardList(){
     di.appendChild(dn); di.appendChild(ds);
     row.appendChild(di);
     const db2=document.createElement('div'); db2.className='dc-btns';
-    const ab=document.createElement('button'); ab.className='dc-btn add'; ab.textContent='＋'; ab.disabled=!canAdd; ab.style.opacity=canAdd?'1':'0.3';
+    const ab=document.createElement('button'); ab.className='dc-btn add'; ab.textContent='＋'; ab.disabled=!canAdd; ab.style.opacity=canAdd?'1':'0.3'; ab.style.background='#7c6dfa'; ab.style.color='#fff';
     ab.addEventListener('click',()=>{ if(!canAdd) return; currentDeck.cards[card.id]=(currentDeck.cards[card.id]??0)+1; renderDeckEditor(); });
     const cs=document.createElement('span'); cs.className='dc-count'; cs.textContent=count||'';
     db2.appendChild(ab); db2.appendChild(cs); row.appendChild(db2);
