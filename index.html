@@ -41,11 +41,11 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, sa
 .card-item.owned { border-color: var(--accent); }
 .card-item img { width: 100%; aspect-ratio: 429/600; object-fit: cover; display: block; background: var(--surface2); }
 .card-item .card-info { padding: 4px 5px; }
-.card-item .card-name { font-size: 0.62rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-item .card-name { font-size: 0.62rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 2px; }
 .card-item .card-sub { font-size: 0.55rem; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 1px; }
 .card-item .own-badge { position: absolute; top: 4px; right: 4px; background: var(--accent); color: #fff; font-size: 0.65rem; font-weight: bold; padding: 1px 5px; border-radius: 8px; }
 .img-placeholder { width: 100%; aspect-ratio: 429/600; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 0.55rem; color: #555; text-align: center; padding: 6px; }
-.ink-dot { display: inline-block; width: 16px; height: 16px; margin-right: 3px; vertical-align: middle; flex-shrink: 0; }
+.ink-dot { display: inline-flex; align-items: center; width: 16px; height: 16px; margin-right: 0; vertical-align: middle; flex-shrink: 0; }
 .ink-dot img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .rarity-icon { display: inline-block; width: 10px; height: 10px; margin-right: 1px; vertical-align: middle; flex-shrink: 0; }
 .rarity-icon img { width: 100%; height: 100%; object-fit: contain; display: block; }
@@ -1019,7 +1019,7 @@ function renderEditorCardList(){
     row.appendChild(makeImg(card));
     const di=document.createElement('div'); di.className='dc-info';
     const dn=document.createElement('div'); dn.className='dc-name';
-    const inkSpan=document.createElement('span'); inkSpan.style.flexShrink='0'; inkSpan.appendChild(makeInkDot(card.ink)); dn.appendChild(inkSpan); const nameSpan=document.createElement('span'); nameSpan.textContent=card.name; nameSpan.style.overflow='hidden'; nameSpan.style.textOverflow='ellipsis'; nameSpan.style.whiteSpace='nowrap'; dn.appendChild(nameSpan);
+    const inkSpan=document.createElement('span'); inkSpan.style.flexShrink='0'; inkSpan.style.display='flex'; inkSpan.style.alignItems='center'; inkSpan.style.marginRight='2px'; inkSpan.appendChild(makeInkDot(card.ink)); dn.appendChild(inkSpan); const nameSpan=document.createElement('span'); nameSpan.textContent=card.name; nameSpan.style.overflow='hidden'; nameSpan.style.textOverflow='ellipsis'; nameSpan.style.whiteSpace='nowrap'; dn.appendChild(nameSpan);
     const ds=document.createElement('div'); ds.className='dc-sub'; ds.textContent=`${card.version??''} · #${card.collector_number}`;
     di.appendChild(dn); di.appendChild(ds);
     row.appendChild(di);
