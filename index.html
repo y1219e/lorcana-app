@@ -88,7 +88,7 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, sa
 #deckEditor { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100vw; height: 100vh; z-index: 9999; background: var(–bg); overflow: hidden; }
 #deckEditor.open { display: flex; flex-direction: column; }
 body.deck-editing .page, body.deck-editing nav { display: none !important; }
-.editor-header { background: var(–surface); padding: 8px 10px; border-bottom: 1px solid var(–border); display: flex; align-items: center; gap: 6px; }
+.editor-header { background: var(–surface); padding: 8px 10px; border-bottom: 1px solid var(–border); display: flex; flex-direction: column; gap: 0; }
 .editor-header input { flex: 1; background: var(–surface2); border: 1px solid var(–border); border-radius: 6px; padding: 5px 10px; color: var(–text); font-size: 0.85rem; }
 .btn-sm { padding: 5px 10px; border-radius: 8px; border: none; cursor: pointer; font-size: 0.75rem; font-weight: bold; background: var(–surface2); color: var(–text); white-space: nowrap; }
 .btn-save { background: var(–accent); color: #fff; }
@@ -101,7 +101,7 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 .deck-card-row { display: flex; align-items: center; padding: 6px 8px; border-bottom: 1px solid var(–border); gap: 6px; }
 .deck-card-row img { width: 36px; border-radius: 4px; flex-shrink: 0; }
 .deck-card-row .dc-info { flex: 1; min-width: 0; }
-.deck-card-row .dc-name { font-size: 0.68rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.deck-card-row .dc-name { font-size: 0.68rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 3px; }
 .deck-card-row .dc-sub { font-size: 0.58rem; color: var(–text2); }
 .deck-card-row .dc-btns { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
 .dc-btn { width: 28px; height: 28px; border-radius: 50%; border: none; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; background: var(–surface2); color: var(–text); }
@@ -148,11 +148,15 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 </div>
 <div id="deckEditor">
   <div class="editor-header">
-    <button class="btn-sm btn-back" id="editorBack" style="background:#16213e;color:#eee;border:1px solid #2a2a4a;white-space:nowrap;">← 戻る</button>
-    <input type="text" id="deckNameInput" placeholder="デッキ名">
-    <button class="btn-sm" id="sleevePickerBtn" style="padding:4px 8px;font-size:0.75rem;background:#16213e;color:#eee;" onclick="document.getElementById('sleevePicker').classList.toggle('open')">🖼️ 画像</button>
-    <button class="btn-sm btn-save" id="editorSave" style="background:#7c6dfa;color:#fff;">保存</button>
-    <button class="btn-sm btn-del" id="editorDel" style="display:none;background:#e74c3c;color:#fff;">削除</button>
+    <div style="display:flex;align-items:center;gap:6px;width:100%;">
+      <button class="btn-sm btn-back" id="editorBack" style="background:#16213e;color:#eee;border:1px solid #2a2a4a;white-space:nowrap;flex-shrink:0;">← 戻る</button>
+      <input type="text" id="deckNameInput" placeholder="デッキ名" style="flex:1;min-width:0;">
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;width:100%;margin-top:6px;">
+      <button class="btn-sm" id="sleevePickerBtn" style="padding:4px 8px;font-size:0.75rem;background:#16213e;color:#eee;flex:1;" onclick="document.getElementById('sleevePicker').classList.toggle('open')">🖼️ 画像</button>
+      <button class="btn-sm btn-save" id="editorSave" style="background:#7c6dfa;color:#fff;flex:1;">保存</button>
+      <button class="btn-sm btn-del" id="editorDel" style="display:none;background:#e74c3c;color:#fff;flex:1;">削除</button>
+    </div>
   </div>
   <div id="sleevePicker" style="padding:8px 12px;background:var(--surface2);border-bottom:1px solid var(--border);">
     <div style="font-size:0.7rem;color:var(--text2);margin-bottom:6px;">スリーブ画像を選択</div>
