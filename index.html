@@ -102,7 +102,7 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 .deck-card-row img { width: 36px; border-radius: 4px; flex-shrink: 0; }
 .deck-card-row .dc-info { flex: 1; min-width: 0; }
 .deck-card-row .dc-name { font-size: 0.68rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.deck-card-row .dc-sub { display: none; }
+.deck-card-row .dc-sub { font-size: 0.58rem; color: var(–text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .deck-card-row .dc-btns { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
 .dc-btn { width: 28px; height: 28px; border-radius: 50%; border: none; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; background: var(–surface2); color: var(–text); }
 .dc-btn.rem { background: var(–ruby); color: #fff; }
@@ -1021,11 +1021,7 @@ function renderEditorCardList(){
     const dn=document.createElement('div'); dn.className='dc-name';
     dn.textContent=card.name;
     const ds=document.createElement('div'); ds.className='dc-sub';
-    const editorCardInks=card.inks??(card.ink?[card.ink]:[]);
-    const inkRow=document.createElement('span'); inkRow.style.cssText='display:inline-flex;align-items:center;gap:2px;margin-right:2px;vertical-align:middle;';
-    editorCardInks.forEach(ink=>inkRow.appendChild(makeInkDot(ink)));
-    ds.appendChild(inkRow);
-    ds.appendChild(document.createTextNode((card.version??'') + ' · #' + card.collector_number));
+    if(card.version) ds.textContent=card.version;
     di.appendChild(dn); di.appendChild(ds);
     row.appendChild(di);
     const db2=document.createElement('div'); db2.className='dc-btns';
