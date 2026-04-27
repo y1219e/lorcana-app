@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -614,12 +613,15 @@ function dbGetAll(store){ return new Promise(r=>{ const tx=db.transaction(store,
 // ═══════════════════════════════════════════
 // アプリ状態
 // ═══════════════════════════════════════════
-let allCards=[],sets=[],collection={},decks=[],filterSet='',filterInk='',searchQ='',currentCard=null,currentDeck=null;
+let allCards=[],sets=[],collection={},decks=[],filterSets=new Set(),filterInks=new Set(),searchQ='',currentCard=null,currentDeck=null;
 
 function filteredCards(){
   return allCards.filter(c=>{
-    if(filterSet && c.set?.code!==filterSet) return false;
-    if(filterInk && c.ink!==filterInk) return false;
+    if(filterSets.size>0 && !filterSets.has(c.set?.code)) return false;
+    if(filterInks.size>0){
+      const cardInks = c.inks ?? (c.ink ? [c.ink] : []);
+      if(!cardInks.some(ink => filterInks.has(ink))) return false;
+    }
     if(searchQ){ const q=searchQ.toLowerCase(); if(!(c.name?.toLowerCase().includes(q)||c.version?.toLowerCase().includes(q))) return false; }
     return true;
   });
@@ -638,19 +640,19 @@ function renderCardGrid(){
   cards.forEach(card=>{
     const total=ownedTotal(card.id);
     const item=document.createElement('div');
-    item.className='card-item'+(total>0?' owned':'');
+    item.className='card-item';
     item.appendChild(makeImg(card));
     const info=document.createElement('div'); info.className='card-info';
     const nameDiv=document.createElement('div'); nameDiv.className='card-name';
     nameDiv.appendChild(makeInkDot(card.ink)); nameDiv.appendChild(document.createTextNode(card.name));
     const subDiv=document.createElement('div'); subDiv.className='card-sub';
-    subDiv.appendChild(document.createTextNode(`#${card.collector_number}`));
+    subDiv.appendChild(document.createTextNode(`${card.set?.code??''}-${card.collector_number}`));
     subDiv.appendChild(document.createTextNode('  '));
     subDiv.appendChild(makeRarityIcon(card.rarity));
     subDiv.appendChild(document.createTextNode(' ' + card.rarity));
     info.appendChild(nameDiv); info.appendChild(subDiv);
     item.appendChild(info);
-    if(total>0){ const o=getOwned(card.id); const b=document.createElement('div'); b.className='own-badge'; b.textContent=o.foil>0?`${o.normal}+${o.foil}✨`:o.normal; item.appendChild(b); }
+    if(total>0){ const o=getOwned(card.id); const b=document.createElement('div'); b.className='own-badge'; b.textContent=o.foil>0?`${o.normal+o.foil}✨`:o.normal; item.appendChild(b); }
     item.addEventListener('click',()=>openCardModal(card));
     grid.appendChild(item);
   });
@@ -660,7 +662,23 @@ function renderSetFilter(){
   const bar=document.getElementById('setFilter');
   bar.innerHTML='<button class="chip active" data-set="">全て</button>';
   sets.forEach(s=>{ const btn=document.createElement('button'); btn.className='chip'; btn.dataset.set=s.code; btn.textContent=`第${s.code}弾`; bar.appendChild(btn); });
-  bar.querySelectorAll('.chip').forEach(btn=>{ btn.addEventListener('click',()=>{ bar.querySelectorAll('.chip').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); filterSet=btn.dataset.set; renderCardGrid(); }); });
+  bar.querySelectorAll('.chip').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const setCode = btn.dataset.set;
+      const allBtn = bar.querySelector('[data-set=""]');
+      if(setCode===''){
+        filterSets.clear();
+        bar.querySelectorAll('.chip').forEach(b=>b.classList.remove('active'));
+        allBtn.classList.add('active');
+      } else {
+        allBtn.classList.remove('active');
+        if(filterSets.has(setCode)){ filterSets.delete(setCode); btn.classList.remove('active'); }
+        else { filterSets.add(setCode); btn.classList.add('active'); }
+        if(filterSets.size===0) allBtn.classList.add('active');
+      }
+      renderCardGrid();
+    });
+  });
 }
 
 function openCardModal(card){
@@ -848,7 +866,21 @@ document.getElementById('inkFilter').querySelectorAll('.chip[data-ink]').forEach
     btn.appendChild(makeInkDot(ink));
     btn.appendChild(document.createTextNode(INK_NAMES_JA[ink]??ink));
   }
-  btn.addEventListener('click',()=>{ document.getElementById('inkFilter').querySelectorAll('.chip').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); filterInk=ink; renderCardGrid(); });
+  btn.addEventListener('click',()=>{
+    const bar = document.getElementById('inkFilter');
+    const allBtn = bar.querySelector('[data-ink=""]');
+    if(ink===''){
+      filterInks.clear();
+      bar.querySelectorAll('.chip').forEach(b=>b.classList.remove('active'));
+      allBtn.classList.add('active');
+    } else {
+      allBtn.classList.remove('active');
+      if(filterInks.has(ink)){ filterInks.delete(ink); btn.classList.remove('active'); }
+      else { filterInks.add(ink); btn.classList.add('active'); }
+      if(filterInks.size===0) allBtn.classList.add('active');
+    }
+    renderCardGrid();
+  });
 });
 
 // ═══════════════════════════════════════════
@@ -926,13 +958,12 @@ async function loadData(){
 (async()=>{
   await openDB();
   const rows = await dbGetAll('collection');
-  collection = {}; rows.forEach(r => { collection[r.id] = r.count; });
+  collection = {}; rows.forEach(r => { collection[r.id] = r; });
   decks = await dbGetAll('decks');
   await loadData();
   renderSetFilter();
   renderCardGrid();
 })();
 </script>
-
 </body>
 </html>
