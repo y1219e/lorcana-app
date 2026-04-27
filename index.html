@@ -97,7 +97,7 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 .editor-body { display: flex; flex: 1; overflow: hidden; }
 .editor-left { width: 55%; border-right: 1px solid var(–border); overflow-y: auto; }
 .editor-right { width: 45%; overflow-y: auto; }
-.editor-section-title { padding: 8px 10px; font-size: 0.72rem; color: var(–text2); background: var(–surface); border-bottom: 1px solid var(–border); position: sticky; top: 0; z-index: 10; }
+.editor-section-title { padding: 8px 10px; font-size: 0.72rem; color: var(–text2); background: var(–surface); border-bottom: 1px solid var(–border); }
 .deck-card-row { display: flex; align-items: center; padding: 6px 8px; border-bottom: 1px solid var(–border); gap: 6px; }
 .deck-card-row img { width: 36px; border-radius: 4px; flex-shrink: 0; }
 .deck-card-row .dc-info { flex: 1; min-width: 0; }
@@ -1019,7 +1019,7 @@ function renderEditorCardList(){
     row.appendChild(makeImg(card));
     const di=document.createElement('div'); di.className='dc-info';
     const dn=document.createElement('div'); dn.className='dc-name';
-    dn.appendChild(makeInkDot(card.ink)); dn.appendChild(document.createTextNode(card.name));
+    const inkSpan=document.createElement('span'); inkSpan.style.flexShrink='0'; inkSpan.appendChild(makeInkDot(card.ink)); dn.appendChild(inkSpan); const nameSpan=document.createElement('span'); nameSpan.textContent=card.name; nameSpan.style.overflow='hidden'; nameSpan.style.textOverflow='ellipsis'; nameSpan.style.whiteSpace='nowrap'; dn.appendChild(nameSpan);
     const ds=document.createElement('div'); ds.className='dc-sub'; ds.textContent=`${card.version??''} · #${card.collector_number}`;
     di.appendChild(dn); di.appendChild(ds);
     row.appendChild(di);
