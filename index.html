@@ -85,7 +85,7 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, sa
 .deck-card .deck-meta { font-size: 0.72rem; color: var(–text2); margin-top: 3px; }
 .deck-card .deck-count { font-size: 1.1rem; font-weight: bold; color: var(–accent); }
 .add-deck-btn { display: block; width: calc(100% - 20px); margin: 0 10px; padding: 13px; background: var(–accent); border: none; border-radius: 10px; color: #fff; font-size: 0.95rem; cursor: pointer; }
-#deckEditor { display: none; position: fixed; inset: 0; z-index: 150; background: var(–bg); flex-direction: column; }
+#deckEditor { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 150; background: var(–bg); flex-direction: column; overflow: hidden; }
 #deckEditor.open { display: flex; }
 .editor-header { background: var(–surface); padding: 12px 16px; border-bottom: 1px solid var(–border); display: flex; align-items: center; gap: 10px; }
 .editor-header input { flex: 1; background: var(–surface2); border: 1px solid var(–border); border-radius: 6px; padding: 5px 10px; color: var(–text); font-size: 0.85rem; }
@@ -188,8 +188,8 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, sa
 <div class="page" id="pageDecks">
   <div class="page-header"><h1>🗂 デッキ</h1></div>
   <div style="padding:10px;display:flex;gap:8px;">
-    <button class="add-deck-btn" id="addDeckBtn" style="flex:1;">＋ 新しいデッキを作る</button>
-    <button class="add-deck-btn" id="importDeckBtn" style="flex:1;background:var(--surface2);color:var(--text1);">🔗 URLから読み込む</button>
+    <button class="add-deck-btn" id="addDeckBtn" style="flex:1;margin:0;width:auto;">＋ 新しいデッキを作る</button>
+    <button class="add-deck-btn" id="importDeckBtn" style="flex:1;margin:0;width:auto;background:var(--surface2);color:var(--text1);">🔗 URLから読み込む</button>
   </div>
   <div class="deck-list" id="deckList"></div>
 </div>
@@ -817,11 +817,20 @@ function decodeDsCode(ds) {
 
 // URLからデッキをインポート
 async function importDeckFromUrl(url) {
-  let parsed;
-  try { parsed = new URL(url); } catch(e) { throw new Error('URLの形式が正しくありません'); }
-  const dsParam = parsed.searchParams.get('ds');
-  if (!dsParam) throw new Error('dsパラメータが見つかりません。タカラトミーのデッキ共有URLを貼り付けてください。');
-  const dsCodes = dsParam.split(',').map(s => s.trim()).filter(Boolean);
+  // URLまたはdsパラメータ文字列（コピー時に%2C区切りになる場合も対応）
+  let dsCodes;
+  const trimmed = url.trim();
+  // dsパラメータを含むURLの場合
+  const dsMatch = trimmed.match(/[?&]ds=([^&]+)/);
+  if (dsMatch) {
+    dsCodes = decodeURIComponent(dsMatch[1]).split(',').map(s => s.trim()).filter(Boolean);
+  } else if (/^[A-Z0-9,%]+$/i.test(trimmed)) {
+    // dsコードのみ（カンマ区切りまたは%2C区切り）
+    dsCodes = decodeURIComponent(trimmed).split(',').map(s => s.trim()).filter(Boolean);
+  } else {
+    throw new Error('URLまたはdsコードの形式が正しくありません。');
+  }
+  if (dsCodes.length === 0) throw new Error('カード情報が空です');
   if (dsCodes.length === 0) throw new Error('カード情報が空です');
   if (allCards.length === 0) throw new Error('カードデータがまだ読み込まれていません。しばらく待ってから再度お試しください。');
   const cards = {};
