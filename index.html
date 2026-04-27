@@ -985,7 +985,7 @@ function renderDeckEditor(){
   entries.forEach(([cardId,count])=>{
     const card=allCards.find(c=>c.id===cardId); if(!card) return;
     const row=document.createElement('div'); row.className='deck-card-row';
-    row.appendChild(makeImg(card));
+    const rowImg=makeImg(card); rowImg.style.cssText='width:36px;height:50px;object-fit:cover;border-radius:4px;flex-shrink:0;'; row.appendChild(rowImg);
     const di=document.createElement('div'); di.className='dc-info';
     di.innerHTML=`<div class="dc-name">${card.name}</div><div class="dc-sub">${card.version??''} · ${(card.inks??[card.ink]).join('/')}</div>`;
     row.appendChild(di);
@@ -1016,7 +1016,7 @@ function renderEditorCardList(){
     const newInks=[...new Set([...inks,...cardInks])];
     const canAdd=total<60&&count<4&&newInks.length<=2;
     const row=document.createElement('div'); row.className='deck-card-row';
-    row.appendChild(makeImg(card));
+    const rowImg=makeImg(card); rowImg.style.cssText='width:36px;height:50px;object-fit:cover;border-radius:4px;flex-shrink:0;'; row.appendChild(rowImg);
     const di=document.createElement('div'); di.className='dc-info';
     const dn=document.createElement('div'); dn.className='dc-name';
     dn.style.cssText='display:flex;align-items:center;gap:3px;min-width:0;overflow:hidden;';
