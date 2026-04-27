@@ -101,7 +101,7 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 .deck-card-row { display: flex; align-items: center; padding: 6px 8px; border-bottom: 1px solid var(–border); gap: 6px; }
 .deck-card-row img { width: 36px; border-radius: 4px; flex-shrink: 0; }
 .deck-card-row .dc-info { flex: 1; min-width: 0; }
-.deck-card-row .dc-name { font-size: 0.68rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 3px; }
+.deck-card-row .dc-name { font-size: 0.68rem; font-weight: bold; display: flex; align-items: center; gap: 3px; min-width: 0; overflow: hidden; }
 .deck-card-row .dc-sub { font-size: 0.58rem; color: var(–text2); }
 .deck-card-row .dc-btns { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
 .dc-btn { width: 28px; height: 28px; border-radius: 50%; border: none; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; background: var(–surface2); color: var(–text); }
@@ -1019,7 +1019,15 @@ function renderEditorCardList(){
     row.appendChild(makeImg(card));
     const di=document.createElement('div'); di.className='dc-info';
     const dn=document.createElement('div'); dn.className='dc-name';
-    const inkSpan=document.createElement('span'); inkSpan.style.flexShrink='0'; inkSpan.style.display='flex'; inkSpan.style.alignItems='center'; inkSpan.style.marginRight='2px'; inkSpan.appendChild(makeInkDot(card.ink)); dn.appendChild(inkSpan); const nameSpan=document.createElement('span'); nameSpan.textContent=card.name; nameSpan.style.overflow='hidden'; nameSpan.style.textOverflow='ellipsis'; nameSpan.style.whiteSpace='nowrap'; dn.appendChild(nameSpan);
+    dn.style.cssText='display:flex;align-items:center;gap:3px;min-width:0;overflow:hidden;';
+    const inkWrap=document.createElement('span');
+    inkWrap.style.cssText='display:inline-flex;flex-shrink:0;width:14px;height:14px;';
+    inkWrap.appendChild(makeInkDot(card.ink));
+    const nameSpan=document.createElement('span');
+    nameSpan.textContent=card.name;
+    nameSpan.style.cssText='overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;';
+    dn.appendChild(inkWrap);
+    dn.appendChild(nameSpan);
     const ds=document.createElement('div'); ds.className='dc-sub'; ds.textContent=`${card.version??''} · #${card.collector_number}`;
     di.appendChild(dn); di.appendChild(ds);
     row.appendChild(di);
