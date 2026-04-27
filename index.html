@@ -813,7 +813,7 @@ function decodeDsCode(ds) {
 }
 
 // URLからデッキをインポート
-async function importDeckFromUrl(url) {
+async async function importDeckFromUrl(url) {
   let parsed;
   try { parsed = new URL(url); } catch(e) { throw new Error('URLの形式が正しくありません'); }
   
