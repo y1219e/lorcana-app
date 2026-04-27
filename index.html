@@ -653,6 +653,7 @@ function renderCardGrid(){
     info.appendChild(nameDiv); info.appendChild(subDiv);
     item.appendChild(info);
     if(total>0){ const o=getOwned(card.id); const b=document.createElement('div'); b.className='own-badge'; b.textContent=o.foil>0?`${o.normal+o.foil}✨`:o.normal; item.appendChild(b); }
+    item._cardId = card.id;
     item.addEventListener('click',()=>openCardModal(card));
     grid.appendChild(item);
   });
@@ -715,7 +716,23 @@ async function updateCount(type, delta){
   document.getElementById('countValF').textContent=foil;
   document.getElementById('countDecN').disabled=normal<=0;
   document.getElementById('countDecF').disabled=foil<=0;
-  renderCardGrid(); renderProgress();
+  // グリッド全体を再描画せず、対象カードのバッジのみ更新
+  const total = normal + foil;
+  const grid = document.getElementById('cardGrid');
+  const items = grid.querySelectorAll('.card-item');
+  items.forEach(item => {
+    const clickHandler = item._cardId;
+    if(item._cardId === currentCard.id) {
+      let badge = item.querySelector('.own-badge');
+      if(total > 0) {
+        if(!badge){ badge = document.createElement('div'); badge.className='own-badge'; item.appendChild(badge); }
+        badge.textContent = foil > 0 ? `${total}✨` : normal;
+      } else {
+        if(badge) badge.remove();
+      }
+    }
+  });
+  renderProgress();
 }
 document.getElementById('countDecN').addEventListener('click',()=>updateCount('normal',-1));
 document.getElementById('countIncN').addEventListener('click',()=>updateCount('normal',+1));
