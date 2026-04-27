@@ -88,9 +88,9 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, sa
 #deckEditor { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100vw; height: 100vh; z-index: 9999; background: var(–bg); overflow: hidden; }
 #deckEditor.open { display: flex; flex-direction: column; }
 body.deck-editing .page, body.deck-editing nav { display: none !important; }
-.editor-header { background: var(–surface); padding: 12px 16px; border-bottom: 1px solid var(–border); display: flex; align-items: center; gap: 10px; }
+.editor-header { background: var(–surface); padding: 8px 10px; border-bottom: 1px solid var(–border); display: flex; align-items: center; gap: 6px; }
 .editor-header input { flex: 1; background: var(–surface2); border: 1px solid var(–border); border-radius: 6px; padding: 5px 10px; color: var(–text); font-size: 0.85rem; }
-.btn-sm { padding: 6px 12px; border-radius: 8px; border: none; cursor: pointer; font-size: 0.8rem; font-weight: bold; background: var(–surface2); color: var(–text1); }
+.btn-sm { padding: 5px 10px; border-radius: 8px; border: none; cursor: pointer; font-size: 0.75rem; font-weight: bold; background: var(–surface2); color: var(–text); white-space: nowrap; }
 .btn-save { background: var(–accent); color: #fff; }
 .btn-del { background: var(–ruby); color: #fff; }
 .btn-back { background: var(–surface2); color: var(–text); border: 1px solid var(–border); }
@@ -104,7 +104,7 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 .deck-card-row .dc-name { font-size: 0.68rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .deck-card-row .dc-sub { font-size: 0.58rem; color: var(–text2); }
 .deck-card-row .dc-btns { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
-.dc-btn { width: 28px; height: 28px; border-radius: 50%; border: none; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; background: var(–surface2); color: var(–text1); }
+.dc-btn { width: 28px; height: 28px; border-radius: 50%; border: none; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; background: var(–surface2); color: var(–text); }
 .dc-btn.rem { background: var(–ruby); color: #fff; }
 .dc-btn.add { background: var(–accent); color: #fff; }
 .dc-btn.add { background: var(–accent); color: #fff; }
