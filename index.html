@@ -193,8 +193,8 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, sa
 </div>
 
 <!-- URLインポートモーダル -->
-<div class="modal" id="importModal">
-  <div class="modal-box" style="max-width:360px;">
+<div class="modal-overlay" id="importModal" style="align-items:center;justify-content:center;z-index:300;">
+  <div style="background:var(--surface);border-radius:14px;padding:20px;width:90%;max-width:360px;max-height:80vh;overflow-y:auto;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
       <h2 style="font-size:1rem;">デッキURLを貼り付け</h2>
       <button id="importClose" style="background:none;border:none;color:var(--text2);font-size:1.2rem;cursor:pointer;">✕</button>
@@ -842,6 +842,9 @@ async function importDeckFromUrl(url) {
     cards[cardId] = (cards[cardId] ?? 0) + count;
   }
   
+  if (allCards.length === 0) {
+    throw new Error('カードデータがまだ読み込まれていません。\nしばらく待ってから再度お試しください。');
+  }
   if (Object.keys(cards).length === 0) {
     throw new Error('カードが1枚も見つかりませんでした。
 カードデータが読み込まれているか確認してください。
@@ -882,11 +885,17 @@ document.getElementById('importExecBtn').addEventListener('click', async () => {
   const url = document.getElementById('importUrlInput').value.trim();
   const errEl = document.getElementById('importError');
   const btn = document.getElementById('importExecBtn');
+  errEl.style.display='none';
   if (!url) { errEl.textContent = 'URLを入力してください'; errEl.style.display=''; return; }
   btn.textContent = '読み込み中...'; btn.disabled = true;
   try {
     const msg = await importDeckFromUrl(url);
     document.getElementById('importModal').classList.remove('open');
+    // デッキタブに遷移
+    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.querySelector('[data-page="pageDecks"]').classList.add('active');
+    document.getElementById('pageDecks').classList.add('active');
     alert(msg);
   } catch(e) {
     errEl.textContent = e.message; errEl.style.display = '';
