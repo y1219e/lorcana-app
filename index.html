@@ -185,8 +185,27 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, sa
 </div>
 <div class="page" id="pageDecks">
   <div class="page-header"><h1>🗂 デッキ</h1></div>
-  <div style="padding:10px;"><button class="add-deck-btn" id="addDeckBtn">＋ 新しいデッキを作る</button></div>
+  <div style="padding:10px;display:flex;gap:8px;">
+    <button class="add-deck-btn" id="addDeckBtn" style="flex:1;">＋ 新しいデッキを作る</button>
+    <button class="add-deck-btn" id="importDeckBtn" style="flex:1;background:var(--surface2);color:var(--text1);">🔗 URLから読み込む</button>
+  </div>
   <div class="deck-list" id="deckList"></div>
+</div>
+
+<!-- URLインポートモーダル -->
+<div class="modal" id="importModal">
+  <div class="modal-box" style="max-width:360px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <h2 style="font-size:1rem;">デッキURLを貼り付け</h2>
+      <button id="importClose" style="background:none;border:none;color:var(--text2);font-size:1.2rem;cursor:pointer;">✕</button>
+    </div>
+    <p style="font-size:0.72rem;color:var(--text2);margin-bottom:10px;">
+      タカラトミー デッキビルダーの「共有URL」をそのまま貼り付けてください。
+    </p>
+    <textarea id="importUrlInput" style="width:100%;height:80px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text1);padding:8px;font-size:0.8rem;resize:none;box-sizing:border-box;" placeholder="https://www.takaratomy.co.jp/products/disneylorcana/deckbuilder/deck/?cs=...&ds=..."></textarea>
+    <div id="importError" style="color:#f55;font-size:0.72rem;margin-top:6px;display:none;"></div>
+    <button id="importExecBtn" style="margin-top:10px;width:100%;padding:10px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:0.9rem;cursor:pointer;">読み込む</button>
+  </div>
 </div>
 <nav id="nav">
   <button class="nav-btn active" data-page="pageCards"><span class="icon">🃏</span>カード</button>
@@ -772,6 +791,109 @@ document.getElementById('countDecN').addEventListener('click',()=>updateCount('n
 document.getElementById('countIncN').addEventListener('click',()=>updateCount('normal',+1));
 document.getElementById('countDecF').addEventListener('click',()=>updateCount('foil',-1));
 document.getElementById('countIncF').addEventListener('click',()=>updateCount('foil',+1));
+
+
+// ═══════════════════════════════════════════
+// タカラトミー デッキビルダー URL インポート
+// ═══════════════════════════════════════════
+
+// dsコードデコード: 'AECUBI' → {setNum, collectorNum, count}
+function decodeDsCode(ds) {
+  function b36(c) {
+    if (c >= 'A' && c <= 'Z') return c.charCodeAt(0) - 65;
+    return 26 + parseInt(c);
+  }
+  if (!ds || ds.length !== 6) return null;
+  const setNum = b36(ds[1]);
+  const colNum = b36(ds[2]) * 36 + b36(ds[3]);
+  const cntEnc = b36(ds[4]) * 36 + b36(ds[5]);
+  const cntMap = {10:1, 20:2, 32:3, 44:4, 54:4};
+  const count = cntMap[cntEnc] ?? 1;
+  return { setNum, colNum, count };
+}
+
+// URLからデッキをインポート
+async function importDeckFromUrl(url) {
+  let parsed;
+  try { parsed = new URL(url); } catch(e) { throw new Error('URLの形式が正しくありません'); }
+  
+  const dsParam = parsed.searchParams.get('ds');
+  if (!dsParam) throw new Error('URLにdsパラメータが見つかりません。
+タカラトミーのデッキ共有URLを貼り付けてください。');
+  
+  const dsCodes = dsParam.split(',').map(s => s.trim()).filter(Boolean);
+  if (dsCodes.length === 0) throw new Error('カード情報が空です');
+  
+  const cards = {};
+  const notFound = [];
+  
+  for (const ds of dsCodes) {
+    const decoded = decodeDsCode(ds);
+    if (!decoded) { notFound.push(ds); continue; }
+    
+    const { setNum, colNum, count } = decoded;
+    // LorcastのカードID: "set_collector"
+    const cardId = `${setNum}_${colNum}`;
+    const card = allCards.find(c => c.id === cardId);
+    if (!card) {
+      notFound.push(`${setNum}弾#${colNum}`);
+      continue;
+    }
+    cards[cardId] = (cards[cardId] ?? 0) + count;
+  }
+  
+  if (Object.keys(cards).length === 0) {
+    throw new Error('カードが1枚も見つかりませんでした。
+カードデータが読み込まれているか確認してください。
+
+見つからなかったコード: ' + notFound.join(', '));
+  }
+  
+  // デッキ名をcsパラメータから生成
+  const csParam = parsed.searchParams.get('cs');
+  const deckName = csParam ? decodeURIComponent(csParam).replace(/,/g, '/') + ' デッキ' : 'インポートデッキ';
+  
+  const newDeck = { id: Date.now().toString(), name: deckName, cards };
+  await dbPut('decks', newDeck);
+  decks.push(newDeck);
+  renderDeckList();
+  
+  const total = Object.values(cards).reduce((a,b)=>a+b,0);
+  const warn = notFound.length > 0 ? `
+
+※以下のカードはデータ未収録のためスキップ:
+${notFound.join(', ')}` : '';
+  return `${Object.keys(cards).length}種 ${total}枚のカードを読み込みました${warn}`;
+}
+
+// インポートモーダルのイベント
+document.getElementById('importDeckBtn').addEventListener('click', () => {
+  document.getElementById('importUrlInput').value = '';
+  document.getElementById('importError').style.display = 'none';
+  document.getElementById('importModal').classList.add('open');
+});
+document.getElementById('importClose').addEventListener('click', () => {
+  document.getElementById('importModal').classList.remove('open');
+});
+document.getElementById('importModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('importModal')) document.getElementById('importModal').classList.remove('open');
+});
+document.getElementById('importExecBtn').addEventListener('click', async () => {
+  const url = document.getElementById('importUrlInput').value.trim();
+  const errEl = document.getElementById('importError');
+  const btn = document.getElementById('importExecBtn');
+  if (!url) { errEl.textContent = 'URLを入力してください'; errEl.style.display=''; return; }
+  btn.textContent = '読み込み中...'; btn.disabled = true;
+  try {
+    const msg = await importDeckFromUrl(url);
+    document.getElementById('importModal').classList.remove('open');
+    alert(msg);
+  } catch(e) {
+    errEl.textContent = e.message; errEl.style.display = '';
+  } finally {
+    btn.textContent = '読み込む'; btn.disabled = false;
+  }
+});
 
 function renderProgress(){
   const section=document.getElementById('progressSection'); section.innerHTML='';
