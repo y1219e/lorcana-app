@@ -51,13 +51,13 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, sa
 .ink-dot img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .rarity-icon { display: inline-block; width: 10px; height: 10px; margin-right: 1px; vertical-align: middle; flex-shrink: 0; }
 .rarity-icon img { width: 100%; height: 100%; object-fit: contain; display: block; }
-.modal-overlay { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.7); align-items: flex-end; }
+.modal-overlay { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.92); align-items: center; justify-content: center; }
 .modal-overlay.open { display: flex; }
-.modal { background: var(--surface); width: 100%; border-radius: 16px 16px 0 0; padding: 20px; max-height: 60vh; overflow-y: auto; }
-.modal-img-row { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 16px; }
-.modal-img-row img { width: 80px; border-radius: 6px; }
-.modal-card-name { font-size: 1rem; font-weight: bold; }
-.modal-card-sub { font-size: 0.8rem; color: var(--text2); margin-top: 2px; }
+.modal { background: transparent; width: 100%; max-width: 420px; padding: 0; display: flex; flex-direction: column; align-items: center; }
+.modal-img-row { display: flex; align-items: center; justify-content: center; width: 100%; position: relative; }
+.modal-img-row img { width: 80vw; max-width: 360px; border-radius: 12px; display: block; }
+.modal-card-name { font-size: 1rem; font-weight: bold; display: none; }
+.modal-card-sub { font-size: 0.8rem; color: var(--text2); margin-top: 2px; display: none; }
 .modal-card-meta { font-size: 0.75rem; color: var(--text2); margin-top: 6px; }
 .count-row { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; }
 .count-row label { font-size: 0.9rem; }
@@ -130,22 +130,26 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 <div id="loadingOverlay"><div class="spinner"></div><div id="loadProgress">読み込み中…</div><div id="cacheInfo"></div></div>
 <div class="modal-overlay" id="cardModal">
   <div class="modal">
-    <div class="modal-img-row"><img id="modalImg" src="" alt=""><div>
-      <div class="modal-card-name" id="modalName"></div>
-      <div class="modal-card-sub" id="modalSub"></div>
-      <div class="modal-card-meta" id="modalMeta"></div>
-    </div></div>
-    <div class="count-row"><label>ノーマル</label><div class="count-btns">
-      <button class="count-btn" id="countDecN">－</button>
-      <span class="count-val" id="countValN">0</span>
-      <button class="count-btn" id="countIncN">＋</button>
-    </div></div>
-    <div class="count-row"><label>✨ ホイル</label><div class="count-btns">
-      <button class="count-btn" id="countDecF">－</button>
-      <span class="count-val" id="countValF">0</span>
-      <button class="count-btn" id="countIncF">＋</button>
-    </div></div>
-    <button class="modal-close" id="modalClose">閉じる</button>
+    <!-- スライドナビ -->
+    <div style="display:flex;align-items:center;justify-content:center;width:100%;position:relative;margin-bottom:12px;">
+      <button id="modalPrev" style="position:absolute;left:0;background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:1.6rem;width:44px;height:44px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;">‹</button>
+      <div class="modal-img-row"><img id="modalImg" src="" alt=""></div>
+      <button id="modalNext" style="position:absolute;right:0;background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:1.6rem;width:44px;height:44px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;">›</button>
+    </div>
+    <!-- 所持数 -->
+    <div style="width:100%;background:var(--surface);border-radius:12px;overflow:hidden;margin-bottom:8px;">
+      <div class="count-row"><label>ノーマル</label><div class="count-btns">
+        <button class="count-btn" id="countDecN" style="background:#e74c3c;color:#fff;">－</button>
+        <span class="count-val" id="countValN">0</span>
+        <button class="count-btn" id="countIncN" style="background:#7c6dfa;color:#fff;">＋</button>
+      </div></div>
+      <div class="count-row" style="border-top:1px solid var(--border);"><label>✨ フォイル</label><div class="count-btns">
+        <button class="count-btn" id="countDecF" style="background:#e74c3c;color:#fff;">－</button>
+        <span class="count-val" id="countValF">0</span>
+        <button class="count-btn" id="countIncF" style="background:#7c6dfa;color:#fff;">＋</button>
+      </div></div>
+    </div>
+    <button class="modal-close" id="modalClose" style="width:100%;padding:12px;background:var(--surface);border:none;color:var(--text2);border-radius:12px;font-size:0.9rem;cursor:pointer;">閉じる</button>
   </div>
 </div>
 <div id="deckEditor">
@@ -791,17 +795,37 @@ function openCardModal(card){
   currentCard=card;
   const o=getOwned(card.id);
   const urls=buildImageUrls(card);
-  const mi=document.getElementById('modalImg'); mi.src=urls[0]; let i=0; mi.onerror=()=>{ i++; if(i<urls.length) mi.src=urls[i]; };
-  document.getElementById('modalName').textContent=card.name;
-  document.getElementById('modalSub').textContent=card.version??'';
-  const inks = card.inks ?? (card.ink ? [card.ink] : []);
-  document.getElementById('modalMeta').textContent=`${inks.join('/')} · ${card.type?.join(', ')??''} · ${card.rarity} · #${card.collector_number} · 第${card.set?.code}弾`;
+  const mi=document.getElementById('modalImg');
+  mi.src=urls[0]; let ei=0;
+  mi.onerror=()=>{ ei++; if(ei<urls.length) mi.src=urls[ei]; };
   document.getElementById('countValN').textContent=o.normal;
   document.getElementById('countValF').textContent=o.foil;
   document.getElementById('countDecN').disabled=o.normal<=0;
   document.getElementById('countDecF').disabled=o.foil<=0;
   document.getElementById('cardModal').classList.add('open');
 }
+
+function navigateModal(delta){
+  const cards = filteredCards();
+  const idx = cards.findIndex(c=>c.id===currentCard.id);
+  if(idx === -1) return;
+  const next = cards[(idx + delta + cards.length) % cards.length];
+  openCardModal(next);
+}
+
+document.getElementById('modalPrev').addEventListener('click', e=>{ e.stopPropagation(); navigateModal(-1); });
+document.getElementById('modalNext').addEventListener('click', e=>{ e.stopPropagation(); navigateModal(1); });
+
+// スワイプ対応
+(function(){
+  let sx=0;
+  const m=document.getElementById('cardModal');
+  m.addEventListener('touchstart', e=>{ sx=e.touches[0].clientX; }, {passive:true});
+  m.addEventListener('touchend', e=>{
+    const dx = e.changedTouches[0].clientX - sx;
+    if(Math.abs(dx)>50){ navigateModal(dx<0?1:-1); }
+  }, {passive:true});
+})();
 function closeCardModal(){ document.getElementById('cardModal').classList.remove('open'); currentCard=null; }
 document.getElementById('modalClose').addEventListener('click',closeCardModal);
 document.getElementById('cardModal').addEventListener('click',e=>{ if(e.target===document.getElementById('cardModal')) closeCardModal(); });
