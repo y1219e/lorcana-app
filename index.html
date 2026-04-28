@@ -720,7 +720,7 @@ function openDB(){
       if(!d.objectStoreNames.contains('collection')) d.createObjectStore('collection',{keyPath:'id'});
       if(!d.objectStoreNames.contains('decks'))      d.createObjectStore('decks',{keyPath:'id'});
       if(!d.objectStoreNames.contains('meta'))       d.createObjectStore('meta',{keyPath:'id'});
-      if(!d.objectStoreNames.contains('wishlist'))    d.createObjectStore('wishlist',{keyPath:'id'});
+
     };
     req.onsuccess = e => { db = e.target.result; res(db); };
     req.onerror   = () => rej(req.error);
@@ -1242,8 +1242,7 @@ async function loadData(){
   await openDB();
   const rows = await dbGetAll('collection');
   collection = {}; rows.forEach(r => { collection[r.id] = r; });
-  const wRows = await dbGetAll('wishlist');
-  wishlist = new Set(wRows.map(r=>r.id));
+  try { const wRows = await dbGetAll('wishlist'); wishlist = new Set(wRows.map(r=>r.id)); } catch(e) { wishlist = new Set(); }
   decks = await dbGetAll('decks');
   await loadData();
   renderSetFilter();
@@ -1265,11 +1264,11 @@ async function loadData(){
     const id=currentCard.id;
     if(wishlist.has(id)){
       wishlist.delete(id);
-      await dbDelete('wishlist',id);
+      try { await dbDelete('wishlist',id); } catch(e) {}
       document.getElementById('modalWishBtn').textContent='🤍';
     } else {
       wishlist.add(id);
-      await dbPut('wishlist',{id});
+      try { await dbPut('wishlist',{id}); } catch(e) {}
       document.getElementById('modalWishBtn').textContent='❤️';
     }
     renderCardGrid();
