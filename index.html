@@ -246,10 +246,20 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
       <span style="font-weight:bold;font-size:0.95rem;">詳細検索</span>
       <button id="advClose" style="background:none;border:none;color:var(--text2);font-size:1.2rem;cursor:pointer;">✕</button>
     </div>
+    <!-- インクタイプ -->
+    <div style="padding:14px 20px 0;">
+      <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">インクタイプ</div>
+      <div id="advInkGrid" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
+    </div>
     <!-- レアリティ -->
     <div style="padding:14px 20px 0;">
       <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">レアリティ</div>
       <div id="advRarityGrid" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
+    </div>
+    <!-- セット -->
+    <div style="padding:14px 20px 0;">
+      <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">弾</div>
+      <div id="advSetGrid" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
     </div>
     <!-- タイプ -->
     <div style="padding:14px 20px 0;">
@@ -260,6 +270,16 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
     <div style="padding:14px 20px 0;">
       <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">インクコスト</div>
       <div id="advCostGrid" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+    </div>
+    <!-- テキスト検索 -->
+    <div style="padding:14px 20px 0;">
+      <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">カードテキスト</div>
+      <input id="advTextInput" type="text" placeholder="テキストを検索..." style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text1);padding:8px 12px;font-size:0.85rem;box-sizing:border-box;">
+    </div>
+    <!-- インクウェル -->
+    <div style="padding:14px 20px 0;display:flex;align-items:center;gap:10px;">
+      <div style="font-size:0.72rem;color:var(--text2);font-weight:bold;">インクウェル（インクに入れられる）のみ</div>
+      <input id="advInkwellCheck" type="checkbox" style="width:18px;height:18px;cursor:pointer;">
     </div>
     <!-- 適用ボタン -->
     <div style="padding:16px 20px 0;">
@@ -767,7 +787,7 @@ function dbGetAll(store){ return new Promise(r=>{ const tx=db.transaction(store,
 // ═══════════════════════════════════════════
 // アプリ状態
 // ═══════════════════════════════════════════
-let allCards=[],sets=[],collection={},wishlist=new Set(),cardView='all',advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),costMin:null,costMax:null},decks=[],filterSets=new Set(),filterInks=new Set(),searchQ='',currentCard=null,currentDeck=null;
+let allCards=[],sets=[],collection={},wishlist=new Set(),cardView='all',advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,inkwellOnly:false,textQ:''},decks=[],filterSets=new Set(),filterInks=new Set(),searchQ='',currentCard=null,currentDeck=null;
 
 function filteredCards(){
   return allCards.filter(c=>{
@@ -782,8 +802,12 @@ function filteredCards(){
     if(advFilter.rarities.size>0 && !advFilter.rarities.has(c.rarity)) return false;
     if(advFilter.types.size>0 && !(c.type??[]).some(t=>advFilter.types.has(t))) return false;
     if(advFilter.classifications.size>0 && !(c.classifications??[]).some(t=>advFilter.classifications.has(t))) return false;
+    if(advFilter.inks.size>0){ const ci=c.inks??(c.ink?[c.ink]:[]); if(!ci.some(i=>advFilter.inks.has(i))) return false; }
+    if(advFilter.sets.size>0 && !advFilter.sets.has(c.set?.code)) return false;
     if(advFilter.costMin!==null && (c.cost??0)<advFilter.costMin) return false;
     if(advFilter.costMax!==null && (c.cost??0)>advFilter.costMax) return false;
+    if(advFilter.inkwellOnly && !c.inkwell) return false;
+    if(advFilter.textQ){ const tq=advFilter.textQ.toLowerCase(); if(!(c.text??'').toLowerCase().includes(tq)) return false; }
     return true;
   });
 }
@@ -1292,63 +1316,90 @@ async function loadData(){
   const TYPES = ['Character','Action','Item','Location'];
   const COSTS = [0,1,2,3,4,5,6,7,8,9,10];
 
+    function makeToggleBtn(label, activeSet, key, container, extraStyle=''){
+    const btn=document.createElement('button');
+    btn.textContent=label;
+    const active=activeSet.has(key);
+    btn.style.cssText='padding:5px 12px;border-radius:14px;border:1px solid '+(active?'var(--accent)':'var(--border)')+';background:'+(active?'rgba(124,109,250,0.2)':'var(--surface2)')+';color:'+(active?'var(--accent)':'var(--text2)')+';font-size:0.78rem;cursor:pointer;'+extraStyle;
+    btn.addEventListener('click',()=>{
+      if(activeSet.has(key)) activeSet.delete(key); else activeSet.add(key);
+      buildAdvUI();
+    });
+    container.appendChild(btn);
+  }
+
   function buildAdvUI(){
-    // レアリティ
-    const rGrid = document.getElementById('advRarityGrid');
-    rGrid.innerHTML = '';
-    RARITIES.forEach(r=>{
-      const btn=document.createElement('div');
-      btn.style.cssText='display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;';
+    // インクタイプ（アイコン付き）
+    const inkGrid=document.getElementById('advInkGrid');
+    inkGrid.innerHTML='';
+    const INK_LIST=['Amber','Amethyst','Emerald','Ruby','Sapphire','Steel'];
+    INK_LIST.forEach(ink=>{
+      const wrap=document.createElement('div');
+      wrap.style.cssText='display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;';
       const iconWrap=document.createElement('div');
-      iconWrap.style.cssText='width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid var(--border);transition:all 0.15s;';
+      const active=advFilter.inks.has(ink);
+      iconWrap.style.cssText='width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid '+(active?'var(--accent)':'var(--border)')+';background:'+(active?'rgba(124,109,250,0.2)':'')+';transition:all 0.15s;';
+      const dot=makeInkDot(ink); dot.style.cssText='width:28px;height:28px;';
+      iconWrap.appendChild(dot);
+      const lbl=document.createElement('span'); lbl.style.cssText='font-size:0.58rem;color:var(--text2);'; lbl.textContent=INK_NAMES_JA[ink]??ink;
+      wrap.appendChild(iconWrap); wrap.appendChild(lbl);
+      wrap.addEventListener('click',()=>{ if(advFilter.inks.has(ink)) advFilter.inks.delete(ink); else advFilter.inks.add(ink); buildAdvUI(); });
+      inkGrid.appendChild(wrap);
+    });
+
+    // レアリティ（アイコン付き）
+    const rGrid=document.getElementById('advRarityGrid');
+    rGrid.innerHTML='';
+    const RARITY_JA={Common:'コモン',Uncommon:'アンコモン',Rare:'レア',Super_rare:'SR',Legendary:'レジェ',Enchanted:'エンチャ',Iconic:'アイコニ',Epic:'エピック'};
+    RARITIES.forEach(r=>{
+      const wrap=document.createElement('div');
+      wrap.style.cssText='display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;';
+      const iconWrap=document.createElement('div');
+      const active=advFilter.rarities.has(r);
+      iconWrap.style.cssText='width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid '+(active?'var(--accent)':'var(--border)')+';background:'+(active?'rgba(124,109,250,0.2)':'')+';';
       const span=document.createElement('span'); span.className='rarity-icon';
       const src=RARITY_IMG[r]??''; if(src){const img=document.createElement('img');img.src=src;img.style.cssText='width:100%;height:100%;object-fit:contain;display:block;';span.appendChild(img);}
       iconWrap.appendChild(span);
-      const label=document.createElement('span'); label.style.cssText='font-size:0.6rem;color:var(--text2);';
-      const RARITY_JA={Common:'コモン',Uncommon:'アンコモン',Rare:'レア',Super_rare:'スーパーレア',Legendary:'レジェンダリー',Enchanted:'エンチャンテッド',Iconic:'アイコニック',Epic:'エピック'};
-      label.textContent=RARITY_JA[r]??r;
-      btn.appendChild(iconWrap); btn.appendChild(label);
-      btn.addEventListener('click',()=>{
-        if(advFilter.rarities.has(r)){ advFilter.rarities.delete(r); iconWrap.style.borderColor='var(--border)'; iconWrap.style.background=''; }
-        else { advFilter.rarities.add(r); iconWrap.style.borderColor='var(--accent)'; iconWrap.style.background='rgba(124,109,250,0.2)'; }
-      });
-      if(advFilter.rarities.has(r)){ iconWrap.style.borderColor='var(--accent)'; iconWrap.style.background='rgba(124,109,250,0.2)'; }
-      rGrid.appendChild(btn);
+      const lbl=document.createElement('span'); lbl.style.cssText='font-size:0.58rem;color:var(--text2);'; lbl.textContent=RARITY_JA[r]??r;
+      wrap.appendChild(iconWrap); wrap.appendChild(lbl);
+      wrap.addEventListener('click',()=>{ if(advFilter.rarities.has(r)) advFilter.rarities.delete(r); else advFilter.rarities.add(r); buildAdvUI(); });
+      rGrid.appendChild(wrap);
     });
+
+    // セット
+    const sGrid=document.getElementById('advSetGrid');
+    sGrid.innerHTML='';
+    sets.forEach(s=>{ makeToggleBtn('第'+s.code+'弾', advFilter.sets, s.code, sGrid); });
 
     // タイプ
-    const tGrid = document.getElementById('advTypeGrid');
-    tGrid.innerHTML = '';
+    const tGrid=document.getElementById('advTypeGrid');
+    tGrid.innerHTML='';
     const TYPE_JA={Character:'キャラクター',Action:'アクション',Item:'アイテム',Location:'ロケーション'};
-    TYPES.forEach(t=>{
-      const btn=document.createElement('button');
-      btn.textContent=TYPE_JA[t]??t;
-      const active=advFilter.types.has(t);
-      btn.style.cssText=`padding:6px 14px;border-radius:16px;border:1px solid ${active?'var(--accent)':'var(--border)'};background:${active?'rgba(124,109,250,0.2)':'var(--surface2)'};color:${active?'var(--accent)':'var(--text2)'};font-size:0.8rem;cursor:pointer;`;
-      btn.addEventListener('click',()=>{
-        if(advFilter.types.has(t)){ advFilter.types.delete(t); btn.style.borderColor='var(--border)'; btn.style.background='var(--surface2)'; btn.style.color='var(--text2)'; }
-        else { advFilter.types.add(t); btn.style.borderColor='var(--accent)'; btn.style.background='rgba(124,109,250,0.2)'; btn.style.color='var(--accent)'; }
-      });
-      tGrid.appendChild(btn);
-    });
+    TYPES.forEach(t=>{ makeToggleBtn(TYPE_JA[t]??t, advFilter.types, t, tGrid); });
 
     // コスト
-    const cGrid = document.getElementById('advCostGrid');
-    cGrid.innerHTML = '';
+    const cGrid=document.getElementById('advCostGrid');
+    cGrid.innerHTML='';
     COSTS.forEach(c=>{
       const btn=document.createElement('button');
       btn.textContent=c;
       const cMin=advFilter.costMin; const cMax=advFilter.costMax;
       const active=(cMin!==null && cMax!==null && c>=cMin && c<=cMax);
-      btn.style.cssText=`width:36px;height:36px;border-radius:50%;border:1px solid ${active?'var(--accent)':'var(--border)'};background:${active?'rgba(124,109,250,0.2)':'var(--surface2)'};color:${active?'var(--accent)':'var(--text2)'};font-size:0.8rem;cursor:pointer;font-weight:bold;`;
-      btn.addEventListener('click',()=>{
-        if(advFilter.costMin===c && advFilter.costMax===c){ advFilter.costMin=null; advFilter.costMax=null; }
-        else { advFilter.costMin=c; advFilter.costMax=c; }
-        buildAdvUI();
-      });
+      btn.style.cssText='width:36px;height:36px;border-radius:50%;border:1px solid '+(active?'var(--accent)':'var(--border)')+';background:'+(active?'rgba(124,109,250,0.2)':'var(--surface2)')+';color:'+(active?'var(--accent)':'var(--text2)')+';font-size:0.8rem;cursor:pointer;font-weight:bold;';
+      btn.addEventListener('click',()=>{ if(advFilter.costMin===c && advFilter.costMax===c){ advFilter.costMin=null; advFilter.costMax=null; } else { advFilter.costMin=c; advFilter.costMax=c; } buildAdvUI(); });
       cGrid.appendChild(btn);
     });
-    // 結果件数更新
+
+    // テキスト
+    const ti=document.getElementById('advTextInput');
+    ti.value=advFilter.textQ??'';
+    ti.oninput=()=>{ advFilter.textQ=ti.value; document.getElementById('advApply').textContent='結果を表示（'+filteredCards().length+'件）'; };
+
+    // インクウェル
+    document.getElementById('advInkwellCheck').checked=advFilter.inkwellOnly;
+    document.getElementById('advInkwellCheck').onchange=e=>{ advFilter.inkwellOnly=e.target.checked; buildAdvUI(); };
+
+    // 結果件数
     document.getElementById('advApply').textContent='結果を表示（'+filteredCards().length+'件）';
   }
 
@@ -1365,7 +1416,7 @@ async function loadData(){
     renderCardGrid();
   });
   document.getElementById('advReset').addEventListener('click',()=>{
-    advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),costMin:null,costMax:null};
+    advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,inkwellOnly:false,textQ:''};
     buildAdvUI();
   });
   // ======= /詳細検索 =======
