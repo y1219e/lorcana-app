@@ -59,7 +59,7 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, sa
 .modal-card-name { font-size: 1rem; font-weight: bold; display: none; }
 .modal-card-sub { font-size: 0.8rem; color: var(--text2); margin-top: 2px; display: none; }
 .modal-card-meta { font-size: 0.75rem; color: var(--text2); margin-top: 6px; }
-.count-row { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; }
+.count-row { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; padding: 0 20px; }
 .count-row label { font-size: 0.9rem; }
 .count-btns { display: flex; align-items: center; gap: 12px; }
 .count-btn { width: 36px; height: 36px; border-radius: 50%; border: none; background: var(--accent); color: #fff; font-size: 1.2rem; cursor: pointer; }
@@ -143,7 +143,7 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
         <span class="count-val" id="countValN">0</span>
         <button class="count-btn" id="countIncN" style="background:#7c6dfa;color:#fff;">＋</button>
       </div></div>
-      <div class="count-row" style="border-top:1px solid var(--border);"><label>✨ フォイル</label><div class="count-btns">
+      <div class="count-row" style="border-top:1px solid var(--border);"><label>フォイル ✨</label><div class="count-btns">
         <button class="count-btn" id="countDecF" style="background:#e74c3c;color:#fff;">－</button>
         <span class="count-val" id="countValF">0</span>
         <button class="count-btn" id="countIncF" style="background:#7c6dfa;color:#fff;">＋</button>
@@ -809,23 +809,19 @@ function navigateModal(delta){
   const cards = filteredCards();
   const idx = cards.findIndex(c=>c.id===currentCard.id);
   if(idx === -1) return;
-  const next = cards[(idx + delta + cards.length) % cards.length];
-  openCardModal(next);
+  openCardModal(cards[(idx + delta + cards.length) % cards.length]);
 }
 
 document.getElementById('modalPrev').addEventListener('click', e=>{ e.stopPropagation(); navigateModal(-1); });
 document.getElementById('modalNext').addEventListener('click', e=>{ e.stopPropagation(); navigateModal(1); });
-
-// スワイプ対応
 (function(){
   let sx=0;
   const m=document.getElementById('cardModal');
   m.addEventListener('touchstart', e=>{ sx=e.touches[0].clientX; }, {passive:true});
-  m.addEventListener('touchend', e=>{
-    const dx = e.changedTouches[0].clientX - sx;
-    if(Math.abs(dx)>50){ navigateModal(dx<0?1:-1); }
-  }, {passive:true});
+  m.addEventListener('touchend', e=>{ const dx=e.changedTouches[0].clientX-sx; if(Math.abs(dx)>50) navigateModal(dx<0?1:-1); }, {passive:true});
 })();
+
+
 function closeCardModal(){ document.getElementById('cardModal').classList.remove('open'); currentCard=null; }
 document.getElementById('modalClose').addEventListener('click',closeCardModal);
 document.getElementById('cardModal').addEventListener('click',e=>{ if(e.target===document.getElementById('cardModal')) closeCardModal(); });
