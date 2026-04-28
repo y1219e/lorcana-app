@@ -250,6 +250,11 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
     </div>
     <!-- スクロール部分 -->
     <div style="overflow-y:auto;flex:1;padding-bottom:8px;">
+      <!-- 並び替え -->
+      <div style="padding:14px 20px 0;">
+        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">並び替え</div>
+        <div id="advSortBtns" style="display:flex;flex-direction:column;gap:6px;"></div>
+      </div>
       <!-- インクタイプ -->
       <div style="padding:14px 20px 0;">
         <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">インクタイプ</div>
@@ -340,9 +345,10 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
         <input id="advTextInput" type="text" placeholder="テキストを検索..." style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text1);padding:8px 12px;font-size:0.85rem;box-sizing:border-box;">
       </div>
     </div>
-    <!-- 結果を表示ボタン（常時表示） -->
-    <div style="padding:12px 20px;border-top:1px solid var(--border);flex-shrink:0;background:var(--surface);">
-      <button id="advApply" style="width:100%;padding:13px;background:var(--accent);border:none;border-radius:10px;color:#fff;font-size:0.95rem;font-weight:bold;cursor:pointer;">結果を表示</button>
+    <!-- 結果を表示・リセットボタン（常時表示） -->
+    <div style="padding:12px 20px;border-top:1px solid var(--border);flex-shrink:0;background:var(--surface);display:flex;gap:8px;">
+      <button id="advReset2" style="padding:13px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text2);font-size:0.85rem;cursor:pointer;white-space:nowrap;">リセット</button>
+      <button id="advApply" style="flex:1;padding:13px;background:var(--accent);border:none;border-radius:10px;color:#fff;font-size:0.95rem;font-weight:bold;cursor:pointer;">結果を表示</button>
     </div>
   </div>
 </div>
@@ -846,7 +852,7 @@ function dbGetAll(store){ return new Promise(r=>{ const tx=db.transaction(store,
 // ═══════════════════════════════════════════
 // アプリ状態
 // ═══════════════════════════════════════════
-let allCards=[],sets=[],collection={},wishlist=new Set(),cardView='all',advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,strMin:null,strMax:null,wpMin:null,wpMax:null,loreMin:null,loreMax:null,inkwell:null,textQ:''},decks=[],filterSets=new Set(),filterInks=new Set(),searchQ='',currentCard=null,currentDeck=null;
+let allCards=[],sets=[],collection={},wishlist=new Set(),cardView='all',advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,strMin:null,strMax:null,wpMin:null,wpMax:null,loreMin:null,loreMax:null,inkwell:null,textQ:'',sortOrder:'id_asc'},decks=[],filterSets=new Set(),filterInks=new Set(),searchQ='',currentCard=null,currentDeck=null;
 
 function filteredCards(){
   return allCards.filter(c=>{
@@ -885,7 +891,28 @@ function ownedTotal(id){ const o=getOwned(id); return o.normal+o.foil; }
 function renderCardGrid(){
   const grid=document.getElementById('cardGrid');
   const badge=document.getElementById('cardCountBadge');
-  const cards=filteredCards();
+  let cards=filteredCards();
+  // ソート
+  const INK_ORDER=['Amber','Amethyst','Emerald','Ruby','Sapphire','Steel'];
+  cards = [...cards].sort((a,b)=>{
+    if(advFilter.sortOrder==='id_asc'||advFilter.sortOrder==='id_desc'){
+      const sc=(a.set?.code??'').localeCompare(b.set?.code??'',undefined,{numeric:true});
+      const nc=String(a.collector_number??'').localeCompare(String(b.collector_number??''),undefined,{numeric:true});
+      const r=sc!==0?sc:nc;
+      return advFilter.sortOrder==='id_desc'?-r:r;
+    }
+    if(advFilter.sortOrder==='cost_asc'||advFilter.sortOrder==='cost_desc'){
+      const ca=a.cost??0, cb=b.cost??0;
+      if(ca!==cb) return advFilter.sortOrder==='cost_asc'?ca-cb:cb-ca;
+      // 同コストは弾番号→インク色→コレクター番号順
+      const sc=(a.set?.code??'').localeCompare(b.set?.code??'',undefined,{numeric:true});
+      if(sc!==0) return sc;
+      const ia=INK_ORDER.indexOf(a.ink??a.inks?.[0]??''), ib=INK_ORDER.indexOf(b.ink??b.inks?.[0]??'');
+      if(ia!==ib) return ia-ib;
+      return String(a.collector_number??'').localeCompare(String(b.collector_number??''),undefined,{numeric:true});
+    }
+    return 0;
+  });
   badge.textContent=cards.length;
   grid.innerHTML='';
   cards.forEach(card=>{
@@ -1392,6 +1419,24 @@ async function loadData(){
   }
 
   function buildAdvUI(){
+    // 並び替え
+    const sortBtns=document.getElementById('advSortBtns');
+    sortBtns.innerHTML='';
+    const SORT_OPTIONS=[
+      {val:'id_asc', label:'ID（昇順）'},
+      {val:'id_desc', label:'ID（降順）'},
+      {val:'cost_asc', label:'インクコスト（昇順）'},
+      {val:'cost_desc', label:'インクコスト（降順）'},
+    ];
+    SORT_OPTIONS.forEach(opt=>{
+      const btn=document.createElement('button');
+      btn.textContent=opt.label;
+      const active=advFilter.sortOrder===opt.val;
+      btn.style.cssText='padding:10px 14px;border-radius:8px;border:1px solid '+(active?'var(--accent)':'var(--border)')+';background:'+(active?'rgba(124,109,250,0.2)':'var(--surface2)')+';color:'+(active?'var(--accent)':'var(--text2)')+';font-size:0.85rem;cursor:pointer;text-align:left;';
+      btn.addEventListener('click',()=>{ advFilter.sortOrder=opt.val; buildAdvUI(); });
+      sortBtns.appendChild(btn);
+    });
+
     // インクタイプ（アイコンのみ・文字なし）
     const inkGrid=document.getElementById('advInkGrid');
     inkGrid.innerHTML='';
@@ -1519,12 +1564,16 @@ async function loadData(){
     document.getElementById('advSearchModal').classList.remove('open');
     renderCardGrid();
   });
+  document.getElementById('advReset2').addEventListener('click',()=>{
+    advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,strMin:null,strMax:null,wpMin:null,wpMax:null,loreMin:null,loreMax:null,inkwell:null,textQ:'',sortOrder:'id_asc'};
+    buildAdvUI();
+  });
   document.getElementById('advApply').addEventListener('click',()=>{
     document.getElementById('advSearchModal').classList.remove('open');
     renderCardGrid();
   });
   document.getElementById('advReset').addEventListener('click',()=>{
-    advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,strMin:null,strMax:null,wpMin:null,wpMax:null,loreMin:null,loreMax:null,inkwell:null,textQ:''};
+    advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,strMin:null,strMax:null,wpMin:null,wpMax:null,loreMin:null,loreMax:null,inkwell:null,textQ:'',sortOrder:'id_asc'};
     buildAdvUI();
   });
   // ======= /詳細検索 =======
