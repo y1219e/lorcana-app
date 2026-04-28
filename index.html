@@ -1426,23 +1426,13 @@ async function loadData(){
   }
 
   function buildAdvUI(){
-    // 並び替え
-    const sortBtns=document.getElementById('advSortBtns');
-    sortBtns.innerHTML='';
-    const SORT_OPTIONS=[
-      {val:'id_asc', label:'ID（昇順）'},
-      {val:'id_desc', label:'ID（降順）'},
-      {val:'cost_asc', label:'インクコスト（昇順）'},
-      {val:'cost_desc', label:'インクコスト（降順）'},
-    ];
-    SORT_OPTIONS.forEach(opt=>{
-      const btn=document.createElement('button');
-      btn.textContent=opt.label;
-      const active=advFilter.sortOrder===opt.val;
-      btn.style.cssText='padding:10px 14px;border-radius:8px;border:1px solid '+(active?'var(--accent)':'var(--border)')+';background:'+(active?'rgba(124,109,250,0.2)':'var(--surface2)')+';color:'+(active?'var(--accent)':'var(--text2)')+';font-size:0.85rem;cursor:pointer;text-align:left;';
-      btn.addEventListener('click',()=>{ advFilter.sortOrder=opt.val; buildAdvUI(); });
-      sortBtns.appendChild(btn);
-    });
+    // 並び替え（ドロップダウン）
+    const sortSel=document.getElementById('advSortSelect');
+    if(sortSel){ sortSel.value=advFilter.sortOrder??'id_asc';
+      if(!sortSel._init){ sortSel._init=true;
+        sortSel.addEventListener('change',()=>{ advFilter.sortOrder=sortSel.value; document.getElementById('advApply').textContent='結果を表示（'+filteredCards().length+'件）'; });
+      }
+    }
 
     // インクタイプ（アイコンのみ・文字なし）
     const inkGrid=document.getElementById('advInkGrid');
