@@ -837,31 +837,7 @@ document.getElementById('modalNext').addEventListener('click', e=>{ e.stopPropag
   m.addEventListener('touchend', e=>{ const dx=e.changedTouches[0].clientX-sx; if(Math.abs(dx)>50) navigateModal(dx<0?1:-1); }, {passive:true});
 })();
 
-// ウィッシュリストトグル
-document.getElementById('modalWishBtn').addEventListener('click', async()=>{
-  if(!currentCard) return;
-  const id=currentCard.id;
-  if(wishlist.has(id)){
-    wishlist.delete(id);
-    await dbDelete('wishlist',id);
-    document.getElementById('modalWishBtn').textContent='🤍';
-  } else {
-    wishlist.add(id);
-    await dbPut('wishlist',{id});
-    document.getElementById('modalWishBtn').textContent='❤️';
-  }
-  renderCardGrid();
-});
 
-// ビュータブ切り替え
-document.querySelectorAll('.view-tab').forEach(btn=>{
-  btn.addEventListener('click',()=>{
-    document.querySelectorAll('.view-tab').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    cardView=btn.dataset.view;
-    renderCardGrid();
-  });
-});
 
 
 function closeCardModal(){ document.getElementById('cardModal').classList.remove('open'); currentCard=null; }
@@ -1272,6 +1248,32 @@ async function loadData(){
   await loadData();
   renderSetFilter();
   renderCardGrid();
+
+  // ビュータブ切り替え
+  document.querySelectorAll('.view-tab').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.view-tab').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      cardView=btn.dataset.view;
+      renderCardGrid();
+    });
+  });
+
+  // ウィッシュリストトグル
+  document.getElementById('modalWishBtn').addEventListener('click', async()=>{
+    if(!currentCard) return;
+    const id=currentCard.id;
+    if(wishlist.has(id)){
+      wishlist.delete(id);
+      await dbDelete('wishlist',id);
+      document.getElementById('modalWishBtn').textContent='🤍';
+    } else {
+      wishlist.add(id);
+      await dbPut('wishlist',{id});
+      document.getElementById('modalWishBtn').textContent='❤️';
+    }
+    renderCardGrid();
+  });
 })();
 </script>
 
