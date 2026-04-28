@@ -349,6 +349,22 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
       </div>
 
 ```
+  <!-- シングル/デュアルインク -->
+  <div style="padding:14px 20px 0;">
+    <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">インクタイプ（シングル/デュアル）</div>
+    <div style="display:flex;gap:8px;" id="advInkTypeBtns">
+      <button data-val="single" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:0.8rem;cursor:pointer;">シングル</button>
+      <button data-val="dual" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:0.8rem;cursor:pointer;">デュアル</button>
+    </div>
+  </div>
+  <!-- クラシフィケーション（折りたたみ） -->
+  <div style="padding:14px 20px 0;">
+    <button id="advClassToggle" style="display:flex;justify-content:space-between;align-items:center;width:100%;background:none;border:none;cursor:pointer;padding:0;">
+      <span style="font-size:0.72rem;color:var(--text2);font-weight:bold;">クラシフィケーション</span>
+      <span id="advClassArrow" style="color:var(--text2);font-size:0.85rem;">▼</span>
+    </button>
+    <div id="advClassGrid" style="display:none;margin-top:8px;gap:6px;flex-wrap:wrap;"></div>
+  </div>
 </div>
 <!-- 結果を表示・リセットボタン（常時表示） -->
 <div style="padding:12px 20px;border-top:1px solid var(--border);flex-shrink:0;background:var(--surface);display:flex;gap:8px;">
@@ -859,7 +875,7 @@ function dbGetAll(store){ return new Promise(r=>{ const tx=db.transaction(store,
 // ═══════════════════════════════════════════
 // アプリ状態
 // ═══════════════════════════════════════════
-let allCards=[],sets=[],collection={},wishlist=new Set(),cardView='all',advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,strMin:null,strMax:null,wpMin:null,wpMax:null,loreMin:null,loreMax:null,inkwell:null,textQ:'',sortOrder:'id_asc'},decks=[],filterSets=new Set(),filterInks=new Set(),searchQ='',currentCard=null,currentDeck=null;
+let allCards=[],sets=[],collection={},wishlist=new Set(),cardView='all',advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,strMin:null,strMax:null,wpMin:null,wpMax:null,loreMin:null,loreMax:null,inkwell:null,inkType:null,textQ:'',sortOrder:'id_asc'},decks=[],filterSets=new Set(),filterInks=new Set(),searchQ='',currentCard=null,currentDeck=null;
 
 function filteredCards(){
   return allCards.filter(c=>{
@@ -874,6 +890,8 @@ function filteredCards(){
     if(advFilter.rarities.size>0 && !advFilter.rarities.has(c.rarity)) return false;
     if(advFilter.types.size>0 && !(c.type??[]).some(t=>advFilter.types.has(t))) return false;
     if(advFilter.classifications.size>0 && !(c.classifications??[]).some(t=>advFilter.classifications.has(t))) return false;
+    if(advFilter.inkType==='single' && (c.inks??[c.ink]).filter(Boolean).length!==1) return false;
+    if(advFilter.inkType==='dual' && (c.inks??[c.ink]).filter(Boolean).length<2) return false;
     if(advFilter.inks.size>0){ const ci=c.inks??(c.ink?[c.ink]:[]); if(!ci.some(i=>advFilter.inks.has(i))) return false; }
     if(advFilter.sets.size>0 && !advFilter.sets.has(c.set?.code)) return false;
     if(advFilter.costMin!==null && (c.cost??0)<advFilter.costMin) return false;
@@ -1550,6 +1568,47 @@ async function loadData(){
     ti.value=advFilter.textQ??'';
     ti.oninput=()=>{ advFilter.textQ=ti.value; document.getElementById('advApply').textContent='結果を表示（'+filteredCards().length+'件）'; };
 
+    // シングル/デュアルインク
+    document.getElementById('advInkTypeBtns').querySelectorAll('button').forEach(btn=>{
+      const val=btn.dataset.val;
+      const active=advFilter.inkType===val;
+      btn.style.borderColor=active?'var(--accent)':'var(--border)';
+      btn.style.background=active?'rgba(124,109,250,0.2)':'var(--surface2)';
+      btn.style.color=active?'var(--accent)':'var(--text2)';
+      btn.onclick=()=>{ advFilter.inkType=(advFilter.inkType===val)?null:val; buildAdvUI(); };
+    });
+
+    // クラシフィケーション
+    const classGrid=document.getElementById('advClassGrid');
+    if(classGrid && !classGrid._built){
+      classGrid._built=true;
+      // allCardsから全classificationsを収集
+      const allClass=new Set();
+      allCards.forEach(c=>(c.classifications??[]).forEach(cl=>allClass.add(cl)));
+      [...allClass].sort().forEach(cl=>{ makeToggleBtn(cl, advFilter.classifications, cl, classGrid); });
+    } else if(classGrid && classGrid._built){
+      // 選択状態だけ更新
+      classGrid.querySelectorAll('button').forEach(btn=>{
+        const cl=btn.textContent;
+        const active=advFilter.classifications.has(cl);
+        btn.style.borderColor=active?'var(--accent)':'var(--border)';
+        btn.style.background=active?'rgba(124,109,250,0.2)':'var(--surface2)';
+        btn.style.color=active?'var(--accent)':'var(--text2)';
+      });
+    }
+    // 折りたたみトグル（初回のみイベント登録）
+    const classToggle=document.getElementById('advClassToggle');
+    if(classToggle && !classToggle._init){
+      classToggle._init=true;
+      classToggle.addEventListener('click',()=>{
+        const grid=document.getElementById('advClassGrid');
+        const arrow=document.getElementById('advClassArrow');
+        const isOpen=grid.style.display!=='none'&&grid.style.display!=='';
+        grid.style.display=isOpen?'none':'flex';
+        arrow.textContent=isOpen?'▼':'▲';
+      });
+    }
+
     // 結果件数
     document.getElementById('advApply').textContent='結果を表示（'+filteredCards().length+'件）';
   }
@@ -1562,7 +1621,7 @@ async function loadData(){
     renderCardGrid();
   });
   document.getElementById('advReset2').addEventListener('click',()=>{
-    advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,strMin:null,strMax:null,wpMin:null,wpMax:null,loreMin:null,loreMax:null,inkwell:null,textQ:'',sortOrder:'id_asc'};
+    advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,strMin:null,strMax:null,wpMin:null,wpMax:null,loreMin:null,loreMax:null,inkwell:null,inkType:null,textQ:'',sortOrder:'id_asc'};
     buildAdvUI();
   });
   document.getElementById('advApply').addEventListener('click',()=>{
