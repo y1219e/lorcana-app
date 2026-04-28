@@ -302,10 +302,10 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
         <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">タイプ</div>
         <div id="advTypeGrid" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
       </div>
-      <!-- クラシフィケーション（折りたたみ） -->
+      <!-- クラス（折りたたみ） -->
       <div style="padding:14px 20px 0;">
         <button id="advClassToggle" style="display:flex;justify-content:space-between;align-items:center;width:100%;background:none;border:none;cursor:pointer;padding:0;">
-          <span style="font-size:0.72rem;color:var(--text2);font-weight:bold;">クラシフィケーション</span>
+          <span style="font-size:0.72rem;color:var(--text2);font-weight:bold;">クラス</span>
           <span id="advClassArrow" style="color:var(--text2);font-size:0.85rem;">▼</span>
         </button>
         <div id="advClassGrid" style="display:none;margin-top:8px;gap:6px;flex-wrap:wrap;"></div>
@@ -1443,6 +1443,7 @@ async function loadData(){
     function makeToggleBtn(label, activeSet, key, container){
     const btn=document.createElement('button');
     btn.textContent=label;
+    btn.dataset.key=key;
     const active=activeSet.has(key);
     btn.style.cssText='padding:5px 12px;border-radius:14px;border:1px solid '+(active?'var(--accent)':'var(--border)')+';background:'+(active?'rgba(124,109,250,0.2)':'var(--surface2)')+';color:'+(active?'var(--accent)':'var(--text2)')+';font-size:0.78rem;cursor:pointer;';
     btn.addEventListener('click',()=>{ if(activeSet.has(key)) activeSet.delete(key); else activeSet.add(key); buildAdvUI(); });
@@ -1594,18 +1595,65 @@ async function loadData(){
       btn.onclick=()=>{ advFilter.inkType=(advFilter.inkType===val)?null:val; buildAdvUI(); };
     });
 
-    // クラシフィケーション
+    // クラス（旧クラシフィケーション）
+    const classificationJaMap = {
+      'Storyborn': 'ストーリーボーン',
+      'Dreamborn': 'ドリームボーン',
+      'Floodborn': 'フラッドボーン',
+      'Seven Dwarfs': '7人のこびと',
+      'Illusion': 'イリュージョン',
+      'Villain': 'ヴィランズ',
+      'Alien': 'エイリアン',
+      'Captain': 'キャプテン',
+      'Super': 'スーパー',
+      'Titan': 'タイタン',
+      'Tigger': 'ティガー',
+      'Toy': 'トイ',
+      'Dragon': 'ドラゴン',
+      'Hyena': 'ハイエナ',
+      'Honey': 'ハニー',
+      'Hero': 'ヒーロー',
+      'Prince': 'プリンス',
+      'Princess': 'プリンセス',
+      'Broom': 'ほうき',
+      'Madrigal': 'マドリガル家',
+      'Monster': 'モンスター',
+      'Racer': 'レーサー',
+      'Robot': 'ロボット',
+      'Ally': '仲間',
+      'Queen': '女王',
+      'Fairy': '妖精',
+      'Puppy': '子犬',
+      'Guide': '導き手',
+      'Dinosaur': '恐竜',
+      'Detective': '探偵',
+      'Pirate': '海賊',
+      'King': '王様',
+      'Inventor': '発明家',
+      'Deity': '神格',
+      'Musketeer': '銃士',
+      'Knight': '騎士',
+      'Sorcerer': '魔法使い',
+      'Song': '歌',
+    };
     const classGrid=document.getElementById('advClassGrid');
     if(classGrid && !classGrid._built){
       classGrid._built=true;
       // allCardsから全classificationsを収集
       const allClass=new Set();
       allCards.forEach(c=>(c.classifications??[]).forEach(cl=>allClass.add(cl)));
-      [...allClass].sort().forEach(cl=>{ makeToggleBtn(cl, advFilter.classifications, cl, classGrid); });
+      [...allClass].sort((a,b)=>{
+        const ja_a=classificationJaMap[a]||a;
+        const ja_b=classificationJaMap[b]||b;
+        return ja_a.localeCompare(ja_b,'ja');
+      }).forEach(cl=>{
+        const label=classificationJaMap[cl]||cl;
+        makeToggleBtn(label, advFilter.classifications, cl, classGrid);
+      });
     } else if(classGrid && classGrid._built){
       // 選択状態だけ更新
       classGrid.querySelectorAll('button').forEach(btn=>{
-        const cl=btn.textContent;
+        const cl=btn.dataset.key||btn.textContent;
         const active=advFilter.classifications.has(cl);
         btn.style.borderColor=active?'var(--accent)':'var(--border)';
         btn.style.background=active?'rgba(124,109,250,0.2)':'var(--surface2)';
