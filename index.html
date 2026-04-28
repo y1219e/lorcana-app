@@ -39,8 +39,8 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, sa
 .view-tab-bar { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); }
 .view-tab { flex: 1; padding: 8px 4px; background: none; border: none; color: var(--text2); font-size: 0.72rem; cursor: pointer; border-bottom: 2px solid transparent; }
 .view-tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: bold; }
-#advCostMin, #advCostMax { height:4px; margin:0; outline:none; }
-#advCostMin::-webkit-slider-thumb, #advCostMax::-webkit-slider-thumb { -webkit-appearance:none; width:20px; height:20px; border-radius:50%; background:var(--accent); cursor:pointer; pointer-events:auto; border:2px solid #fff; }
+#advCostMin, #advCostMax, #advStrMin, #advStrMax, #advWpMin, #advWpMax, #advLoreMin, #advLoreMax { height:4px; margin:0; outline:none; }
+#advCostMin::-webkit-slider-thumb, #advCostMax::-webkit-slider-thumb, #advStrMin::-webkit-slider-thumb, #advStrMax::-webkit-slider-thumb, #advWpMin::-webkit-slider-thumb, #advWpMax::-webkit-slider-thumb, #advLoreMin::-webkit-slider-thumb, #advLoreMax::-webkit-slider-thumb { -webkit-appearance:none; width:20px; height:20px; border-radius:50%; background:var(--accent); cursor:pointer; pointer-events:auto; border:2px solid #fff; }
 .search-bar input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 7px 12px; color: var(--text); font-size: 0.85rem; }
 .search-bar input::placeholder { color: var(--text2); }
 .card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 10px; }
@@ -290,6 +290,48 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
         <div style="display:flex;gap:8px;" id="advInkwellBtns">
           <button data-val="yes" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:0.8rem;cursor:pointer;">あり</button>
           <button data-val="no" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:0.8rem;cursor:pointer;">なし</button>
+        </div>
+      </div>
+      <!-- 攻撃力 -->
+      <div style="padding:14px 20px 0;">
+        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">攻撃力（ストレングス）<span id="advStrLabel" style="color:var(--accent);">全て</span></div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span style="font-size:0.75rem;color:var(--text2);width:16px;text-align:center;">0</span>
+          <div style="flex:1;position:relative;height:32px;display:flex;align-items:center;">
+            <div style="position:absolute;left:0;right:0;height:4px;background:var(--border);border-radius:2px;"></div>
+            <div id="advStrFill" style="position:absolute;height:4px;background:var(--accent);border-radius:2px;"></div>
+            <input id="advStrMin" type="range" min="0" max="12" value="0" style="position:absolute;width:100%;appearance:none;-webkit-appearance:none;background:transparent;pointer-events:none;z-index:2;">
+            <input id="advStrMax" type="range" min="0" max="12" value="12" style="position:absolute;width:100%;appearance:none;-webkit-appearance:none;background:transparent;pointer-events:none;z-index:2;">
+          </div>
+          <span style="font-size:0.75rem;color:var(--text2);width:20px;text-align:center;">12</span>
+        </div>
+      </div>
+      <!-- 意志力 -->
+      <div style="padding:14px 20px 0;">
+        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">意志力（ウィルパワー）<span id="advWpLabel" style="color:var(--accent);">全て</span></div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span style="font-size:0.75rem;color:var(--text2);width:16px;text-align:center;">0</span>
+          <div style="flex:1;position:relative;height:32px;display:flex;align-items:center;">
+            <div style="position:absolute;left:0;right:0;height:4px;background:var(--border);border-radius:2px;"></div>
+            <div id="advWpFill" style="position:absolute;height:4px;background:var(--accent);border-radius:2px;"></div>
+            <input id="advWpMin" type="range" min="0" max="12" value="0" style="position:absolute;width:100%;appearance:none;-webkit-appearance:none;background:transparent;pointer-events:none;z-index:2;">
+            <input id="advWpMax" type="range" min="0" max="12" value="12" style="position:absolute;width:100%;appearance:none;-webkit-appearance:none;background:transparent;pointer-events:none;z-index:2;">
+          </div>
+          <span style="font-size:0.75rem;color:var(--text2);width:20px;text-align:center;">12</span>
+        </div>
+      </div>
+      <!-- ロア値 -->
+      <div style="padding:14px 20px 0;">
+        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">ロア値<span id="advLoreLabel" style="color:var(--accent);">全て</span></div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span style="font-size:0.75rem;color:var(--text2);width:16px;text-align:center;">0</span>
+          <div style="flex:1;position:relative;height:32px;display:flex;align-items:center;">
+            <div style="position:absolute;left:0;right:0;height:4px;background:var(--border);border-radius:2px;"></div>
+            <div id="advLoreFill" style="position:absolute;height:4px;background:var(--accent);border-radius:2px;"></div>
+            <input id="advLoreMin" type="range" min="0" max="5" value="0" style="position:absolute;width:100%;appearance:none;-webkit-appearance:none;background:transparent;pointer-events:none;z-index:2;">
+            <input id="advLoreMax" type="range" min="0" max="5" value="5" style="position:absolute;width:100%;appearance:none;-webkit-appearance:none;background:transparent;pointer-events:none;z-index:2;">
+          </div>
+          <span style="font-size:0.75rem;color:var(--text2);width:20px;text-align:center;">5</span>
         </div>
       </div>
       <!-- カードテキスト -->
@@ -804,7 +846,7 @@ function dbGetAll(store){ return new Promise(r=>{ const tx=db.transaction(store,
 // ═══════════════════════════════════════════
 // アプリ状態
 // ═══════════════════════════════════════════
-let allCards=[],sets=[],collection={},wishlist=new Set(),cardView='all',advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,inkwell:null,textQ:''},decks=[],filterSets=new Set(),filterInks=new Set(),searchQ='',currentCard=null,currentDeck=null;
+let allCards=[],sets=[],collection={},wishlist=new Set(),cardView='all',advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,strMin:null,strMax:null,wpMin:null,wpMax:null,loreMin:null,loreMax:null,inkwell:null,textQ:''},decks=[],filterSets=new Set(),filterInks=new Set(),searchQ='',currentCard=null,currentDeck=null;
 
 function filteredCards(){
   return allCards.filter(c=>{
@@ -823,6 +865,12 @@ function filteredCards(){
     if(advFilter.sets.size>0 && !advFilter.sets.has(c.set?.code)) return false;
     if(advFilter.costMin!==null && (c.cost??0)<advFilter.costMin) return false;
     if(advFilter.costMax!==null && (c.cost??0)>advFilter.costMax) return false;
+    if(advFilter.strMin!==null && (c.strength??0)<advFilter.strMin) return false;
+    if(advFilter.strMax!==null && (c.strength??0)>advFilter.strMax) return false;
+    if(advFilter.wpMin!==null && (c.willpower??0)<advFilter.wpMin) return false;
+    if(advFilter.wpMax!==null && (c.willpower??0)>advFilter.wpMax) return false;
+    if(advFilter.loreMin!==null && (c.lore??0)<advFilter.loreMin) return false;
+    if(advFilter.loreMax!==null && (c.lore??0)>advFilter.loreMax) return false;
     if(advFilter.inkwell===true && !c.inkwell) return false;
     if(advFilter.inkwell===false && c.inkwell) return false;
     if(advFilter.textQ){ const tq=advFilter.textQ.toLowerCase(); if(!(c.text??'').toLowerCase().includes(tq)) return false; }
@@ -1419,6 +1467,28 @@ async function loadData(){
     const lbl=document.getElementById('advCostLabel');
     lbl.textContent=(lo===0&&hi===10)?'全て':(lo===hi?lo+'コスト':lo+'〜'+hi+'コスト');
 
+    // 攻撃力・意志力・ロアのスライダー共通ヘルパー
+    function initRangeSlider(idMin, idMax, idFill, idLabel, max, minKey, maxKey, suffix){
+      const sMin=document.getElementById(idMin), sMax=document.getElementById(idMax);
+      sMin.value=advFilter[minKey]??0;
+      sMax.value=advFilter[maxKey]??max;
+      function upd(){
+        let lo2=parseInt(sMin.value), hi2=parseInt(sMax.value);
+        if(lo2>hi2){ lo2=hi2; sMin.value=lo2; }
+        advFilter[minKey]=(lo2===0)?null:lo2;
+        advFilter[maxKey]=(hi2===max)?null:hi2;
+        document.getElementById(idFill).style.left=(lo2/max*100)+'%';
+        document.getElementById(idFill).style.width=((hi2-lo2)/max*100)+'%';
+        document.getElementById(idLabel).textContent=(lo2===0&&hi2===max)?'全て':(lo2===hi2?lo2+suffix:lo2+'〜'+hi2+suffix);
+        document.getElementById('advApply').textContent='結果を表示（'+filteredCards().length+'件）';
+      }
+      if(!sMin._init){ sMin._init=true; sMin.addEventListener('input',upd); sMax.addEventListener('input',()=>{ if(parseInt(sMax.value)<parseInt(sMin.value)) sMax.value=sMin.value; upd(); }); }
+      upd();
+    }
+    initRangeSlider('advStrMin','advStrMax','advStrFill','advStrLabel',12,'strMin','strMax','');
+    initRangeSlider('advWpMin','advWpMax','advWpFill','advWpLabel',12,'wpMin','wpMax','');
+    initRangeSlider('advLoreMin','advLoreMax','advLoreFill','advLoreLabel',5,'loreMin','loreMax','');
+
     // インクウェル・シンボル
     document.getElementById('advInkwellBtns').querySelectorAll('button').forEach(btn=>{
       const val=btn.dataset.val;
@@ -1454,7 +1524,7 @@ async function loadData(){
     renderCardGrid();
   });
   document.getElementById('advReset').addEventListener('click',()=>{
-    advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,inkwell:null,textQ:''};
+    advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,strMin:null,strMax:null,wpMin:null,wpMax:null,loreMin:null,loreMax:null,inkwell:null,textQ:''};
     buildAdvUI();
   });
   // ======= /詳細検索 =======
