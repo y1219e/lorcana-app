@@ -48,7 +48,8 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, sa
 .card-item .card-info { padding: 4px 5px; }
 .card-item .card-name { font-size: 0.62rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 2px; }
 .card-item .card-sub { font-size: 0.55rem; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 1px; }
-.card-item .own-badge { position: absolute; top: 4px; right: 4px; background: var(--accent); color: #fff; font-size: 0.65rem; font-weight: bold; padding: 1px 5px; border-radius: 8px; }
+.card-item .own-badge { position: absolute; top: 4px; right: 4px; background: #000; color: #fff; font-size: 0.65rem; font-weight: bold; padding: 1px 5px; border-radius: 8px; border: 1px solid #555; }
+.own-badge.foil { border: 2px solid #c9a84c; box-shadow: 0 0 4px rgba(201,168,76,0.6); }
 .img-placeholder { width: 100%; aspect-ratio: 429/600; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 0.55rem; color: #555; text-align: center; padding: 6px; }
 .ink-dot { display: inline-flex; align-items: center; width: 16px; height: 16px; margin-right: 0; vertical-align: middle; flex-shrink: 0; }
 .ink-dot img { width: 100%; height: 100%; object-fit: contain; display: block; }
@@ -295,7 +296,7 @@ const SET_INFO = {
   '6': { month:'2025/10', newPattern:true, slug:'azurite-sea' },
   '7': { month:'2025/12', oldPattern:true, code:'DLCS7', size:'', dualInk:true },
   '8': { month:'2026/02', oldPattern:true, code:'DLCS8', size:'', suffixX:true },
-  '9': { month:'2025/12', month2:'2026/02', oldPattern:true, code:'DLCS9', size:'', suffixX:true },
+  '9': { month:'2026/02', month2:'2025/12', oldPattern:true, code:'DLCS9', size:'', suffixX:true },
 };
 const IMG_HOST = 'https://disneylorcana.jp/wp-content/uploads/';
 const RARITY_CODE = { 'Common':'C','Uncommon':'U','Rare':'R','Super_rare':'S','Legendary':'L','Enchanted':'E','Iconic':'Q','Promo':'P' };
@@ -775,7 +776,7 @@ function renderCardGrid(){
     subDiv.appendChild(document.createTextNode(' ' + card.rarity));
     info.appendChild(nameDiv); info.appendChild(subDiv);
     item.appendChild(info);
-    if(total>0){ const o=getOwned(card.id); const b=document.createElement('div'); b.className='own-badge'; b.textContent=o.foil>0?`${o.normal+o.foil}✨`:o.normal; item.appendChild(b); }
+    if(total>0){ const o=getOwned(card.id); const b=document.createElement('div'); b.className='own-badge'; b.textContent=o.normal+o.foil; if(o.foil>0) b.classList.add('foil'); item.appendChild(b); }
     item._cardId = card.id;
     item.addEventListener('click',()=>openCardModal(card));
     grid.appendChild(item);
@@ -869,7 +870,7 @@ async function updateCount(type, delta){
       let badge = item.querySelector('.own-badge');
       if(total > 0) {
         if(!badge){ badge = document.createElement('div'); badge.className='own-badge'; item.appendChild(badge); }
-        badge.textContent = foil > 0 ? `${total}✨` : normal;
+        badge.textContent = total; if(foil>0) badge.classList.add('foil'); else badge.classList.remove('foil');
       } else {
         if(badge) badge.remove();
       }
