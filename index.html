@@ -39,6 +39,8 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, sa
 .view-tab-bar { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); }
 .view-tab { flex: 1; padding: 8px 4px; background: none; border: none; color: var(--text2); font-size: 0.72rem; cursor: pointer; border-bottom: 2px solid transparent; }
 .view-tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: bold; }
+#advCostMin, #advCostMax { height:4px; margin:0; outline:none; }
+#advCostMin::-webkit-slider-thumb, #advCostMax::-webkit-slider-thumb { -webkit-appearance:none; width:20px; height:20px; border-radius:50%; background:var(--accent); cursor:pointer; pointer-events:auto; border:2px solid #fff; }
 .search-bar input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 7px 12px; color: var(--text); font-size: 0.85rem; }
 .search-bar input::placeholder { color: var(--text2); }
 .card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 10px; }
@@ -239,50 +241,65 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 </div>
 <!-- 詳細検索モーダル -->
 <div class="modal-overlay" id="advSearchModal" style="align-items:flex-end;z-index:250;">
-  <div style="background:var(--surface);width:100%;border-radius:16px 16px 0 0;max-height:85vh;overflow-y:auto;padding:0 0 20px 0;">
-    <!-- ヘッダー -->
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:1;">
+  <div style="background:var(--surface);width:100%;border-radius:16px 16px 0 0;max-height:85vh;display:flex;flex-direction:column;">
+    <!-- ヘッダー（sticky） -->
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0;">
       <button id="advReset" style="background:none;border:none;color:var(--text2);font-size:0.8rem;cursor:pointer;">リセット</button>
       <span style="font-weight:bold;font-size:0.95rem;">詳細検索</span>
       <button id="advClose" style="background:none;border:none;color:var(--text2);font-size:1.2rem;cursor:pointer;">✕</button>
     </div>
-    <!-- インクタイプ -->
-    <div style="padding:14px 20px 0;">
-      <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">インクタイプ</div>
-      <div id="advInkGrid" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
+    <!-- スクロール部分 -->
+    <div style="overflow-y:auto;flex:1;padding-bottom:8px;">
+      <!-- インクタイプ -->
+      <div style="padding:14px 20px 0;">
+        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">インクタイプ</div>
+        <div id="advInkGrid" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
+      </div>
+      <!-- レアリティ -->
+      <div style="padding:14px 20px 0;">
+        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">レアリティ</div>
+        <div id="advRarityGrid" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
+      </div>
+      <!-- セット -->
+      <div style="padding:14px 20px 0;">
+        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">セット</div>
+        <div id="advSetGrid" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+      </div>
+      <!-- タイプ -->
+      <div style="padding:14px 20px 0;">
+        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">タイプ</div>
+        <div id="advTypeGrid" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+      </div>
+      <!-- インクコスト スライダー -->
+      <div style="padding:14px 20px 0;">
+        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">インクコスト <span id="advCostLabel" style="color:var(--accent);">全て</span></div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span style="font-size:0.75rem;color:var(--text2);width:16px;text-align:center;">0</span>
+          <div style="flex:1;position:relative;height:32px;display:flex;align-items:center;">
+            <div id="advCostTrack" style="position:absolute;left:0;right:0;height:4px;background:var(--border);border-radius:2px;"></div>
+            <div id="advCostFill" style="position:absolute;height:4px;background:var(--accent);border-radius:2px;"></div>
+            <input id="advCostMin" type="range" min="0" max="10" value="0" style="position:absolute;width:100%;appearance:none;-webkit-appearance:none;background:transparent;pointer-events:none;z-index:2;">
+            <input id="advCostMax" type="range" min="0" max="10" value="10" style="position:absolute;width:100%;appearance:none;-webkit-appearance:none;background:transparent;pointer-events:none;z-index:2;">
+          </div>
+          <span style="font-size:0.75rem;color:var(--text2);width:20px;text-align:center;">10</span>
+        </div>
+      </div>
+      <!-- インクウェル・シンボル -->
+      <div style="padding:14px 20px 0;">
+        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">インクウェル・シンボル</div>
+        <div style="display:flex;gap:8px;" id="advInkwellBtns">
+          <button data-val="yes" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:0.8rem;cursor:pointer;">あり</button>
+          <button data-val="no" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:0.8rem;cursor:pointer;">なし</button>
+        </div>
+      </div>
+      <!-- カードテキスト -->
+      <div style="padding:14px 20px 0;">
+        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">カードテキスト</div>
+        <input id="advTextInput" type="text" placeholder="テキストを検索..." style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text1);padding:8px 12px;font-size:0.85rem;box-sizing:border-box;">
+      </div>
     </div>
-    <!-- レアリティ -->
-    <div style="padding:14px 20px 0;">
-      <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">レアリティ</div>
-      <div id="advRarityGrid" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
-    </div>
-    <!-- セット -->
-    <div style="padding:14px 20px 0;">
-      <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">弾</div>
-      <div id="advSetGrid" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
-    </div>
-    <!-- タイプ -->
-    <div style="padding:14px 20px 0;">
-      <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">タイプ</div>
-      <div id="advTypeGrid" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
-    </div>
-    <!-- インクコスト -->
-    <div style="padding:14px 20px 0;">
-      <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">インクコスト</div>
-      <div id="advCostGrid" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
-    </div>
-    <!-- テキスト検索 -->
-    <div style="padding:14px 20px 0;">
-      <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">カードテキスト</div>
-      <input id="advTextInput" type="text" placeholder="テキストを検索..." style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text1);padding:8px 12px;font-size:0.85rem;box-sizing:border-box;">
-    </div>
-    <!-- インクウェル -->
-    <div style="padding:14px 20px 0;display:flex;align-items:center;gap:10px;">
-      <div style="font-size:0.72rem;color:var(--text2);font-weight:bold;">インクウェル（インクに入れられる）のみ</div>
-      <input id="advInkwellCheck" type="checkbox" style="width:18px;height:18px;cursor:pointer;">
-    </div>
-    <!-- 適用ボタン -->
-    <div style="padding:16px 20px 0;">
+    <!-- 結果を表示ボタン（常時表示） -->
+    <div style="padding:12px 20px;border-top:1px solid var(--border);flex-shrink:0;background:var(--surface);">
       <button id="advApply" style="width:100%;padding:13px;background:var(--accent);border:none;border-radius:10px;color:#fff;font-size:0.95rem;font-weight:bold;cursor:pointer;">結果を表示</button>
     </div>
   </div>
@@ -787,7 +804,7 @@ function dbGetAll(store){ return new Promise(r=>{ const tx=db.transaction(store,
 // ═══════════════════════════════════════════
 // アプリ状態
 // ═══════════════════════════════════════════
-let allCards=[],sets=[],collection={},wishlist=new Set(),cardView='all',advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,inkwellOnly:false,textQ:''},decks=[],filterSets=new Set(),filterInks=new Set(),searchQ='',currentCard=null,currentDeck=null;
+let allCards=[],sets=[],collection={},wishlist=new Set(),cardView='all',advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,inkwell:null,textQ:''},decks=[],filterSets=new Set(),filterInks=new Set(),searchQ='',currentCard=null,currentDeck=null;
 
 function filteredCards(){
   return allCards.filter(c=>{
@@ -806,7 +823,8 @@ function filteredCards(){
     if(advFilter.sets.size>0 && !advFilter.sets.has(c.set?.code)) return false;
     if(advFilter.costMin!==null && (c.cost??0)<advFilter.costMin) return false;
     if(advFilter.costMax!==null && (c.cost??0)>advFilter.costMax) return false;
-    if(advFilter.inkwellOnly && !c.inkwell) return false;
+    if(advFilter.inkwell===true && !c.inkwell) return false;
+    if(advFilter.inkwell===false && c.inkwell) return false;
     if(advFilter.textQ){ const tq=advFilter.textQ.toLowerCase(); if(!(c.text??'').toLowerCase().includes(tq)) return false; }
     return true;
   });
@@ -1316,52 +1334,47 @@ async function loadData(){
   const TYPES = ['Character','Action','Item','Location'];
   const COSTS = [0,1,2,3,4,5,6,7,8,9,10];
 
-    function makeToggleBtn(label, activeSet, key, container, extraStyle=''){
+    function makeToggleBtn(label, activeSet, key, container){
     const btn=document.createElement('button');
     btn.textContent=label;
     const active=activeSet.has(key);
-    btn.style.cssText='padding:5px 12px;border-radius:14px;border:1px solid '+(active?'var(--accent)':'var(--border)')+';background:'+(active?'rgba(124,109,250,0.2)':'var(--surface2)')+';color:'+(active?'var(--accent)':'var(--text2)')+';font-size:0.78rem;cursor:pointer;'+extraStyle;
-    btn.addEventListener('click',()=>{
-      if(activeSet.has(key)) activeSet.delete(key); else activeSet.add(key);
-      buildAdvUI();
-    });
+    btn.style.cssText='padding:5px 12px;border-radius:14px;border:1px solid '+(active?'var(--accent)':'var(--border)')+';background:'+(active?'rgba(124,109,250,0.2)':'var(--surface2)')+';color:'+(active?'var(--accent)':'var(--text2)')+';font-size:0.78rem;cursor:pointer;';
+    btn.addEventListener('click',()=>{ if(activeSet.has(key)) activeSet.delete(key); else activeSet.add(key); buildAdvUI(); });
     container.appendChild(btn);
   }
 
   function buildAdvUI(){
-    // インクタイプ（アイコン付き）
+    // インクタイプ（アイコンのみ・文字なし）
     const inkGrid=document.getElementById('advInkGrid');
     inkGrid.innerHTML='';
-    const INK_LIST=['Amber','Amethyst','Emerald','Ruby','Sapphire','Steel'];
-    INK_LIST.forEach(ink=>{
+    ['Amber','Amethyst','Emerald','Ruby','Sapphire','Steel'].forEach(ink=>{
       const wrap=document.createElement('div');
-      wrap.style.cssText='display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;';
+      wrap.style.cssText='cursor:pointer;';
       const iconWrap=document.createElement('div');
       const active=advFilter.inks.has(ink);
-      iconWrap.style.cssText='width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid '+(active?'var(--accent)':'var(--border)')+';background:'+(active?'rgba(124,109,250,0.2)':'')+';transition:all 0.15s;';
-      const dot=makeInkDot(ink); dot.style.cssText='width:28px;height:28px;';
+      iconWrap.style.cssText='width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid '+(active?'var(--accent)':'var(--border)')+';background:'+(active?'rgba(124,109,250,0.2)':'')+';transition:all 0.15s;';
+      const dot=makeInkDot(ink); dot.style.cssText='width:32px;height:32px;';
+      if(dot.querySelector('img')) dot.querySelector('img').style.cssText='width:100%;height:100%;object-fit:contain;display:block;';
       iconWrap.appendChild(dot);
-      const lbl=document.createElement('span'); lbl.style.cssText='font-size:0.58rem;color:var(--text2);'; lbl.textContent=INK_NAMES_JA[ink]??ink;
-      wrap.appendChild(iconWrap); wrap.appendChild(lbl);
+      wrap.appendChild(iconWrap);
       wrap.addEventListener('click',()=>{ if(advFilter.inks.has(ink)) advFilter.inks.delete(ink); else advFilter.inks.add(ink); buildAdvUI(); });
       inkGrid.appendChild(wrap);
     });
 
-    // レアリティ（アイコン付き）
+    // レアリティ（アイコンのみ・文字なし・エピックをレジェの後に）
     const rGrid=document.getElementById('advRarityGrid');
     rGrid.innerHTML='';
-    const RARITY_JA={Common:'コモン',Uncommon:'アンコモン',Rare:'レア',Super_rare:'SR',Legendary:'レジェ',Enchanted:'エンチャ',Iconic:'アイコニ',Epic:'エピック'};
-    RARITIES.forEach(r=>{
+    ['Common','Uncommon','Rare','Super_rare','Legendary','Epic','Enchanted','Iconic'].forEach(r=>{
       const wrap=document.createElement('div');
-      wrap.style.cssText='display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;';
+      wrap.style.cssText='cursor:pointer;';
       const iconWrap=document.createElement('div');
       const active=advFilter.rarities.has(r);
-      iconWrap.style.cssText='width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid '+(active?'var(--accent)':'var(--border)')+';background:'+(active?'rgba(124,109,250,0.2)':'')+';';
-      const span=document.createElement('span'); span.className='rarity-icon';
-      const src=RARITY_IMG[r]??''; if(src){const img=document.createElement('img');img.src=src;img.style.cssText='width:100%;height:100%;object-fit:contain;display:block;';span.appendChild(img);}
+      iconWrap.style.cssText='width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid '+(active?'var(--accent)':'var(--border)')+';background:'+(active?'rgba(124,109,250,0.2)':'')+';';
+      const span=document.createElement('span'); span.style.cssText='display:inline-flex;width:32px;height:32px;align-items:center;justify-content:center;';
+      const src=RARITY_IMG[r]??'';
+      if(src){const img=document.createElement('img');img.src=src;img.style.cssText='width:100%;height:100%;object-fit:contain;display:block;';span.appendChild(img);}
       iconWrap.appendChild(span);
-      const lbl=document.createElement('span'); lbl.style.cssText='font-size:0.58rem;color:var(--text2);'; lbl.textContent=RARITY_JA[r]??r;
-      wrap.appendChild(iconWrap); wrap.appendChild(lbl);
+      wrap.appendChild(iconWrap);
       wrap.addEventListener('click',()=>{ if(advFilter.rarities.has(r)) advFilter.rarities.delete(r); else advFilter.rarities.add(r); buildAdvUI(); });
       rGrid.appendChild(wrap);
     });
@@ -1374,20 +1387,50 @@ async function loadData(){
     // タイプ
     const tGrid=document.getElementById('advTypeGrid');
     tGrid.innerHTML='';
-    const TYPE_JA={Character:'キャラクター',Action:'アクション',Item:'アイテム',Location:'ロケーション'};
-    TYPES.forEach(t=>{ makeToggleBtn(TYPE_JA[t]??t, advFilter.types, t, tGrid); });
+    {const TYPE_JA={Character:'キャラクター',Action:'アクション',Item:'アイテム',Location:'ロケーション'};
+    ['Character','Action','Item','Location'].forEach(t=>{ makeToggleBtn(TYPE_JA[t], advFilter.types, t, tGrid); });}
 
-    // コスト
-    const cGrid=document.getElementById('advCostGrid');
-    cGrid.innerHTML='';
-    COSTS.forEach(c=>{
-      const btn=document.createElement('button');
-      btn.textContent=c;
-      const cMin=advFilter.costMin; const cMax=advFilter.costMax;
-      const active=(cMin!==null && cMax!==null && c>=cMin && c<=cMax);
-      btn.style.cssText='width:36px;height:36px;border-radius:50%;border:1px solid '+(active?'var(--accent)':'var(--border)')+';background:'+(active?'rgba(124,109,250,0.2)':'var(--surface2)')+';color:'+(active?'var(--accent)':'var(--text2)')+';font-size:0.8rem;cursor:pointer;font-weight:bold;';
-      btn.addEventListener('click',()=>{ if(advFilter.costMin===c && advFilter.costMax===c){ advFilter.costMin=null; advFilter.costMax=null; } else { advFilter.costMin=c; advFilter.costMax=c; } buildAdvUI(); });
-      cGrid.appendChild(btn);
+    // コストスライダー
+    const minSlider=document.getElementById('advCostMin');
+    const maxSlider=document.getElementById('advCostMax');
+    if(!minSlider._init){
+      minSlider._init=true;
+      function updateSlider(){
+        let lo=parseInt(minSlider.value), hi=parseInt(maxSlider.value);
+        if(lo>hi){ lo=hi; minSlider.value=lo; }
+        advFilter.costMin=(lo===0)?null:lo;
+        advFilter.costMax=(hi===10)?null:hi;
+        const pLo=lo/10*100, pHi=hi/10*100;
+        document.getElementById('advCostFill').style.left=pLo+'%';
+        document.getElementById('advCostFill').style.width=(pHi-pLo)+'%';
+        const lbl=document.getElementById('advCostLabel');
+        lbl.textContent=(lo===0&&hi===10)?'全て':(lo===hi?lo+'コスト':lo+'〜'+hi+'コスト');
+        document.getElementById('advApply').textContent='結果を表示（'+filteredCards().length+'件）';
+      }
+      minSlider.addEventListener('input',updateSlider);
+      maxSlider.addEventListener('input',()=>{ if(parseInt(maxSlider.value)<parseInt(minSlider.value)) maxSlider.value=minSlider.value; updateSlider(); });
+    }
+    // スライダーの初期値を反映
+    minSlider.value=advFilter.costMin??0;
+    maxSlider.value=advFilter.costMax??10;
+    const lo=parseInt(minSlider.value), hi=parseInt(maxSlider.value);
+    document.getElementById('advCostFill').style.left=(lo/10*100)+'%';
+    document.getElementById('advCostFill').style.width=((hi-lo)/10*100)+'%';
+    const lbl=document.getElementById('advCostLabel');
+    lbl.textContent=(lo===0&&hi===10)?'全て':(lo===hi?lo+'コスト':lo+'〜'+hi+'コスト');
+
+    // インクウェル・シンボル
+    document.getElementById('advInkwellBtns').querySelectorAll('button').forEach(btn=>{
+      const val=btn.dataset.val;
+      const active=(val==='yes'&&advFilter.inkwell===true)||(val==='no'&&advFilter.inkwell===false);
+      btn.style.borderColor=active?'var(--accent)':'var(--border)';
+      btn.style.background=active?'rgba(124,109,250,0.2)':'var(--surface2)';
+      btn.style.color=active?'var(--accent)':'var(--text2)';
+      btn.onclick=()=>{
+        const newVal=val==='yes'?true:false;
+        advFilter.inkwell=(advFilter.inkwell===newVal)?null:newVal;
+        buildAdvUI();
+      };
     });
 
     // テキスト
@@ -1395,14 +1438,9 @@ async function loadData(){
     ti.value=advFilter.textQ??'';
     ti.oninput=()=>{ advFilter.textQ=ti.value; document.getElementById('advApply').textContent='結果を表示（'+filteredCards().length+'件）'; };
 
-    // インクウェル
-    document.getElementById('advInkwellCheck').checked=advFilter.inkwellOnly;
-    document.getElementById('advInkwellCheck').onchange=e=>{ advFilter.inkwellOnly=e.target.checked; buildAdvUI(); };
-
     // 結果件数
     document.getElementById('advApply').textContent='結果を表示（'+filteredCards().length+'件）';
   }
-
   document.getElementById('advSearchBtn').addEventListener('click',()=>{
     buildAdvUI();
     document.getElementById('advSearchModal').classList.add('open');
@@ -1416,7 +1454,7 @@ async function loadData(){
     renderCardGrid();
   });
   document.getElementById('advReset').addEventListener('click',()=>{
-    advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,inkwellOnly:false,textQ:''};
+    advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,inkwell:null,textQ:''};
     buildAdvUI();
   });
   // ======= /詳細検索 =======
