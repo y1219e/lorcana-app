@@ -466,7 +466,7 @@ const SET_INFO = {
   '8': { month:'2026/02', oldPattern:true, code:'DLCS8', size:'', suffixX:true },
   '9': { month:'2026/02', month2:'2025/12', oldPattern:true, code:'DLCS9', size:'', suffixX:true },
 };
-const IMG_HOST = 'https://disneylorcana.jp/wp-content/uploads/';
+const IMG_HOST = 'https://pub-1ffff5ba3a074d538aa9f3027d3c97dc.r2.dev/';
 const RARITY_CODE = { 'Common':'C','Uncommon':'U','Rare':'R','Super_rare':'S','Legendary':'L','Enchanted':'E','Iconic':'Q','Promo':'P' };
 const INK_CODE    = { 'Amber':'A','Amethyst':'M','Emerald':'E','Ruby':'R','Sapphire':'S','Steel':'T' };
 const TYPE_CODE   = { 'Character':'C','Action':'A','Item':'I','Location':'L' };
@@ -811,70 +811,11 @@ function getInkCode(card, info) {
 }
 
 function buildImageUrls(card){
-  const setCode = card.set?.code ?? '1';
-  const info = SET_INFO[setCode];
-  if(!info) return [''];
-
-  const num = padNum(card.collector_number);
-  const base = IMG_HOST + info.month + '/';
-
-  // 例外マップ
-  const exKey = `${setCode}_${card.collector_number}`;
-  if(EXCEPTION_IMG[exKey]) {
-    // 9弾はSET9_MONTH2で正確なフォルダを確定（1本）、それ以外は従来通り
-    if(info.month2) {
-      const num9 = String(card.collector_number);
-      const exBase = SET9_MONTH2.has(num9) ? IMG_HOST + info.month2 + '/' : base;
-      return [exBase + EXCEPTION_IMG[exKey]];
-    }
-    const base2 = info.month2 ? IMG_HOST + info.month2 + '/' : null;
-    const urls = [base + EXCEPTION_IMG[exKey]];
-    if(base2) urls.push(base2 + EXCEPTION_IMG[exKey]);
-    return urls;
+  if(card.card_file) {
+    return [IMG_HOST + card.card_file + '.png'];
   }
-
-  if(info.newPattern){
-    return [`${base}${info.slug}_ja_${num}.webp`];
-  }
-
-  const rarity  = RARITY_CODE[card.rarity] ?? 'C';
-  const inkC    = getInkCode(card, info);
-  const typeC   = TYPE_CODE[card.type?.[0]] ?? 'C';
-  const prefix  = (info.dualInk || info.suffixX)
-    ? `${num}_${info.code}_${rarity}${typeC}${inkC}`
-    : `${num}_${info.code}_${rarity}${inkC}${typeC}`;
-  const nameS   = slug(card.name);
-  const verS    = slug(card.version);
-
-  if(info.size) {
-    if(card.type?.includes('Character') && verS){
-      return [
-        `${base}${prefix}_${nameS}_${verS}_JA-${info.size}.webp`,
-        `${base}${prefix}_${nameS}_${verS}_JA.webp`,
-      ];
-    } else {
-      return [
-        `${base}${prefix}_${nameS}_JA.webp`,
-        `${base}${prefix}_${nameS}_JA-${info.size}.webp`,
-      ];
-    }
-  }
-
-  // 9弾: カード番号で正確にフォルダを振り分けて1本に確定
-  const num9 = String(card.collector_number);
-  const effectiveBase = info.month2
-    ? (SET9_MONTH2.has(num9) ? IMG_HOST + info.month2 + '/' : base)
-    : base;
-
-  const urls = [];
-  if(card.type?.includes('Character') && verS){
-    urls.push(`${effectiveBase}${prefix}_${nameS}_${verS}_JA.webp`);
-  } else {
-    urls.push(`${effectiveBase}${prefix}_${nameS}_JA.webp`);
-  }
-  return urls;
+  return [''];
 }
-
 function makeImg(card, deckStyle){
   const urls = buildImageUrls(card);
   const img = document.createElement('img');
@@ -1464,33 +1405,52 @@ async function loadData(){
     return;
   }
 
-  // キャッシュなし or 期限切れ → API取得
+  // キャッシュなし or 期限切れ → R2からJSON取得
   cInfo.textContent = cached ? '2ヶ月経過のため再取得中…' : '';
   try {
-    prog.textContent = 'セット情報を取得中…';
-    const sRes  = await fetch('https://api.lorcast.com/v0/sets');
-    const sData = await sRes.json();
-    sets = (sData.results ?? []).filter(s => SET_INFO[s.code]);
+    prog.textContent = 'カードデータを取得中…';
+    const res = await fetch('https://pub-1ffff5ba3a074d538aa9f3027d3c97dc.r2.dev/takaratomy_cards.json');
+    const data = await res.json();
+    const rawCards = Array.isArray(data) ? data : (data.cards ?? []);
 
-    prog.textContent = `全${sets.length}弾を並列取得中…`;
-
-    // ★ 並列fetch（80msウェイトなし）
-    const results = await Promise.allSettled(
-      sets.map(s => fetch(`https://api.lorcast.com/v0/sets/${s.code}/cards`).then(r => r.json()))
+    // sets を sets_order から生成
+    const setMap = {};
+    rawCards.forEach(c => {
+      const order = c.sets_order ?? 0;
+      const code  = String(Math.round(order / 100));
+      if(!setMap[code]) setMap[code] = { code, name: c.sets ?? `第${code}弾` };
+    });
+    sets = Object.values(setMap).sort((a,b) =>
+      a.code.localeCompare(b.code, undefined, {numeric:true})
     );
 
-    allCards = [];
-    results.forEach((result, i) => {
-      if(result.status !== 'fulfilled') { console.warn(`Set ${sets[i].code} fetch failed`); return; }
-      const s = sets[i];
-      const cards = Array.isArray(result.value) ? result.value : [];
-      const filtered = cards.filter(c => {
-        const key = `${s.code}_${c.collector_number}`;
-        if(SKIP_CARDS.has(key)) return false;
-        if(s.code === '9' && !SET9_JA.has(c.collector_number)) return false;
-        return true;
-      });
-      allCards.push(...filtered);
+    // takaratomy フィールド → アプリ内フォーマットに変換
+    allCards = rawCards.map(c => {
+      const order  = c.sets_order ?? 0;
+      const code   = String(Math.round(order / 100));
+      const inkParts = (c.ink_color ?? '').split('/').map(s => s.trim()).filter(Boolean);
+      return {
+        id:               `tt_${code}_${c.collector_number}`,
+        name:             c.card_name   ?? '',
+        version:          c.version     ?? '',
+        type:             c.card_type   ? [c.card_type] : [],
+        rarity:           c.rarity      ?? '',
+        ink:              inkParts[0]   ?? '',
+        inks:             inkParts.length > 0 ? inkParts : [],
+        cost:             c.ink_cost    != null ? Number(c.ink_cost)   : null,
+        strength:         c.strength    != null ? Number(c.strength)   : null,
+        willpower:        c.willpower   != null ? Number(c.willpower)  : null,
+        lore:             c.lore_value  != null ? Number(c.lore_value) : null,
+        move_cost:        null,
+        inkwell:          c.inkwell === 'y',
+        text:             [c.rules_text, c.flavor_text].filter(Boolean).join('\n'),
+        classifications:  c.classifications ?? [],
+        keywords:         (c.abilities   ?? []).map(a => (a.name ?? a).toLowerCase()),
+        artist:           c.artist_credit1 ?? '',
+        card_file:        c.card_file   ?? '',
+        collector_number: String(c.collector_number ?? ''),
+        set: { code, name: c.sets ?? `第${code}弾` },
+      };
     });
 
     allCards.sort((a,b)=>{
