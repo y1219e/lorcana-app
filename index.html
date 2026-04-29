@@ -841,18 +841,33 @@ function buildImageUrls(card){
   return urls;
 }
 
-function makeImg(card){
+function makeImg(card, deckStyle){
   const urls = buildImageUrls(card);
-  const img  = document.createElement('img');
-  img.src = urls[0]; img.alt = card.name; img.loading = 'lazy';
-  img.style.background = 'var(--surface2)';
-  let i = 0;
-  img.onerror = () => {
-    i++;
-    if(i < urls.length) { img.style.opacity='0'; img.src = urls[i]; img.onload=()=>{ img.style.opacity='1'; img.style.transition='opacity 0.15s'; }; }
-    else { const ph=document.createElement('div'); ph.className='img-placeholder'; ph.textContent=card.name; img.replaceWith(ph); }
-  };
-  return img;
+  const wrapper = document.createElement('div');
+  const ws = deckStyle || 'width:100%;aspect-ratio:429/600;';
+  wrapper.style.cssText = ws + 'background:var(--surface2);flex-shrink:0;';
+
+  function tryLoad(index){
+    if(index >= urls.length){
+      const ph = document.createElement('div');
+      ph.className = 'img-placeholder';
+      ph.textContent = card.name;
+      wrapper.replaceWith(ph);
+      return;
+    }
+    const probe = new Image();
+    probe.onload = () => {
+      const img = document.createElement('img');
+      img.src = urls[index];
+      img.alt = card.name;
+      img.style.cssText = (deckStyle || 'width:100%;aspect-ratio:429/600;') + 'object-fit:cover;display:block;border-radius:inherit;';
+      wrapper.replaceWith(img);
+    };
+    probe.onerror = () => tryLoad(index + 1);
+    probe.src = urls[index];
+  }
+  tryLoad(0);
+  return wrapper;
 }
 
 // ═══════════════════════════════════════════
@@ -1254,9 +1269,7 @@ function renderDeckEditor(){
   entries.forEach(([cardId,count])=>{
     const card=allCards.find(c=>c.id===cardId); if(!card) return;
     const row=document.createElement('div'); row.className='deck-card-row';
-    const rowImg=makeImg(card); rowImg.style.cssText='width:36px;height:50px;object-fit:cover;border-radius:4px;flex-shrink:0;'; row.appendChild(rowImg);
-    const di=document.createElement('div'); di.className='dc-info';
-    di.innerHTML=`<div class="dc-name">${card.name}</div><div class="dc-sub">${card.version??''} · ${(card.inks??[card.ink]).join('/')}</div>`;
+    const rowImg=makeImg(card,'width:36px;height:50px;border-radius:4px;flex-shrink:0;'); row.appendChild(rowImg);
     row.appendChild(di);
     const db2=document.createElement('div'); db2.className='dc-btns';
     db2.innerHTML=`<button class="dc-btn rem" style="background:#e74c3c;color:#fff;">－</button><span class="dc-count">${count}</span><button class="dc-btn add" style="background:#7c6dfa;color:#fff;">＋</button>`;
@@ -1285,7 +1298,7 @@ function renderEditorCardList(){
     const newInks=[...new Set([...inks,...cardInks])];
     const canAdd=total<60&&count<4&&newInks.length<=2;
     const row=document.createElement('div'); row.className='deck-card-row';
-    const rowImg=makeImg(card); rowImg.style.cssText='width:36px;height:50px;object-fit:cover;border-radius:4px;flex-shrink:0;'; row.appendChild(rowImg);
+    const rowImg=makeImg(card,'width:36px;height:50px;border-radius:4px;flex-shrink:0;'); row.appendChild(rowImg);
     const di=document.createElement('div'); di.className='dc-info';
     const dn=document.createElement('div'); dn.className='dc-name';
     dn.textContent=card.name;
