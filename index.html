@@ -892,18 +892,20 @@ function filteredCards(){
     if(searchQ){ const q=searchQ.toLowerCase(); if(!(c.name?.toLowerCase().includes(q)||c.version?.toLowerCase().includes(q))) return false; }
     if(advFilter.rarities.size>0 && !advFilter.rarities.has(c.rarity)) return false;
     // タイプフィルター
+    // action_song = card_type が アクション かつ classifications に「歌」を含む
     if(advFilter.types.size>0){
-      const isSong = (c.type??[]).includes('Action') && (c.type??[]).includes('Song');
+      const isAction = (c.type??[]).includes('アクション');
+      const isSong   = isAction && (c.classifications??[]).includes('歌');
       let matched = false;
       for(const t of advFilter.types){
-        if(t==='action_song' && isSong){ matched=true; break; }
-        if(t==='Action' && (c.type??[]).includes('Action') && !isSong){ matched=true; break; }
-        if(t!=='action_song' && t!=='Action' && (c.type??[]).includes(t)){ matched=true; break; }
+        if(t==='action_song'  && isSong)                              { matched=true; break; }
+        if(t==='アクション'   && isAction && !isSong)                 { matched=true; break; }
+        if(t!=='action_song'  && t!=='アクション' && (c.type??[]).includes(t)){ matched=true; break; }
       }
       if(!matched) return false;
     }
     if(advFilter.classifications.size>0 && !(c.classifications??[]).some(t=>advFilter.classifications.has(t))) return false;
-    if(advFilter.keywords.size>0 && !(c.keywords??[]).some(k=>advFilter.keywords.has(k.toLowerCase()))) return false;
+    if(advFilter.keywords.size>0 && !(c.keywords??[]).some(k=>advFilter.keywords.has(k))) return false;
     if(advFilter.inkType==='single' && (c.inks??[c.ink]).filter(Boolean).length!==1) return false;
     if(advFilter.inkType==='dual' && (c.inks??[c.ink]).filter(Boolean).length<2) return false;
     if(advFilter.inks.size>0){ const ci=c.inks??(c.ink?[c.ink]:[]); if(!ci.some(i=>advFilter.inks.has(i))) return false; }
@@ -1454,17 +1456,26 @@ async function loadData(){
       'スーパーレア':'Super_rare','レジェンダリー':'Legendary',
       'エンチャンテッド':'Enchanted','エピック':'Epic','アイコニック':'Iconic','プロモ':'Promo'
     };
+    // rules_text の <XXX> からキーワード能力を抽出する正規表現
+    function extractKeywords(rulesText) {
+      if(!rulesText) return [];
+      const matches = rulesText.match(/<([^>]+)>/g) ?? [];
+      return [...new Set(matches.map(m => m.slice(1,-1).trim()))];
+    }
     allCards = rawCards.map(c => {
       const order  = c.sets_order ?? 0;
       const code   = String(Math.round(order / 100));
       const rawInks = [c.ink_color, c.ink_color2].filter(Boolean);
       const inkParts = rawInks.map(i => INK_JA_TO_EN[i] ?? i);
       const rarity = RARITY_JA_TO_EN[c.rarity] ?? c.rarity ?? '';
+      const typeJA = c.card_type ?? ''; // 日本語のまま保持
+      // classificationは日本語のまま保持（APIが日本語で返すため）
+      const classifications = c.classifications ?? [];
       return {
         id:               `tt_${code}_${c.collector_number}`,
         name:             c.card_name   ?? '',
         version:          c.version     ?? '',
-        type:             c.card_type   ? [c.card_type] : [],
+        type:             typeJA ? [typeJA] : [],
         rarity:           rarity,
         ink:              inkParts[0]   ?? '',
         inks:             inkParts.length > 0 ? inkParts : [],
@@ -1472,11 +1483,11 @@ async function loadData(){
         strength:         c.strength    != null ? Number(c.strength)   : null,
         willpower:        c.willpower   != null ? Number(c.willpower)  : null,
         lore:             c.lore_value  != null ? Number(c.lore_value) : null,
-        move_cost:        c.move_cost != null ? Number(c.move_cost) : (c.loc_move_cost != null ? Number(c.loc_move_cost) : null),
+        move_cost:        c.move_cost   != null ? Number(c.move_cost)  : null,
         inkwell:          c.inkwell === 'y',
         text:             [c.rules_text, c.flavor_text].filter(Boolean).join('\n'),
-        classifications:  c.classifications ?? [],
-        keywords:         (c.abilities   ?? []).map(a => (a.name ?? a).toLowerCase()),
+        classifications:  classifications,
+        keywords:         extractKeywords(c.rules_text),
         artist:           c.artist_credit1 ?? '',
         card_file:        c.card_file   ?? '',
         collector_number: String(c.collector_number ?? ''),
@@ -1599,25 +1610,36 @@ async function loadData(){
     const tGrid=document.getElementById('advTypeGrid');
     tGrid.innerHTML='';
     {
-      const TYPE_JA={Character:'キャラクター',Action:'アクション・歌以外',action_song:'アクション・歌',Item:'アイテム',Location:'ロケーション'};
-      ['Character','Action','action_song','Item','Location'].forEach(t=>{
+      const TYPE_BTNS=[
+        {key:'キャラクター', label:'キャラクター'},
+        {key:'アクション',   label:'アクション・歌以外'},
+        {key:'action_song',  label:'アクション・歌'},
+        {key:'アイテム',     label:'アイテム'},
+        {key:'ロケーション', label:'ロケーション'},
+      ];
+      TYPE_BTNS.forEach(({key,label})=>{
         const btn=document.createElement('button');
-        btn.textContent=TYPE_JA[t];
-        btn.dataset.key=t;
-        const active=advFilter.types.has(t);
+        btn.textContent=label;
+        btn.dataset.key=key;
+        const active=advFilter.types.has(key);
         btn.style.cssText='padding:5px 12px;border-radius:14px;border:1px solid '+(active?'var(--accent)':'var(--border)')+';background:'+(active?'rgba(124,109,250,0.2)':'var(--surface2)')+';color:'+(active?'var(--accent)':'var(--text2)')+';font-size:0.78rem;cursor:pointer;';
-        btn.addEventListener('click',()=>{ if(advFilter.types.has(t)) advFilter.types.delete(t); else advFilter.types.add(t); buildAdvUI(); });
+        btn.addEventListener('click',()=>{ if(advFilter.types.has(key)) advFilter.types.delete(key); else advFilter.types.add(key); buildAdvUI(); });
         tGrid.appendChild(btn);
       });
     }
 
-    // 能力（keywords）
-    const KEYWORD_ORDER = ['bodyguard','challenger','evasive','reckless','resist','rush','shift','singer','support','vanish','ward'];
-    const KEYWORD_JA = {bodyguard:'護衛',challenger:'果敢',evasive:'回避',reckless:'暴勇',resist:'耐久',rush:'突進',shift:'変身',singer:'歌声',support:'支援',vanish:'霧消',ward:'魔除'};
+    // 能力（keywords）- rules_textの<XXX>から抽出した日本語キーで管理
+    const KEYWORD_ORDER = ['護衛','果敢','回避','暴勇','耐久','突進','変身','歌声','支援','霧消','魔除','抵抗','強行','突撃','加速'];
     const kwGrid=document.getElementById('advKeywordGrid');
     if(kwGrid){
       kwGrid.innerHTML='';
-      KEYWORD_ORDER.forEach(kw=>{ makeToggleBtn(KEYWORD_JA[kw], advFilter.keywords, kw, kwGrid); });
+      // 実際にカード内に存在するキーワードのみ表示
+      const existingKw = new Set();
+      allCards.forEach(c=>(c.keywords??[]).forEach(k=>existingKw.add(k)));
+      // 指定順で存在するものを先に、残りは追加
+      const orderedKw = KEYWORD_ORDER.filter(k=>existingKw.has(k));
+      const restKw    = [...existingKw].filter(k=>!KEYWORD_ORDER.includes(k)).sort((a,b)=>a.localeCompare(b,'ja'));
+      [...orderedKw,...restKw].forEach(kw=>{ makeToggleBtn(kw, advFilter.keywords, kw, kwGrid); });
     }
     // 能力折りたたみトグル
     const kwToggle=document.getElementById('advKeywordToggle');
@@ -1723,69 +1745,23 @@ async function loadData(){
       btn.onclick=()=>{ advFilter.inkType=(advFilter.inkType===val)?null:val; buildAdvUI(); };
     });
 
-    // クラス（旧クラシフィケーション）
-    const classificationJaMap = {
-      'Storyborn': 'ストーリーボーン',
-      'Dreamborn': 'ドリームボーン',
-      'Floodborn': 'フラッドボーン',
-      'Seven Dwarfs': '7人のこびと',
-      'Illusion': 'イリュージョン',
-      'Villain': 'ヴィランズ',
-      'Alien': 'エイリアン',
-      'Captain': 'キャプテン',
-      'Super': 'スーパー',
-      'Titan': 'タイタン',
-      'Tigger': 'ティガー',
-      'Toy': 'トイ',
-      'Dragon': 'ドラゴン',
-      'Hyena': 'ハイエナ',
-      'Honey': 'ハニー',
-      'Hunny': 'ハニー',
-      'Hero': 'ヒーロー',
-      'Prince': 'プリンス',
-      'Princess': 'プリンセス',
-      'Broom': 'ほうき',
-      'Madrigal': 'マドリガル家',
-      'Monster': 'モンスター',
-      'Racer': 'レーサー',
-      'Robot': 'ロボット',
-      'Ally': '仲間',
-      'Queen': '女王',
-      'Fairy': '妖精',
-      'Puppy': '子犬',
-      'Guide': '導き手',
-      'Mentor': '導き手',
-      'Dinosaur': '恐竜',
-      'Detective': '探偵',
-      'Pirate': '海賊',
-      'King': '王様',
-      'Inventor': '発明家',
-      'Deity': '神格',
-      'Musketeer': '銃士',
-      'Knight': '騎士',
-      'Sorcerer': '魔法使い',
-      'Song': '歌',
-    };
-    // 指定された並び順（添付画像の順）
-    const CLASS_ORDER = [
-      'Storyborn','Dreamborn','Floodborn',
-      'Ally','Broom','Captain','Deity','Detective','Dinosaur','Dragon',
-      'Fairy','Guide','Hero','Hyena','Illusion','Inventor','King','Knight',
-      'Madrigal','Mentor','Monster','Musketeer','Pirate','Prince','Princess',
-      'Puppy','Queen','Racer','Robot','Seven Dwarfs','Song','Sorcerer',
-      'Super','Tigger','Titan','Toy','Villain',
+    // クラス（APIが日本語で返すのでキーも日本語）
+    const CLASS_ORDER_JA = [
+      'ストーリーボーン','ドリームボーン','フラッドボーン',
+      '仲間','ほうき','キャプテン','神格','探偵','恐竜','ドラゴン',
+      '妖精','導き手','ヒーロー','ハイエナ','イリュージョン','発明家','王様','騎士',
+      'マドリガル家','モンスター','銃士','海賊','プリンス','プリンセス',
+      '子犬','女王','レーサー','ロボット','7人のこびと','歌','魔法使い',
+      'スーパー','ティガー','タイタン','トイ','ヴィランズ',
     ];
     const classGrid=document.getElementById('advClassGrid');
     if(classGrid){
       classGrid.innerHTML='';
       const existingClass=new Set();
       allCards.forEach(c=>(c.classifications??[]).forEach(cl=>existingClass.add(cl)));
-      const ordered = CLASS_ORDER.filter(cl=>existingClass.has(cl));
-      const rest = [...existingClass].filter(cl=>!CLASS_ORDER.includes(cl)).sort((a,b)=>a.localeCompare(b,'ja'));
-      [...ordered,...rest].forEach(cl=>{
-        const label=classificationJaMap[cl]||cl;
-        makeToggleBtn(label, advFilter.classifications, cl, classGrid);
-      });
+      const ordered = CLASS_ORDER_JA.filter(cl=>existingClass.has(cl));
+      const rest    = [...existingClass].filter(cl=>!CLASS_ORDER_JA.includes(cl)).sort((a,b)=>a.localeCompare(b,'ja'));
+      [...ordered,...rest].forEach(cl=>{ makeToggleBtn(cl, advFilter.classifications, cl, classGrid); });
     }
     // 折りたたみトグル（初回のみイベント登録）
     const classToggle=document.getElementById('advClassToggle');
