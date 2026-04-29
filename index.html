@@ -129,14 +129,14 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 @keyframes spin { to { transform: rotate(360deg); } }
 #loadProgress { font-size: 0.85rem; color: var(–text2); }
 #cacheInfo { font-size: 0.72rem; color: #555; margin-top: 4px; }
-#prefetchBar { display:none; position:fixed; bottom:58px; left:0; right:0; z-index:99; background:var(--surface); border-top:1px solid var(--border); padding:4px 12px; font-size:0.68rem; color:var(--text2); }
-#prefetchBarInner { height:3px; background:var(--accent); border-radius:2px; margin-top:3px; transition:width 0.3s; width:0%; }
+#prefetchBar { display:none; position:fixed; bottom:58px; left:0; right:0; z-index:99; background:var(–surface); border-top:1px solid var(–border); padding:4px 12px; font-size:0.68rem; color:var(–text2); }
+#prefetchBarInner { height:3px; background:var(–accent,#7c6dfa); border-radius:2px; margin-top:3px; transition:width 0.3s; width:0%; }
 </style>
 
 </head>
 <body>
 <div id="loadingOverlay"><div class="spinner"></div><div id="loadProgress">読み込み中…</div><div id="cacheInfo"></div></div>
-<div id="prefetchBar"><span id="prefetchLabel">画像をキャッシュ中…</span><div id="prefetchBarInner"></div></div>
+<div id="prefetchBar"><span id="prefetchLabel"></span><div id="prefetchBarInner"></div></div>
 <div class="modal-overlay" id="cardModal">
   <div class="modal">
     <!-- スライドナビ -->
@@ -417,122 +417,46 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 // Service Worker をBlobで登録（画像キャッシュ）
 // ═══════════════════════════════════════════
 // ═══════════════════════════════════════════
-// 画像キャッシュ（IndexedDB images ストア）
+// 画像プリフェッチ＆キャッシュ（Cache API）
 // ═══════════════════════════════════════════
-// IDB上に画像Blobを保存し、ObjectURLで即時表示する。
-// アプリ起動時にallCards確定後、バックグラウンドで全枚数プリフェッチする。
-
-const IMG_DB_NAME = 'lorcana-images';
-const IMG_DB_VER  = 1;
-const IMG_STORE   = 'blobs';
-let imgDb = null;
-
-function openImgDb() {
-  if (imgDb) return Promise.resolve(imgDb);
-  return new Promise((res, rej) => {
-    const req = indexedDB.open(IMG_DB_NAME, IMG_DB_VER);
-    req.onupgradeneeded = e => {
-      e.target.result.createObjectStore(IMG_STORE); // key = card_file
-    };
-    req.onsuccess = e => { imgDb = e.target.result; res(imgDb); };
-    req.onerror   = () => rej(req.error);
-  });
-}
-
-function imgDbGet(key) {
-  return new Promise((res, rej) => {
-    const tx = imgDb.transaction(IMG_STORE, 'readonly');
-    const req = tx.objectStore(IMG_STORE).get(key);
-    req.onsuccess = () => res(req.result ?? null);
-    req.onerror   = () => rej(req.error);
-  });
-}
-
-function imgDbPut(key, blob) {
-  return new Promise((res, rej) => {
-    const tx = imgDb.transaction(IMG_STORE, 'readwrite');
-    const req = tx.objectStore(IMG_STORE).put(blob, key);
-    req.onsuccess = () => res();
-    req.onerror   = () => rej(req.error);
-  });
-}
-
-function imgDbHas(key) {
-  return new Promise((res, rej) => {
-    const tx = imgDb.transaction(IMG_STORE, 'readonly');
-    const req = tx.objectStore(IMG_STORE).getKey(key);
-    req.onsuccess = () => res(req.result != null);
-    req.onerror   = () => rej(req.error);
-  });
-}
-
-// key = card_file 文字列 → ObjectURL（キャッシュ済みなら即座、未キャッシュはfetchして保存）
-const objectUrlCache = new Map(); // メモリ内ObjectURLキャッシュ
-async function getImgObjectUrl(cardFile) {
-  if (objectUrlCache.has(cardFile)) return objectUrlCache.get(cardFile);
-  const blob = await imgDbGet(cardFile);
-  if (blob) {
-    const url = URL.createObjectURL(blob);
-    objectUrlCache.set(cardFile, url);
-    return url;
-  }
-  return null; // キャッシュなし
-}
-
-// バックグラウンドプリフェッチ
-const PREFETCH_CONCURRENCY = 6; // 同時並列数
-let prefetchDone = false;
+const IMG_CACHE_NAME = 'lorcana-img-v6';
+const PREFETCH_CONCURRENCY = 8;
 
 async function prefetchAllImages(cards, onProgress) {
-  await openImgDb();
-  const IMG_HOST = 'https://pub-1ffff5ba3a074d538aa9f3027d3c97dc.r2.dev/';
-  const urls = cards
+  if (!('caches' in window)) return; // 非対応ブラウザはスキップ
+  const cache = await caches.open(IMG_CACHE_NAME);
+  const IMG_HOST_PF = 'https://pub-1ffff5ba3a074d538aa9f3027d3c97dc.r2.dev/';
+
+  // 全カードのURLリスト
+  const items = cards
     .filter(c => c.card_file)
-    .map(c => ({ key: c.card_file, url: IMG_HOST + c.card_file + '.png' }));
+    .map(c => IMG_HOST_PF + c.card_file + '.png');
 
-  let done = 0;
-  const total = urls.length;
-
-  // すでにキャッシュ済みのものはスキップ
+  // キャッシュ済みをスキップ
   const todo = [];
-  for (const item of urls) {
-    const has = await imgDbHas(item.key);
-    if (!has) todo.push(item);
-    else done++;
+  let done = 0;
+  for (const url of items) {
+    const hit = await cache.match(url);
+    if (hit) done++;
+    else todo.push(url);
   }
-  onProgress(done, total);
+  onProgress(done, items.length);
+  if (todo.length === 0) return;
 
-  if (todo.length === 0) { prefetchDone = true; return; }
-
-  // 並列フェッチキュー
+  // 並列ワーカー
   let idx = 0;
   async function worker() {
     while (idx < todo.length) {
-      const item = todo[idx++];
+      const url = todo[idx++];
       try {
-        const res = await fetch(item.url);
-        if (res.ok) {
-          const blob = await res.blob();
-          await imgDbPut(item.key, blob);
-          // ObjectURLキャッシュも更新
-          if (!objectUrlCache.has(item.key)) {
-            objectUrlCache.set(item.key, URL.createObjectURL(blob));
-          }
-          // グリッド上の未ロード img を即差し替え
-          const pending = document.querySelectorAll(`img[data-file="${item.key}"]`);
-          pending.forEach(img => {
-            img.src = objectUrlCache.get(item.key);
-            img.removeAttribute('data-file');
-          });
-        }
-      } catch(e) { /* ネットワークエラーは無視 */ }
+        const res = await fetch(url, { mode: 'cors' });
+        if (res.ok) await cache.put(url, res);
+      } catch(e) {}
       done++;
-      onProgress(done, total);
+      onProgress(done, items.length);
     }
   }
-  const workers = Array.from({ length: PREFETCH_CONCURRENCY }, worker);
-  await Promise.all(workers);
-  prefetchDone = true;
+  await Promise.all(Array.from({ length: PREFETCH_CONCURRENCY }, worker));
 }
 
 // ═══════════════════════════════════════════
@@ -895,42 +819,23 @@ function buildImageUrls(card){
   }
   return [''];
 }
-// ═══════════════════════════════════════════
-// 画像表示（IDBキャッシュ優先）
-// ═══════════════════════════════════════════
-// IDBにあれば ObjectURL で即表示。
-// なければ data-file 属性をつけてプレースホルダー表示し、
-// プリフェッチが完了したタイミングで差し替える。
-async function setImgSrc(img, cardFile) {
-  const objUrl = await getImgObjectUrl(cardFile);
-  if (objUrl) {
-    img.src = objUrl;
-  } else {
-    // まだキャッシュなし → data-file を付けてプリフェッチ待ち
-    img.dataset.file = cardFile;
-    img.src = '';
-    // フォールバック: 直接fetchも試みる（プリフェッチより先に表示される場合がある）
-    const IMG_HOST = 'https://pub-1ffff5ba3a074d538aa9f3027d3c97dc.r2.dev/';
-    fetch(IMG_HOST + cardFile + '.png')
-      .then(r => r.ok ? r.blob() : null)
-      .then(async blob => {
-        if (!blob) return;
-        await imgDbPut(cardFile, blob);
-        if (!objectUrlCache.has(cardFile)) {
-          objectUrlCache.set(cardFile, URL.createObjectURL(blob));
-        }
-        // このimgがまだDOMにあれば即差し替え
-        if (img.dataset.file === cardFile) {
-          img.src = objectUrlCache.get(cardFile);
-          img.removeAttribute('data-file');
-        }
-        // グリッド上の同カード分も差し替え
-        document.querySelectorAll(`img[data-file="${cardFile}"]`).forEach(el => {
-          el.src = objectUrlCache.get(cardFile);
-          el.removeAttribute('data-file');
-        });
-      }).catch(() => {});
+// メモリキャッシュ（ObjectURL）
+const _imgUrlCache = new Map();
+
+async function resolveImgSrc(url) {
+  if (_imgUrlCache.has(url)) return _imgUrlCache.get(url);
+  if ('caches' in window) {
+    const cache = await caches.open(IMG_CACHE_NAME);
+    const hit = await cache.match(url);
+    if (hit) {
+      const blob = await hit.blob();
+      const objUrl = URL.createObjectURL(blob);
+      _imgUrlCache.set(url, objUrl);
+      return objUrl;
+    }
   }
+  // キャッシュなし → 通常URLで表示（ブラウザが取得）
+  return url;
 }
 
 function makeImg(card, deckStyle){
@@ -939,7 +844,8 @@ function makeImg(card, deckStyle){
   if(deckStyle) img.style.cssText = deckStyle + 'object-fit:cover;display:block;';
   img.onerror = () => { const ph=document.createElement('div'); ph.className='img-placeholder'; ph.textContent=card.name; img.replaceWith(ph); };
   if(card.card_file) {
-    setImgSrc(img, card.card_file);
+    const url = IMG_HOST + card.card_file + '.png';
+    resolveImgSrc(url).then(src => { img.src = src; });
   }
   return img;
 }
@@ -985,24 +891,16 @@ function filteredCards(){
     }
     if(searchQ){ const q=searchQ.toLowerCase(); if(!(c.name?.toLowerCase().includes(q)||c.version?.toLowerCase().includes(q))) return false; }
     if(advFilter.rarities.size>0 && !advFilter.rarities.has(c.rarity)) return false;
-    // タイプフィルター: 'action_song'=アクション・歌(type=['Action','Song']), 'Action'=アクション・歌以外(Actionのみ)
+    // タイプフィルター
     if(advFilter.types.size>0){
       const isSong = (c.type??[]).includes('Action') && (c.type??[]).includes('Song');
-      if(advFilter.types.has('action_song') && !isSong) return false;
-      if(!advFilter.types.has('action_song')){
-        const typeCheck = [...advFilter.types].filter(t=>t!=='action_song');
-        if(typeCheck.length>0){
-          if(typeCheck.includes('Action')){
-            // アクション・歌以外：Actionだが歌でないもの
-            const otherTypes = typeCheck.filter(t=>t!=='Action');
-            const matchAction = (c.type??[]).includes('Action') && !isSong;
-            const matchOther = (c.type??[]).some(t=>otherTypes.includes(t));
-            if(!matchAction && !matchOther) return false;
-          } else {
-            if(!(c.type??[]).some(t=>typeCheck.includes(t))) return false;
-          }
-        }
+      let matched = false;
+      for(const t of advFilter.types){
+        if(t==='action_song' && isSong){ matched=true; break; }
+        if(t==='Action' && (c.type??[]).includes('Action') && !isSong){ matched=true; break; }
+        if(t!=='action_song' && t!=='Action' && (c.type??[]).includes(t)){ matched=true; break; }
       }
+      if(!matched) return false;
     }
     if(advFilter.classifications.size>0 && !(c.classifications??[]).some(t=>advFilter.classifications.has(t))) return false;
     if(advFilter.keywords.size>0 && !(c.keywords??[]).some(k=>advFilter.keywords.has(k.toLowerCase()))) return false;
@@ -1012,12 +910,12 @@ function filteredCards(){
     if(advFilter.sets.size>0 && !advFilter.sets.has(c.set?.code)) return false;
     if(advFilter.costMin!==null && (c.cost??0)<advFilter.costMin) return false;
     if(advFilter.costMax!==null && (c.cost??0)>advFilter.costMax) return false;
-    if(advFilter.strMin!==null && (c.strength??0)<advFilter.strMin) return false;
-    if(advFilter.strMax!==null && (c.strength??0)>advFilter.strMax) return false;
-    if(advFilter.wpMin!==null && (c.willpower??0)<advFilter.wpMin) return false;
-    if(advFilter.wpMax!==null && (c.willpower??0)>advFilter.wpMax) return false;
-    if(advFilter.loreMin!==null && (c.lore??0)<advFilter.loreMin) return false;
-    if(advFilter.loreMax!==null && (c.lore??0)>advFilter.loreMax) return false;
+    if(advFilter.strMin!==null && (c.strength==null || c.strength<advFilter.strMin)) return false;
+    if(advFilter.strMax!==null && (c.strength==null || c.strength>advFilter.strMax)) return false;
+    if(advFilter.wpMin!==null && (c.willpower==null || c.willpower<advFilter.wpMin)) return false;
+    if(advFilter.wpMax!==null && (c.willpower==null || c.willpower>advFilter.wpMax)) return false;
+    if(advFilter.loreMin!==null && (c.lore==null || c.lore<advFilter.loreMin)) return false;
+    if(advFilter.loreMax!==null && (c.lore==null || c.lore>advFilter.loreMax)) return false;
     if(advFilter.mcMin!==null || advFilter.mcMax!==null){
       if(c.move_cost==null) return false;
       if(advFilter.mcMin!==null && c.move_cost<advFilter.mcMin) return false;
@@ -1116,9 +1014,9 @@ function openCardModal(card){
   mi.onload=()=>{ mi.style.visibility=''; };
   mi.onerror=()=>{ mi.style.visibility=''; };
   if(card.card_file) {
-    setImgSrc(mi, card.card_file);
+    resolveImgSrc(IMG_HOST + card.card_file + '.png').then(src => { mi.src = src; });
   } else {
-    mi.src='';
+    mi.src = '';
   }
   document.getElementById('countValN').textContent=o.normal;
   document.getElementById('countValF').textContent=o.foil;
@@ -1574,7 +1472,7 @@ async function loadData(){
         strength:         c.strength    != null ? Number(c.strength)   : null,
         willpower:        c.willpower   != null ? Number(c.willpower)  : null,
         lore:             c.lore_value  != null ? Number(c.lore_value) : null,
-        move_cost:        null,
+        move_cost:        c.move_cost != null ? Number(c.move_cost) : (c.loc_move_cost != null ? Number(c.loc_move_cost) : null),
         inkwell:          c.inkwell === 'y',
         text:             [c.rules_text, c.flavor_text].filter(Boolean).join('\n'),
         classifications:  c.classifications ?? [],
@@ -1614,23 +1512,24 @@ async function loadData(){
   try { const wRows = await dbGetAll('wishlist'); wishlist = new Set(wRows.map(r=>r.id)); } catch(e) { wishlist = new Set(); }
   decks = await dbGetAll('decks');
   await loadData();
-  await openImgDb(); // 画像IDB初期化
   renderSetFilter();
   renderCardGrid();
 
-  // バックグラウンドで全画像をプリフェッチ
-  const prefetchBar   = document.getElementById('prefetchBar');
-  const prefetchLabel = document.getElementById('prefetchLabel');
-  const prefetchInner = document.getElementById('prefetchBarInner');
-  prefetchBar.style.display = 'block';
-  prefetchAllImages(allCards, (done, total) => {
-    const pct = total > 0 ? Math.round(done / total * 100) : 100;
-    prefetchLabel.textContent = pct < 100
-      ? `画像キャッシュ中… ${done} / ${total}`
-      : '画像キャッシュ完了 ✓';
-    prefetchInner.style.width = pct + '%';
-    if (pct >= 100) setTimeout(() => { prefetchBar.style.display = 'none'; }, 2000);
-  }).catch(() => { prefetchBar.style.display = 'none'; });
+  // バックグラウンドで全画像プリフェッチ
+  if('caches' in window){
+    const bar   = document.getElementById('prefetchBar');
+    const label = document.getElementById('prefetchLabel');
+    const inner = document.getElementById('prefetchBarInner');
+    if(bar){
+      bar.style.display='block';
+      prefetchAllImages(allCards,(done,total)=>{
+        const pct=total>0?Math.round(done/total*100):100;
+        label.textContent=pct<100?`画像キャッシュ中… ${done} / ${total}`:'画像キャッシュ完了 ✓';
+        inner.style.width=pct+'%';
+        if(pct>=100) setTimeout(()=>{ bar.style.display='none'; },2000);
+      }).catch(()=>{ bar.style.display='none'; });
+    }
+  }
 
   // ======= 詳細検索 =======
   const RARITIES = ['Common','Uncommon','Rare','Super_rare','Legendary','Enchanted','Iconic','Epic'];
@@ -1716,19 +1615,9 @@ async function loadData(){
     const KEYWORD_ORDER = ['bodyguard','challenger','evasive','reckless','resist','rush','shift','singer','support','vanish','ward'];
     const KEYWORD_JA = {bodyguard:'護衛',challenger:'果敢',evasive:'回避',reckless:'暴勇',resist:'耐久',rush:'突進',shift:'変身',singer:'歌声',support:'支援',vanish:'霧消',ward:'魔除'};
     const kwGrid=document.getElementById('advKeywordGrid');
-    if(kwGrid && !kwGrid._built){
-      kwGrid._built=true;
-      KEYWORD_ORDER.forEach(kw=>{
-        makeToggleBtn(KEYWORD_JA[kw], advFilter.keywords, kw, kwGrid);
-      });
-    } else if(kwGrid && kwGrid._built){
-      kwGrid.querySelectorAll('button').forEach(btn=>{
-        const kw=btn.dataset.key;
-        const active=advFilter.keywords.has(kw);
-        btn.style.borderColor=active?'var(--accent)':'var(--border)';
-        btn.style.background=active?'rgba(124,109,250,0.2)':'var(--surface2)';
-        btn.style.color=active?'var(--accent)':'var(--text2)';
-      });
+    if(kwGrid){
+      kwGrid.innerHTML='';
+      KEYWORD_ORDER.forEach(kw=>{ makeToggleBtn(KEYWORD_JA[kw], advFilter.keywords, kw, kwGrid); });
     }
     // 能力折りたたみトグル
     const kwToggle=document.getElementById('advKeywordToggle');
@@ -1887,26 +1776,15 @@ async function loadData(){
       'Super','Tigger','Titan','Toy','Villain',
     ];
     const classGrid=document.getElementById('advClassGrid');
-    if(classGrid && !classGrid._built){
-      classGrid._built=true;
-      // allCardsから実際に存在するclassificationsを収集
+    if(classGrid){
+      classGrid.innerHTML='';
       const existingClass=new Set();
       allCards.forEach(c=>(c.classifications??[]).forEach(cl=>existingClass.add(cl)));
-      // 指定順で存在するものだけ表示、残りはアルファベット順で末尾に
       const ordered = CLASS_ORDER.filter(cl=>existingClass.has(cl));
       const rest = [...existingClass].filter(cl=>!CLASS_ORDER.includes(cl)).sort((a,b)=>a.localeCompare(b,'ja'));
       [...ordered,...rest].forEach(cl=>{
         const label=classificationJaMap[cl]||cl;
         makeToggleBtn(label, advFilter.classifications, cl, classGrid);
-      });
-    } else if(classGrid && classGrid._built){
-      // 選択状態だけ更新
-      classGrid.querySelectorAll('button').forEach(btn=>{
-        const cl=btn.dataset.key||btn.textContent;
-        const active=advFilter.classifications.has(cl);
-        btn.style.borderColor=active?'var(--accent)':'var(--border)';
-        btn.style.background=active?'rgba(124,109,250,0.2)':'var(--surface2)';
-        btn.style.color=active?'var(--accent)':'var(--text2)';
       });
     }
     // 折りたたみトグル（初回のみイベント登録）
