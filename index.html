@@ -795,9 +795,15 @@ function buildImageUrls(card){
   const num = padNum(card.collector_number);
   const base = IMG_HOST + info.month + '/';
 
-  // 例外マップ（month2フォールバックあり）
+  // 例外マップ
   const exKey = `${setCode}_${card.collector_number}`;
   if(EXCEPTION_IMG[exKey]) {
+    // 9弾はSET9_MONTH2で正確なフォルダを確定（1本）、それ以外は従来通り
+    if(info.month2) {
+      const num9 = String(card.collector_number);
+      const exBase = SET9_MONTH2.has(num9) ? IMG_HOST + info.month2 + '/' : base;
+      return [exBase + EXCEPTION_IMG[exKey]];
+    }
     const base2 = info.month2 ? IMG_HOST + info.month2 + '/' : null;
     const urls = [base + EXCEPTION_IMG[exKey]];
     if(base2) urls.push(base2 + EXCEPTION_IMG[exKey]);
@@ -999,8 +1005,10 @@ function openCardModal(card){
   const o=getOwned(card.id);
   const urls=buildImageUrls(card);
   const mi=document.getElementById('modalImg');
-  mi.src=urls[0]; let ei=0;
-  mi.onerror=()=>{ ei++; if(ei<urls.length) mi.src=urls[ei]; };
+  mi.style.visibility='hidden';
+  mi.onload=()=>{ mi.style.visibility=''; };
+  mi.onerror=()=>{ mi.style.visibility=''; };
+  mi.src=urls[0];
   document.getElementById('countValN').textContent=o.normal;
   document.getElementById('countValF').textContent=o.foil;
   document.getElementById('countDecN').disabled=o.normal<=0;
