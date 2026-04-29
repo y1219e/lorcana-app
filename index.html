@@ -39,8 +39,8 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, sa
 .view-tab-bar { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); }
 .view-tab { flex: 1; padding: 8px 4px; background: none; border: none; color: var(--text2); font-size: 0.72rem; cursor: pointer; border-bottom: 2px solid transparent; }
 .view-tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: bold; }
-#advCostMin, #advCostMax, #advStrMin, #advStrMax, #advWpMin, #advWpMax, #advLoreMin, #advLoreMax { height:4px; margin:0; outline:none; }
-#advCostMin::-webkit-slider-thumb, #advCostMax::-webkit-slider-thumb, #advStrMin::-webkit-slider-thumb, #advStrMax::-webkit-slider-thumb, #advWpMin::-webkit-slider-thumb, #advWpMax::-webkit-slider-thumb, #advLoreMin::-webkit-slider-thumb, #advLoreMax::-webkit-slider-thumb { -webkit-appearance:none; width:20px; height:20px; border-radius:50%; background:var(--accent); cursor:pointer; pointer-events:auto; border:2px solid #fff; }
+#advCostMin, #advCostMax, #advStrMin, #advStrMax, #advWpMin, #advWpMax, #advLoreMin, #advLoreMax, #advMcMin, #advMcMax { height:4px; margin:0; outline:none; }
+#advCostMin::-webkit-slider-thumb, #advCostMax::-webkit-slider-thumb, #advStrMin::-webkit-slider-thumb, #advStrMax::-webkit-slider-thumb, #advWpMin::-webkit-slider-thumb, #advWpMax::-webkit-slider-thumb, #advLoreMin::-webkit-slider-thumb, #advLoreMax::-webkit-slider-thumb, #advMcMin::-webkit-slider-thumb, #advMcMax::-webkit-slider-thumb { -webkit-appearance:none; width:20px; height:20px; border-radius:50%; background:var(--accent); cursor:pointer; pointer-events:auto; border:2px solid #fff; }
 .search-bar input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 7px 12px; color: var(--text); font-size: 0.85rem; }
 .search-bar input::placeholder { color: var(--text2); }
 .card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 10px; }
@@ -377,6 +377,20 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
             <input id="advLoreMax" type="range" min="0" max="5" value="5" style="position:absolute;width:100%;appearance:none;-webkit-appearance:none;background:transparent;pointer-events:none;z-index:2;">
           </div>
           <span style="font-size:0.75rem;color:var(--text2);width:20px;text-align:center;">5</span>
+        </div>
+      </div>
+      <!-- 移動コスト -->
+      <div style="padding:14px 20px 0;">
+        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">移動コスト <span id="advMcLabel" style="color:var(--accent);">全て</span></div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span style="font-size:0.75rem;color:var(--text2);width:16px;text-align:center;">0</span>
+          <div style="flex:1;position:relative;height:32px;display:flex;align-items:center;">
+            <div style="position:absolute;left:0;right:0;height:4px;background:var(--border);border-radius:2px;"></div>
+            <div id="advMcFill" style="position:absolute;height:4px;background:var(--accent);border-radius:2px;"></div>
+            <input id="advMcMin" type="range" min="0" max="10" value="0" style="position:absolute;width:100%;appearance:none;-webkit-appearance:none;background:transparent;pointer-events:none;z-index:2;">
+            <input id="advMcMax" type="range" min="0" max="10" value="10" style="position:absolute;width:100%;appearance:none;-webkit-appearance:none;background:transparent;pointer-events:none;z-index:2;">
+          </div>
+          <span style="font-size:0.75rem;color:var(--text2);width:20px;text-align:center;">10</span>
         </div>
       </div>
     </div>
@@ -895,7 +909,7 @@ function dbGetAll(store){ return new Promise(r=>{ const tx=db.transaction(store,
 // ═══════════════════════════════════════════
 // アプリ状態
 // ═══════════════════════════════════════════
-let allCards=[],sets=[],collection={},wishlist=new Set(),cardView='all',advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),keywords:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,strMin:null,strMax:null,wpMin:null,wpMax:null,loreMin:null,loreMax:null,inkwell:null,inkType:null,collectionStatus:null,textQ:'',sortOrder:'id_asc'},decks=[],filterSets=new Set(),filterInks=new Set(),searchQ='',currentCard=null,currentDeck=null;
+let allCards=[],sets=[],collection={},wishlist=new Set(),cardView='all',advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),keywords:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,strMin:null,strMax:null,wpMin:null,wpMax:null,loreMin:null,loreMax:null,mcMin:null,mcMax:null,inkwell:null,inkType:null,collectionStatus:null,textQ:'',sortOrder:'id_asc'},decks=[],filterSets=new Set(),filterInks=new Set(),searchQ='',currentCard=null,currentDeck=null;
 
 function filteredCards(){
   return allCards.filter(c=>{
@@ -943,6 +957,8 @@ function filteredCards(){
     if(advFilter.wpMax!==null && (c.willpower??0)>advFilter.wpMax) return false;
     if(advFilter.loreMin!==null && (c.lore??0)<advFilter.loreMin) return false;
     if(advFilter.loreMax!==null && (c.lore??0)>advFilter.loreMax) return false;
+    if(advFilter.mcMin!==null && (c.move_cost??0)<advFilter.mcMin) return false;
+    if(advFilter.mcMax!==null && (c.move_cost??0)>advFilter.mcMax) return false;
     if(advFilter.inkwell===true && !c.inkwell) return false;
     if(advFilter.inkwell===false && c.inkwell) return false;
     if(advFilter.textQ){ const tq=advFilter.textQ.toLowerCase(); if(!(c.text??'').toLowerCase().includes(tq)) return false; }
@@ -1658,6 +1674,7 @@ async function loadData(){
     initRangeSlider('advStrMin','advStrMax','advStrFill','advStrLabel',12,'strMin','strMax','');
     initRangeSlider('advWpMin','advWpMax','advWpFill','advWpLabel',12,'wpMin','wpMax','');
     initRangeSlider('advLoreMin','advLoreMax','advLoreFill','advLoreLabel',5,'loreMin','loreMax','');
+    initRangeSlider('advMcMin','advMcMax','advMcFill','advMcLabel',10,'mcMin','mcMax','');
 
     // インクウェル・シンボル
     document.getElementById('advInkwellBtns').querySelectorAll('button').forEach(btn=>{
@@ -1798,7 +1815,7 @@ async function loadData(){
     renderCardGrid();
   });
   document.getElementById('advReset2').addEventListener('click',()=>{
-    advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),keywords:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,strMin:null,strMax:null,wpMin:null,wpMax:null,loreMin:null,loreMax:null,inkwell:null,inkType:null,collectionStatus:null,textQ:'',sortOrder:'id_asc'};
+    advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),keywords:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,strMin:null,strMax:null,wpMin:null,wpMax:null,loreMin:null,loreMax:null,mcMin:null,mcMax:null,inkwell:null,inkType:null,collectionStatus:null,textQ:'',sortOrder:'id_asc'};
     buildAdvUI();
   });
   document.getElementById('advApply').addEventListener('click',()=>{
