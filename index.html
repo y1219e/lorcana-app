@@ -702,7 +702,7 @@ function makeInkDot(ink) {
 function makeDualInkDot(inks) {
   // inks配列をソートしてキーを作成
   const sorted = [...inks].sort();
-  const key = sorted.join('/');
+  const key = sorted.join('_');
   const src = DUAL_INK_IMG[key] ?? '';
   const span = document.createElement('span');
   span.className = 'ink-dot';
@@ -777,7 +777,7 @@ function makeRarityIcon(rarity) {
 // カードデータキャッシュ（IndexedDB, 2ヶ月TTL）
 // ═══════════════════════════════════════════
 const CARD_CACHE_TTL = 60 * 24 * 60 * 60 * 1000; // 2ヶ月 (ms)
-const CARD_CACHE_KEY = 'card_cache_v1';
+const CARD_CACHE_KEY = 'card_cache_v2';
 
 async function loadCardCache() {
   return new Promise(r => {
@@ -1421,16 +1421,27 @@ async function loadData(){
     );
 
     // takaratomy フィールド → アプリ内フォーマットに変換
+    const INK_JA_TO_EN = {
+      'アンバー':'Amber','アメジスト':'Amethyst','エメラルド':'Emerald',
+      'ルビー':'Ruby','サファイア':'Sapphire','スティール':'Steel'
+    };
+    const RARITY_JA_TO_EN = {
+      'コモン':'Common','アンコモン':'Uncommon','レア':'Rare',
+      'スーパーレア':'Super_rare','レジェンダリー':'Legendary',
+      'エンチャンテッド':'Enchanted','エピック':'Epic','アイコニック':'Iconic','プロモ':'Promo'
+    };
     allCards = rawCards.map(c => {
       const order  = c.sets_order ?? 0;
       const code   = String(Math.round(order / 100));
-      const inkParts = (c.ink_color ?? '').split('/').map(s => s.trim()).filter(Boolean);
+      const rawInks = [c.ink_color, c.ink_color2].filter(Boolean);
+      const inkParts = rawInks.map(i => INK_JA_TO_EN[i] ?? i);
+      const rarity = RARITY_JA_TO_EN[c.rarity] ?? c.rarity ?? '';
       return {
         id:               `tt_${code}_${c.collector_number}`,
         name:             c.card_name   ?? '',
         version:          c.version     ?? '',
         type:             c.card_type   ? [c.card_type] : [],
-        rarity:           c.rarity      ?? '',
+        rarity:           rarity,
         ink:              inkParts[0]   ?? '',
         inks:             inkParts.length > 0 ? inkParts : [],
         cost:             c.ink_cost    != null ? Number(c.ink_cost)   : null,
