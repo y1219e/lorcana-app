@@ -830,44 +830,32 @@ function buildImageUrls(card){
     }
   }
 
+  // 9弾: SET9_JAに含まれる番号は2025/12フォルダ、それ以外は2026/02フォルダ
+  const effectiveBase = (info.month2 && SET9_JA.has(String(card.collector_number)))
+    ? IMG_HOST + info.month2 + '/'
+    : base;
+
   const urls = [];
   if(card.type?.includes('Character') && verS){
-    urls.push(`${base}${prefix}_${nameS}_${verS}_JA.webp`);
-    if(info.month2) urls.push(`${IMG_HOST}${info.month2}/${prefix}_${nameS}_${verS}_JA.webp`);
+    urls.push(`${effectiveBase}${prefix}_${nameS}_${verS}_JA.webp`);
   } else {
-    urls.push(`${base}${prefix}_${nameS}_JA.webp`);
-    if(info.month2) urls.push(`${IMG_HOST}${info.month2}/${prefix}_${nameS}_JA.webp`);
+    urls.push(`${effectiveBase}${prefix}_${nameS}_JA.webp`);
   }
   return urls;
 }
 
 function makeImg(card, deckStyle){
   const urls = buildImageUrls(card);
-  const wrapper = document.createElement('div');
-  const ws = deckStyle || 'width:100%;aspect-ratio:429/600;';
-  wrapper.style.cssText = ws + 'background:var(--surface2);flex-shrink:0;';
-
-  function tryLoad(index){
-    if(index >= urls.length){
-      const ph = document.createElement('div');
-      ph.className = 'img-placeholder';
-      ph.textContent = card.name;
-      wrapper.replaceWith(ph);
-      return;
-    }
-    const probe = new Image();
-    probe.onload = () => {
-      const img = document.createElement('img');
-      img.src = urls[index];
-      img.alt = card.name;
-      img.style.cssText = (deckStyle || 'width:100%;aspect-ratio:429/600;') + 'object-fit:cover;display:block;border-radius:inherit;';
-      wrapper.replaceWith(img);
-    };
-    probe.onerror = () => tryLoad(index + 1);
-    probe.src = urls[index];
-  }
-  tryLoad(0);
-  return wrapper;
+  const img = document.createElement('img');
+  img.src = urls[0]; img.alt = card.name; img.loading = 'lazy';
+  if(deckStyle) img.style.cssText = deckStyle + 'object-fit:cover;display:block;';
+  let i = 0;
+  img.onerror = () => {
+    i++;
+    if(i < urls.length) img.src = urls[i];
+    else { const ph=document.createElement('div'); ph.className='img-placeholder'; ph.textContent=card.name; img.replaceWith(ph); }
+  };
+  return img;
 }
 
 // ═══════════════════════════════════════════
