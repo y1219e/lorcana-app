@@ -993,8 +993,9 @@ function renderCardGrid(){
     const subDiv=document.createElement('div'); subDiv.className='card-sub';
     subDiv.appendChild(document.createTextNode(`${card.set?.code??''}-${card.collector_number}`));
     subDiv.appendChild(document.createTextNode('  '));
+    const RARITY_JA = {Common:'コモン',Uncommon:'アンコモン',Rare:'レア',Super_rare:'スーパーレア',Legendary:'レジェンダリー',Enchanted:'エンチャンテッド',Iconic:'アイコニック',Epic:'エピック',Promo:'プロモ'};
     subDiv.appendChild(makeRarityIcon(card.rarity));
-    subDiv.appendChild(document.createTextNode(' ' + card.rarity));
+    subDiv.appendChild(document.createTextNode(' ' + (RARITY_JA[card.rarity] ?? card.rarity)));
     info.appendChild(nameDiv); info.appendChild(subDiv);
     item.appendChild(info);
     if(total>0){ const o=getOwned(card.id); const b=document.createElement('div'); b.className='own-badge'; b.textContent=o.normal+o.foil; if(o.foil>0) b.classList.add('foil'); item.appendChild(b); }
