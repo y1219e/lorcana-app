@@ -414,8 +414,9 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 // Service Worker をBlobで登録（画像キャッシュ）
 // ═══════════════════════════════════════════
 const SW_CODE = `
-const CACHE_NAME = 'lorcana-img-v3';
-const IMG_ORIGIN = 'https://disneylorcana.jp';
+const CACHE_NAME = 'lorcana-img-v5';
+const IMG_ORIGIN = 'https://pub-1ffff5ba3a074d538aa9f3027d3c97dc.r2.dev';
+const MAX_CACHE_ENTRIES = 500;
 
 self.addEventListener('install', e => self.skipWaiting());
 self.addEventListener('activate', e => {
@@ -426,19 +427,32 @@ self.addEventListener('activate', e => {
   );
 });
 
+async function trimCache(cache) {
+  const keys = await cache.keys();
+  if (keys.length > MAX_CACHE_ENTRIES) {
+    const toDelete = keys.slice(0, keys.length - MAX_CACHE_ENTRIES);
+    await Promise.all(toDelete.map(k => cache.delete(k)));
+  }
+}
+
 self.addEventListener('fetch', e => {
   const url = e.request.url;
-  if (!url.startsWith(IMG_ORIGIN) || !url.endsWith('.webp')) return;
+  if (!url.startsWith(IMG_ORIGIN) || !url.endsWith('.png')) return;
   e.respondWith(
-    caches.open(CACHE_NAME).then(cache =>
-      cache.match(e.request).then(cached => {
-        if (cached) return cached;
-        return fetch(e.request).then(res => {
-          if (res.ok) cache.put(e.request, res.clone());
-          return res;
-        }).catch(() => cached);
-      })
-    )
+    caches.open(CACHE_NAME).then(async cache => {
+      const cached = await cache.match(e.request);
+      if (cached) return cached;
+      try {
+        const res = await fetch(e.request);
+        if (res.ok) {
+          cache.put(e.request, res.clone());
+          trimCache(cache);
+        }
+        return res;
+      } catch (err) {
+        return cached || Promise.reject(err);
+      }
+    })
   );
 });
 `;
