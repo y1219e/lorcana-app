@@ -302,6 +302,14 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
         <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">タイプ</div>
         <div id="advTypeGrid" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
       </div>
+      <!-- 能力（折りたたみ） -->
+      <div style="padding:14px 20px 0;">
+        <button id="advKeywordToggle" style="display:flex;justify-content:space-between;align-items:center;width:100%;background:none;border:none;cursor:pointer;padding:0;">
+          <span style="font-size:0.72rem;color:var(--text2);font-weight:bold;">能力</span>
+          <span id="advKeywordArrow" style="color:var(--text2);font-size:0.85rem;">▼</span>
+        </button>
+        <div id="advKeywordGrid" style="display:none;margin-top:8px;gap:6px;flex-wrap:wrap;"></div>
+      </div>
       <!-- クラス（折りたたみ） -->
       <div style="padding:14px 20px 0;">
         <button id="advClassToggle" style="display:flex;justify-content:space-between;align-items:center;width:100%;background:none;border:none;cursor:pointer;padding:0;">
@@ -887,7 +895,7 @@ function dbGetAll(store){ return new Promise(r=>{ const tx=db.transaction(store,
 // ═══════════════════════════════════════════
 // アプリ状態
 // ═══════════════════════════════════════════
-let allCards=[],sets=[],collection={},wishlist=new Set(),cardView='all',advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,strMin:null,strMax:null,wpMin:null,wpMax:null,loreMin:null,loreMax:null,inkwell:null,inkType:null,collectionStatus:null,textQ:'',sortOrder:'id_asc'},decks=[],filterSets=new Set(),filterInks=new Set(),searchQ='',currentCard=null,currentDeck=null;
+let allCards=[],sets=[],collection={},wishlist=new Set(),cardView='all',advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),keywords:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,strMin:null,strMax:null,wpMin:null,wpMax:null,loreMin:null,loreMax:null,inkwell:null,inkType:null,collectionStatus:null,textQ:'',sortOrder:'id_asc'},decks=[],filterSets=new Set(),filterInks=new Set(),searchQ='',currentCard=null,currentDeck=null;
 
 function filteredCards(){
   return allCards.filter(c=>{
@@ -902,8 +910,27 @@ function filteredCards(){
     }
     if(searchQ){ const q=searchQ.toLowerCase(); if(!(c.name?.toLowerCase().includes(q)||c.version?.toLowerCase().includes(q))) return false; }
     if(advFilter.rarities.size>0 && !advFilter.rarities.has(c.rarity)) return false;
-    if(advFilter.types.size>0 && !(c.type??[]).some(t=>advFilter.types.has(t))) return false;
+    // タイプフィルター: 'action_song'=アクション・歌(type=['Action','Song']), 'Action'=アクション・歌以外(Actionのみ)
+    if(advFilter.types.size>0){
+      const isSong = (c.type??[]).includes('Action') && (c.type??[]).includes('Song');
+      if(advFilter.types.has('action_song') && !isSong) return false;
+      if(!advFilter.types.has('action_song')){
+        const typeCheck = [...advFilter.types].filter(t=>t!=='action_song');
+        if(typeCheck.length>0){
+          if(typeCheck.includes('Action')){
+            // アクション・歌以外：Actionだが歌でないもの
+            const otherTypes = typeCheck.filter(t=>t!=='Action');
+            const matchAction = (c.type??[]).includes('Action') && !isSong;
+            const matchOther = (c.type??[]).some(t=>otherTypes.includes(t));
+            if(!matchAction && !matchOther) return false;
+          } else {
+            if(!(c.type??[]).some(t=>typeCheck.includes(t))) return false;
+          }
+        }
+      }
+    }
     if(advFilter.classifications.size>0 && !(c.classifications??[]).some(t=>advFilter.classifications.has(t))) return false;
+    if(advFilter.keywords.size>0 && !(c.keywords??[]).some(k=>advFilter.keywords.has(k.toLowerCase()))) return false;
     if(advFilter.inkType==='single' && (c.inks??[c.ink]).filter(Boolean).length!==1) return false;
     if(advFilter.inkType==='dual' && (c.inks??[c.ink]).filter(Boolean).length<2) return false;
     if(advFilter.inks.size>0){ const ci=c.inks??(c.ink?[c.ink]:[]); if(!ci.some(i=>advFilter.inks.has(i))) return false; }
@@ -1513,8 +1540,49 @@ async function loadData(){
     // タイプ
     const tGrid=document.getElementById('advTypeGrid');
     tGrid.innerHTML='';
-    {const TYPE_JA={Character:'キャラクター',Action:'アクション',Item:'アイテム',Location:'ロケーション'};
-    ['Character','Action','Item','Location'].forEach(t=>{ makeToggleBtn(TYPE_JA[t], advFilter.types, t, tGrid); });}
+    {
+      const TYPE_JA={Character:'キャラクター',Action:'アクション・歌以外',action_song:'アクション・歌',Item:'アイテム',Location:'ロケーション'};
+      ['Character','Action','action_song','Item','Location'].forEach(t=>{
+        const btn=document.createElement('button');
+        btn.textContent=TYPE_JA[t];
+        btn.dataset.key=t;
+        const active=advFilter.types.has(t);
+        btn.style.cssText='padding:5px 12px;border-radius:14px;border:1px solid '+(active?'var(--accent)':'var(--border)')+';background:'+(active?'rgba(124,109,250,0.2)':'var(--surface2)')+';color:'+(active?'var(--accent)':'var(--text2)')+';font-size:0.78rem;cursor:pointer;';
+        btn.addEventListener('click',()=>{ if(advFilter.types.has(t)) advFilter.types.delete(t); else advFilter.types.add(t); buildAdvUI(); });
+        tGrid.appendChild(btn);
+      });
+    }
+
+    // 能力（keywords）
+    const KEYWORD_ORDER = ['bodyguard','challenger','evasive','reckless','resist','rush','shift','singer','support','vanish','ward'];
+    const KEYWORD_JA = {bodyguard:'護衛',challenger:'果敢',evasive:'回避',reckless:'暴勇',resist:'耐久',rush:'突進',shift:'変身',singer:'歌声',support:'支援',vanish:'霧消',ward:'魔除'};
+    const kwGrid=document.getElementById('advKeywordGrid');
+    if(kwGrid && !kwGrid._built){
+      kwGrid._built=true;
+      KEYWORD_ORDER.forEach(kw=>{
+        makeToggleBtn(KEYWORD_JA[kw], advFilter.keywords, kw, kwGrid);
+      });
+    } else if(kwGrid && kwGrid._built){
+      kwGrid.querySelectorAll('button').forEach(btn=>{
+        const kw=btn.dataset.key;
+        const active=advFilter.keywords.has(kw);
+        btn.style.borderColor=active?'var(--accent)':'var(--border)';
+        btn.style.background=active?'rgba(124,109,250,0.2)':'var(--surface2)';
+        btn.style.color=active?'var(--accent)':'var(--text2)';
+      });
+    }
+    // 能力折りたたみトグル
+    const kwToggle=document.getElementById('advKeywordToggle');
+    if(kwToggle && !kwToggle._init){
+      kwToggle._init=true;
+      kwToggle.addEventListener('click',()=>{
+        const grid=document.getElementById('advKeywordGrid');
+        const arrow=document.getElementById('advKeywordArrow');
+        const isOpen=grid.style.display!=='none'&&grid.style.display!=='';
+        grid.style.display=isOpen?'none':'flex';
+        arrow.textContent=isOpen?'▼':'▲';
+      });
+    }
 
     // コストスライダー
     const minSlider=document.getElementById('advCostMin');
@@ -1649,17 +1717,25 @@ async function loadData(){
       'Sorcerer': '魔法使い',
       'Song': '歌',
     };
+    // 指定された並び順（添付画像の順）
+    const CLASS_ORDER = [
+      'Storyborn','Dreamborn','Floodborn',
+      'Ally','Broom','Captain','Deity','Detective','Dinosaur','Dragon',
+      'Fairy','Guide','Hero','Hyena','Illusion','Inventor','King','Knight',
+      'Madrigal','Mentor','Monster','Musketeer','Pirate','Prince','Princess',
+      'Puppy','Queen','Racer','Robot','Seven Dwarfs','Song','Sorcerer',
+      'Super','Tigger','Titan','Toy','Villain',
+    ];
     const classGrid=document.getElementById('advClassGrid');
     if(classGrid && !classGrid._built){
       classGrid._built=true;
-      // allCardsから全classificationsを収集
-      const allClass=new Set();
-      allCards.forEach(c=>(c.classifications??[]).forEach(cl=>allClass.add(cl)));
-      [...allClass].sort((a,b)=>{
-        const ja_a=classificationJaMap[a]||a;
-        const ja_b=classificationJaMap[b]||b;
-        return ja_a.localeCompare(ja_b,'ja');
-      }).forEach(cl=>{
+      // allCardsから実際に存在するclassificationsを収集
+      const existingClass=new Set();
+      allCards.forEach(c=>(c.classifications??[]).forEach(cl=>existingClass.add(cl)));
+      // 指定順で存在するものだけ表示、残りはアルファベット順で末尾に
+      const ordered = CLASS_ORDER.filter(cl=>existingClass.has(cl));
+      const rest = [...existingClass].filter(cl=>!CLASS_ORDER.includes(cl)).sort((a,b)=>a.localeCompare(b,'ja'));
+      [...ordered,...rest].forEach(cl=>{
         const label=classificationJaMap[cl]||cl;
         makeToggleBtn(label, advFilter.classifications, cl, classGrid);
       });
@@ -1698,7 +1774,7 @@ async function loadData(){
     renderCardGrid();
   });
   document.getElementById('advReset2').addEventListener('click',()=>{
-    advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,strMin:null,strMax:null,wpMin:null,wpMax:null,loreMin:null,loreMax:null,inkwell:null,inkType:null,collectionStatus:null,textQ:'',sortOrder:'id_asc'};
+    advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),keywords:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,strMin:null,strMax:null,wpMin:null,wpMax:null,loreMin:null,loreMax:null,inkwell:null,inkType:null,collectionStatus:null,textQ:'',sortOrder:'id_asc'};
     buildAdvUI();
   });
   document.getElementById('advApply').addEventListener('click',()=>{
