@@ -306,21 +306,15 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
         <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">タイプ</div>
         <div id="advTypeGrid" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
       </div>
-      <!-- 能力（折りたたみ） -->
+      <!-- 能力 -->
       <div style="padding:14px 20px 0;">
-        <button id="advKeywordToggle" style="display:flex;justify-content:space-between;align-items:center;width:100%;background:none;border:none;cursor:pointer;padding:0;">
-          <span style="font-size:0.72rem;color:var(--text2);font-weight:bold;">能力</span>
-          <span id="advKeywordArrow" style="color:var(--text2);font-size:0.85rem;">▼</span>
-        </button>
-        <div id="advKeywordGrid" style="display:none;margin-top:8px;gap:6px;flex-wrap:wrap;"></div>
+        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">能力</div>
+        <div id="advKeywordGrid" style="display:flex;margin-top:8px;gap:6px;flex-wrap:wrap;"></div>
       </div>
-      <!-- クラス（折りたたみ） -->
+      <!-- クラス -->
       <div style="padding:14px 20px 0;">
-        <button id="advClassToggle" style="display:flex;justify-content:space-between;align-items:center;width:100%;background:none;border:none;cursor:pointer;padding:0;">
-          <span style="font-size:0.72rem;color:var(--text2);font-weight:bold;">クラス</span>
-          <span id="advClassArrow" style="color:var(--text2);font-size:0.85rem;">▼</span>
-        </button>
-        <div id="advClassGrid" style="display:none;margin-top:8px;gap:6px;flex-wrap:wrap;"></div>
+        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">クラス</div>
+        <div id="advClassGrid" style="display:flex;margin-top:8px;gap:6px;flex-wrap:wrap;"></div>
       </div>
       <!-- セット -->
       <div style="padding:14px 20px 0;">
@@ -876,7 +870,7 @@ function dbGetAll(store){ return new Promise(r=>{ const tx=db.transaction(store,
 // ═══════════════════════════════════════════
 // アプリ状態
 // ═══════════════════════════════════════════
-let allCards=[],sets=[],collection={},wishlist=new Set(),cardView='all',advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),keywords:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,strMin:null,strMax:null,wpMin:null,wpMax:null,loreMin:null,loreMax:null,mcMin:null,mcMax:null,inkwell:null,inkType:null,collectionStatus:null,textQ:'',sortOrder:'id_asc'},decks=[],filterSets=new Set(),filterInks=new Set(),searchQ='',currentCard=null,currentDeck=null;
+let allCards=[],sets=[],collection={},wishlist=new Set(),cardView='all',advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),keywords:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,strMin:null,strMax:null,wpMin:null,wpMax:null,loreMin:null,loreMax:null,mcMin:null,mcMax:null,mcActive:false,inkwell:null,inkType:null,collectionStatus:null,textQ:'',sortOrder:'id_asc'},decks=[],filterSets=new Set(),filterInks=new Set(),searchQ='',currentCard=null,currentDeck=null;
 
 function filteredCards(){
   return allCards.filter(c=>{
@@ -918,7 +912,7 @@ function filteredCards(){
     if(advFilter.wpMax!==null && (c.willpower==null || c.willpower>advFilter.wpMax)) return false;
     if(advFilter.loreMin!==null && (c.lore==null || c.lore<advFilter.loreMin)) return false;
     if(advFilter.loreMax!==null && (c.lore==null || c.lore>advFilter.loreMax)) return false;
-    if(advFilter.mcMin!==null || advFilter.mcMax!==null){
+    if(advFilter.mcActive){
       if(c.move_cost==null) return false;
       if(advFilter.mcMin!==null && c.move_cost<advFilter.mcMin) return false;
       if(advFilter.mcMax!==null && c.move_cost>advFilter.mcMax) return false;
@@ -1641,19 +1635,6 @@ async function loadData(){
       const restKw    = [...existingKw].filter(k=>!KEYWORD_ORDER.includes(k)).sort((a,b)=>a.localeCompare(b,'ja'));
       [...orderedKw,...restKw].forEach(kw=>{ makeToggleBtn(kw, advFilter.keywords, kw, kwGrid); });
     }
-    // 能力折りたたみトグル
-    const kwToggle=document.getElementById('advKeywordToggle');
-    if(kwToggle && !kwToggle._init){
-      kwToggle._init=true;
-      kwToggle.addEventListener('click',()=>{
-        const grid=document.getElementById('advKeywordGrid');
-        const arrow=document.getElementById('advKeywordArrow');
-        const isOpen=grid.style.display!=='none'&&grid.style.display!=='';
-        grid.style.display=isOpen?'none':'flex';
-        arrow.textContent=isOpen?'▼':'▲';
-      });
-    }
-
     // コストスライダー
     const minSlider=document.getElementById('advCostMin');
     const maxSlider=document.getElementById('advCostMax');
@@ -1704,7 +1685,25 @@ async function loadData(){
     initRangeSlider('advStrMin','advStrMax','advStrFill','advStrLabel',12,'strMin','strMax','');
     initRangeSlider('advWpMin','advWpMax','advWpFill','advWpLabel',12,'wpMin','wpMax','');
     initRangeSlider('advLoreMin','advLoreMax','advLoreFill','advLoreLabel',5,'loreMin','loreMax','');
-    initRangeSlider('advMcMin','advMcMax','advMcFill','advMcLabel',10,'mcMin','mcMax','');
+    // 移動コスト：スライダーを触ったときだけmcActiveをtrueにする
+    {
+      const sMin=document.getElementById('advMcMin'), sMax=document.getElementById('advMcMax');
+      sMin.value=advFilter.mcMin??0;
+      sMax.value=advFilter.mcMax??10;
+      function updMc(){
+        let lo2=parseInt(sMin.value), hi2=parseInt(sMax.value);
+        if(lo2>hi2){ lo2=hi2; sMin.value=lo2; }
+        advFilter.mcActive = !(lo2===0 && hi2===10);
+        advFilter.mcMin = advFilter.mcActive ? lo2 : null;
+        advFilter.mcMax = advFilter.mcActive ? hi2 : null;
+        document.getElementById('advMcFill').style.left=(lo2/10*100)+'%';
+        document.getElementById('advMcFill').style.width=((hi2-lo2)/10*100)+'%';
+        document.getElementById('advMcLabel').textContent=(lo2===0&&hi2===10)?'全て':(lo2===hi2?lo2+'':lo2+'〜'+hi2);
+        document.getElementById('advApply').textContent='結果を表示（'+filteredCards().length+'件）';
+      }
+      if(!sMin._init){ sMin._init=true; sMin.addEventListener('input',()=>{ if(parseInt(sMin.value)>parseInt(sMax.value)) sMax.value=sMin.value; updMc(); }); sMax.addEventListener('input',()=>{ if(parseInt(sMax.value)<parseInt(sMin.value)) sMin.value=sMax.value; updMc(); }); }
+      updMc();
+    }
 
     // インクウェル・シンボル
     document.getElementById('advInkwellBtns').querySelectorAll('button').forEach(btn=>{
@@ -1763,19 +1762,6 @@ async function loadData(){
       const rest    = [...existingClass].filter(cl=>!CLASS_ORDER_JA.includes(cl)).sort((a,b)=>a.localeCompare(b,'ja'));
       [...ordered,...rest].forEach(cl=>{ makeToggleBtn(cl, advFilter.classifications, cl, classGrid); });
     }
-    // 折りたたみトグル（初回のみイベント登録）
-    const classToggle=document.getElementById('advClassToggle');
-    if(classToggle && !classToggle._init){
-      classToggle._init=true;
-      classToggle.addEventListener('click',()=>{
-        const grid=document.getElementById('advClassGrid');
-        const arrow=document.getElementById('advClassArrow');
-        const isOpen=grid.style.display!=='none'&&grid.style.display!=='';
-        grid.style.display=isOpen?'none':'flex';
-        arrow.textContent=isOpen?'▼':'▲';
-      });
-    }
-
     // 結果件数
     document.getElementById('advApply').textContent='結果を表示（'+filteredCards().length+'件）';
   }
@@ -1788,7 +1774,7 @@ async function loadData(){
     renderCardGrid();
   });
   document.getElementById('advReset2').addEventListener('click',()=>{
-    advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),keywords:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,strMin:null,strMax:null,wpMin:null,wpMax:null,loreMin:null,loreMax:null,mcMin:null,mcMax:null,inkwell:null,inkType:null,collectionStatus:null,textQ:'',sortOrder:'id_asc'};
+    advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),keywords:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,strMin:null,strMax:null,wpMin:null,wpMax:null,loreMin:null,loreMax:null,mcMin:null,mcMax:null,mcActive:false,inkwell:null,inkType:null,collectionStatus:null,textQ:'',sortOrder:'id_asc'};
     buildAdvUI();
   });
   document.getElementById('advApply').addEventListener('click',()=>{
