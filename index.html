@@ -778,7 +778,7 @@ function makeRarityIcon(rarity) {
 // カードデータキャッシュ（IndexedDB, 2ヶ月TTL）
 // ═══════════════════════════════════════════
 const CARD_CACHE_TTL = 60 * 24 * 60 * 60 * 1000; // 2ヶ月 (ms)
-const CARD_CACHE_KEY = 'card_cache_v3';
+const CARD_CACHE_KEY = 'card_cache_v4';
 
 async function loadCardCache() {
   return new Promise(r => {
@@ -912,8 +912,11 @@ function filteredCards(){
     if(advFilter.wpMax!==null && (c.willpower==null || c.willpower>advFilter.wpMax)) return false;
     if(advFilter.loreMin!==null && (c.lore==null || c.lore<advFilter.loreMin)) return false;
     if(advFilter.loreMax!==null && (c.lore==null || c.lore>advFilter.loreMax)) return false;
-    if(advFilter.mcMin!==null && (c.move_cost??-1)<advFilter.mcMin) return false;
-    if(advFilter.mcMax!==null && (c.move_cost??999)>advFilter.mcMax) return false;
+    if(advFilter.mcMin!==null || advFilter.mcMax!==null){
+      if(c.move_cost==null) return false;
+      if(advFilter.mcMin!==null && c.move_cost<advFilter.mcMin) return false;
+      if(advFilter.mcMax!==null && c.move_cost>advFilter.mcMax) return false;
+    }
     if(advFilter.inkwell===true && !c.inkwell) return false;
     if(advFilter.inkwell===false && c.inkwell) return false;
     if(advFilter.textQ){ const tq=advFilter.textQ.toLowerCase(); if(!(c.text??'').toLowerCase().includes(tq)) return false; }
@@ -1451,7 +1454,12 @@ async function loadData(){
     function extractKeywords(rulesText) {
       if(!rulesText) return [];
       const matches = rulesText.match(/<([^>]+)>/g) ?? [];
-      return [...new Set(matches.map(m => m.slice(1,-1).trim()))];
+      return [...new Set(matches.map(m => {
+        const kw = m.slice(1,-1).trim();
+        // 「変身：〜」「だれでも変身」「〇〇変身」等を全て「変身」に統一
+        if(kw.includes('変身')) return '変身';
+        return kw;
+      }))];
     }
     allCards = rawCards.map(c => {
       const order  = c.sets_order ?? 0;
