@@ -778,7 +778,7 @@ function makeRarityIcon(rarity) {
 // カードデータキャッシュ（IndexedDB, 2ヶ月TTL）
 // ═══════════════════════════════════════════
 const CARD_CACHE_TTL = 60 * 24 * 60 * 60 * 1000; // 2ヶ月 (ms)
-const CARD_CACHE_KEY = 'card_cache_v4';
+const CARD_CACHE_KEY = 'card_cache_v5';
 
 async function loadCardCache() {
   return new Promise(r => {
@@ -1482,7 +1482,7 @@ async function loadData(){
         strength:         c.strength    != null ? Number(c.strength)   : null,
         willpower:        c.willpower   != null ? Number(c.willpower)  : null,
         lore:             c.lore_value  != null ? Number(c.lore_value) : null,
-        move_cost:        c.move_cost   != null ? Number(c.move_cost)  : null,
+        move_cost:        (c.card_type==='ロケーション' && c.move_cost!=null) ? Number(c.move_cost) : null,
         inkwell:          c.inkwell === 'y',
         text:             [c.rules_text, c.flavor_text].filter(Boolean).join('\n'),
         classifications:  classifications,
