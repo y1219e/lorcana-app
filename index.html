@@ -778,7 +778,7 @@ function makeRarityIcon(rarity) {
 // カードデータキャッシュ（IndexedDB, 2ヶ月TTL）
 // ═══════════════════════════════════════════
 const CARD_CACHE_TTL = 60 * 24 * 60 * 60 * 1000; // 2ヶ月 (ms)
-const CARD_CACHE_KEY = 'card_cache_v2';
+const CARD_CACHE_KEY = 'card_cache_v3';
 
 async function loadCardCache() {
   return new Promise(r => {
@@ -870,7 +870,7 @@ function dbGetAll(store){ return new Promise(r=>{ const tx=db.transaction(store,
 // ═══════════════════════════════════════════
 // アプリ状態
 // ═══════════════════════════════════════════
-let allCards=[],sets=[],collection={},wishlist=new Set(),cardView='all',advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),keywords:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,strMin:null,strMax:null,wpMin:null,wpMax:null,loreMin:null,loreMax:null,mcMin:null,mcMax:null,mcActive:false,inkwell:null,inkType:null,collectionStatus:null,textQ:'',sortOrder:'id_asc'},decks=[],filterSets=new Set(),filterInks=new Set(),searchQ='',currentCard=null,currentDeck=null;
+let allCards=[],sets=[],collection={},wishlist=new Set(),cardView='all',advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),keywords:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,strMin:null,strMax:null,wpMin:null,wpMax:null,loreMin:null,loreMax:null,mcMin:null,mcMax:null,inkwell:null,inkType:null,collectionStatus:null,textQ:'',sortOrder:'id_asc'},decks=[],filterSets=new Set(),filterInks=new Set(),searchQ='',currentCard=null,currentDeck=null;
 
 function filteredCards(){
   return allCards.filter(c=>{
@@ -912,11 +912,8 @@ function filteredCards(){
     if(advFilter.wpMax!==null && (c.willpower==null || c.willpower>advFilter.wpMax)) return false;
     if(advFilter.loreMin!==null && (c.lore==null || c.lore<advFilter.loreMin)) return false;
     if(advFilter.loreMax!==null && (c.lore==null || c.lore>advFilter.loreMax)) return false;
-    if(advFilter.mcActive){
-      if(c.move_cost==null) return false;
-      if(advFilter.mcMin!==null && c.move_cost<advFilter.mcMin) return false;
-      if(advFilter.mcMax!==null && c.move_cost>advFilter.mcMax) return false;
-    }
+    if(advFilter.mcMin!==null && (c.move_cost??-1)<advFilter.mcMin) return false;
+    if(advFilter.mcMax!==null && (c.move_cost??999)>advFilter.mcMax) return false;
     if(advFilter.inkwell===true && !c.inkwell) return false;
     if(advFilter.inkwell===false && c.inkwell) return false;
     if(advFilter.textQ){ const tq=advFilter.textQ.toLowerCase(); if(!(c.text??'').toLowerCase().includes(tq)) return false; }
@@ -1685,25 +1682,7 @@ async function loadData(){
     initRangeSlider('advStrMin','advStrMax','advStrFill','advStrLabel',12,'strMin','strMax','');
     initRangeSlider('advWpMin','advWpMax','advWpFill','advWpLabel',12,'wpMin','wpMax','');
     initRangeSlider('advLoreMin','advLoreMax','advLoreFill','advLoreLabel',5,'loreMin','loreMax','');
-    // 移動コスト：スライダーを触ったときだけmcActiveをtrueにする
-    {
-      const sMin=document.getElementById('advMcMin'), sMax=document.getElementById('advMcMax');
-      sMin.value=advFilter.mcMin??0;
-      sMax.value=advFilter.mcMax??10;
-      function updMc(){
-        let lo2=parseInt(sMin.value), hi2=parseInt(sMax.value);
-        if(lo2>hi2){ lo2=hi2; sMin.value=lo2; }
-        advFilter.mcActive = !(lo2===0 && hi2===10);
-        advFilter.mcMin = advFilter.mcActive ? lo2 : null;
-        advFilter.mcMax = advFilter.mcActive ? hi2 : null;
-        document.getElementById('advMcFill').style.left=(lo2/10*100)+'%';
-        document.getElementById('advMcFill').style.width=((hi2-lo2)/10*100)+'%';
-        document.getElementById('advMcLabel').textContent=(lo2===0&&hi2===10)?'全て':(lo2===hi2?lo2+'':lo2+'〜'+hi2);
-        document.getElementById('advApply').textContent='結果を表示（'+filteredCards().length+'件）';
-      }
-      if(!sMin._init){ sMin._init=true; sMin.addEventListener('input',()=>{ if(parseInt(sMin.value)>parseInt(sMax.value)) sMax.value=sMin.value; updMc(); }); sMax.addEventListener('input',()=>{ if(parseInt(sMax.value)<parseInt(sMin.value)) sMin.value=sMax.value; updMc(); }); }
-      updMc();
-    }
+    initRangeSlider('advMcMin','advMcMax','advMcFill','advMcLabel',10,'mcMin','mcMax','');
 
     // インクウェル・シンボル
     document.getElementById('advInkwellBtns').querySelectorAll('button').forEach(btn=>{
@@ -1774,7 +1753,7 @@ async function loadData(){
     renderCardGrid();
   });
   document.getElementById('advReset2').addEventListener('click',()=>{
-    advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),keywords:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,strMin:null,strMax:null,wpMin:null,wpMax:null,loreMin:null,loreMax:null,mcMin:null,mcMax:null,mcActive:false,inkwell:null,inkType:null,collectionStatus:null,textQ:'',sortOrder:'id_asc'};
+    advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),keywords:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,strMin:null,strMax:null,wpMin:null,wpMax:null,loreMin:null,loreMax:null,mcMin:null,mcMax:null,inkwell:null,inkType:null,collectionStatus:null,textQ:'',sortOrder:'id_asc'};
     buildAdvUI();
   });
   document.getElementById('advApply').addEventListener('click',()=>{
