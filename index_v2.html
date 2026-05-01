@@ -131,6 +131,13 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 #cacheInfo { font-size: 0.72rem; color: #555; margin-top: 4px; }
 #prefetchBar { display:none; position:fixed; bottom:58px; left:0; right:0; z-index:99; background:var(–surface); border-top:1px solid var(–border); padding:4px 12px; font-size:0.68rem; color:var(–text2); }
 #prefetchBarInner { height:3px; background:var(–accent,#7c6dfa); border-radius:2px; margin-top:3px; transition:width 0.3s; width:0%; }
+#dialogModal { z-index: 500; }
+.dialog-box { background: var(--surface2); border-radius: 14px; padding: 24px 20px 16px; width: calc(100% - 48px); max-width: 300px; box-shadow: 0 4px 24px rgba(0,0,0,0.5); }
+.dialog-msg { margin: 0 0 20px; color: var(--text1); font-size: 0.92rem; line-height: 1.55; white-space: pre-wrap; }
+.dialog-btns { display: flex; gap: 10px; }
+.dialog-btns button { flex: 1; padding: 10px; border-radius: 8px; font-size: 0.9rem; cursor: pointer; border: none; }
+.dialog-btn-cancel { background: var(--surface); border: 1px solid var(--border) !important; color: var(--text2); }
+.dialog-btn-ok { background: var(--accent); color: #fff; }
 </style>
 
 </head>
@@ -397,6 +404,16 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
   </div>
 </div>
 
+<div class="modal-overlay" id="dialogModal">
+  <div class="dialog-box">
+    <p class="dialog-msg" id="dialogMsg"></p>
+    <div class="dialog-btns">
+      <button class="dialog-btn-cancel" id="dialogCancel">キャンセル</button>
+      <button class="dialog-btn-ok" id="dialogOk">OK</button>
+    </div>
+  </div>
+</div>
+
 <nav id="nav">
   <button class="nav-btn active" data-page="pageCards"><span class="icon">🃏</span>カード</button>
   <button class="nav-btn" data-page="pageCollection"><span class="icon">📦</span>コレクション</button>
@@ -404,6 +421,36 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 </nav>
 
 <script>
+// ───────────────────────────────────────────
+// 共通ダイアログ
+// ───────────────────────────────────────────
+function showAlert(msg) {
+  return new Promise(resolve => {
+    document.getElementById('dialogMsg').textContent = msg;
+    document.getElementById('dialogCancel').style.display = 'none';
+    const modal = document.getElementById('dialogModal');
+    const ok = document.getElementById('dialogOk');
+    modal.classList.add('open');
+    const handler = () => { modal.classList.remove('open'); ok.removeEventListener('click', handler); resolve(); };
+    ok.addEventListener('click', handler);
+  });
+}
+function showConfirm(msg) {
+  return new Promise(resolve => {
+    document.getElementById('dialogMsg').textContent = msg;
+    const cancel = document.getElementById('dialogCancel');
+    cancel.style.display = '';
+    const modal = document.getElementById('dialogModal');
+    const ok = document.getElementById('dialogOk');
+    modal.classList.add('open');
+    function cleanup(val) { modal.classList.remove('open'); ok.removeEventListener('click', handleOk); cancel.removeEventListener('click', handleCancel); resolve(val); }
+    function handleOk() { cleanup(true); }
+    function handleCancel() { cleanup(false); }
+    ok.addEventListener('click', handleOk);
+    cancel.addEventListener('click', handleCancel);
+  });
+}
+
 // ═══════════════════════════════════════════
 // Service Worker をBlobで登録（画像キャッシュ）
 // ═══════════════════════════════════════════
@@ -962,7 +1009,7 @@ document.getElementById('importExecBtn').addEventListener('click', async () => {
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
     document.querySelector('[data-page="pageDecks"]').classList.add('active');
     document.getElementById('pageDecks').classList.add('active');
-    alert(msg);
+    await showAlert(msg);
   } catch(e) {
     errEl.textContent = e.message; errEl.style.display = '';
   } finally {
@@ -1137,7 +1184,7 @@ document.getElementById('editorSave').addEventListener('click',async()=>{
   renderDeckList(); closeDeckEditor();
 });
 document.getElementById('editorDel').addEventListener('click',async()=>{
-  if(!confirm(`「${currentDeck.name}」を削除しますか？`)) return;
+  if(!await showConfirm(`「${currentDeck.name}」を削除しますか？`)) return;
   await dbDelete('decks',currentDeck.id); decks=decks.filter(d=>d.id!==currentDeck.id);
   renderDeckList(); closeDeckEditor();
 });
@@ -1159,7 +1206,7 @@ document.querySelectorAll('.nav-btn').forEach(btn=>{
 
 // キャッシュクリアボタン
 document.getElementById('cacheRefreshBtn').addEventListener('click', async()=>{
-  if(!confirm('カードデータのキャッシュを削除して再取得しますか？\n（move_costなど新しいデータが反映されます）')) return;
+  if(!await showConfirm('カードデータのキャッシュを削除して再取得しますか？\n（move_costなど新しいデータが反映されます）')) return;
   await dbDelete('meta', CARD_CACHE_KEY);
   location.reload();
 });
