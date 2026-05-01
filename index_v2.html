@@ -1223,7 +1223,7 @@ async function loadData(){
   cInfo.textContent = cached ? '2ヶ月経過のため再取得中…' : '';
   try {
     prog.textContent = 'カードデータを取得中…';
-    const res = await fetch('https://lorcana-api.com/api/cards');
+    const res = await fetch('https://pub-1ffff5ba3a074d538aa9f3027d3c97dc.r2.dev/takaratomy_cards.json');
     const data = await res.json();
     const rawCards = Array.isArray(data) ? data : (data.cards ?? []);
 
