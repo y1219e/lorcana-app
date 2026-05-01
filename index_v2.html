@@ -84,53 +84,72 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, sa
 #sleevePicker { display: none; }
 #sleevePicker.open { display: block !important; }
 .sleeve-option { width: 56px; height: 77px; border-radius: 5px; object-fit: cover; object-position: center top; cursor: pointer; border: 2px solid transparent; transition: border-color 0.15s; }
-.sleeve-option.selected { border-color: var(–accent); }
-.sleeve-option-none { width: 56px; height: 77px; border-radius: 5px; background: var(–surface); border: 2px solid var(–border); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
-.sleeve-option-none.selected { border-color: var(–accent); }
-.deck-sleeve { width: 48px; height: 66px; border-radius: 5px; object-fit: cover; object-position: center top; flex-shrink: 0; background: var(–surface2); }
-.deck-sleeve-placeholder { width: 48px; height: 66px; border-radius: 5px; background: var(–surface2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
+.sleeve-option.selected { border-color: var(--accent); }
+.sleeve-option-none { width: 56px; height: 77px; border-radius: 5px; background: var(--surface); border: 2px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
+.sleeve-option-none.selected { border-color: var(--accent); }
+.deck-sleeve { width: 48px; height: 66px; border-radius: 5px; object-fit: cover; object-position: center top; flex-shrink: 0; background: var(--surface2); }
+.deck-sleeve-placeholder { width: 48px; height: 66px; border-radius: 5px; background: var(--surface2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
 .deck-card h3 { font-size: 0.9rem; }
-.deck-card .deck-meta { font-size: 0.72rem; color: var(–text2); margin-top: 3px; }
-.deck-card .deck-count { font-size: 1.1rem; font-weight: bold; color: var(–accent); }
-.add-deck-btn { display: block; width: calc(100% - 20px); margin: 0 10px; padding: 13px; background: var(–accent); border: none; border-radius: 10px; color: #fff; font-size: 0.95rem; cursor: pointer; }
-#deckEditor { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100vw; height: 100vh; z-index: 9999; background: var(–bg); overflow: hidden; }
+.deck-card .deck-meta { font-size: 0.72rem; color: var(--text2); margin-top: 3px; }
+.deck-card .deck-count { font-size: 1.1rem; font-weight: bold; color: var(--accent); }
+.add-deck-btn { display: block; width: calc(100% - 20px); margin: 0 10px; padding: 13px; background: var(--accent); border: none; border-radius: 10px; color: #fff; font-size: 0.95rem; cursor: pointer; }
+#deckEditor { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100vw; height: 100vh; z-index: 9999; background: var(--bg); overflow: hidden; }
 #deckEditor.open { display: flex; flex-direction: column; }
 body.deck-editing .page, body.deck-editing nav { display: none !important; }
-.editor-header { background: var(–surface); padding: 8px 10px; border-bottom: 1px solid var(–border); display: flex; flex-direction: column; gap: 0; }
-.editor-header input { flex: 1; background: var(–surface2); border: 1px solid var(–border); border-radius: 6px; padding: 5px 10px; color: var(–text); font-size: 0.85rem; }
-.btn-sm { padding: 5px 10px; border-radius: 8px; border: none; cursor: pointer; font-size: 0.75rem; font-weight: bold; background: var(–surface2); color: var(–text); white-space: nowrap; }
-.btn-save { background: var(–accent); color: #fff; }
-.btn-del { background: var(–ruby); color: #fff; }
-.btn-back { background: var(–surface2); color: var(–text); border: 1px solid var(–border); }
+.editor-header { background: var(--surface); padding: 8px 10px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 0; }
+.editor-header input { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; color: var(--text); font-size: 0.85rem; }
+.btn-sm { padding: 5px 10px; border-radius: 8px; border: none; cursor: pointer; font-size: 0.75rem; font-weight: bold; background: var(--surface2); color: var(--text); white-space: nowrap; }
+.btn-save { background: var(--accent); color: #fff; }
+.btn-del { background: var(--ruby); color: #fff; }
+.btn-back { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
 .editor-body { display: flex; flex: 1; overflow: hidden; }
-.editor-left { width: 55%; border-right: 1px solid var(–border); overflow-y: auto; }
+.editor-left { width: 55%; border-right: 1px solid var(--border); overflow-y: auto; }
 .editor-right { width: 45%; overflow-y: auto; }
-.editor-section-title { padding: 8px 10px; font-size: 0.72rem; color: var(–text2); background: var(–surface); border-bottom: 1px solid var(–border); }
-.deck-card-row { display: flex; align-items: center; padding: 6px 8px; border-bottom: 1px solid var(–border); gap: 6px; }
+.editor-section-title { padding: 8px 10px; font-size: 0.72rem; color: var(--text2); background: var(--surface); border-bottom: 1px solid var(--border); }
+.deck-card-row { display: flex; align-items: center; padding: 6px 8px; border-bottom: 1px solid var(--border); gap: 6px; }
 .deck-card-row img { width: 36px; border-radius: 4px; flex-shrink: 0; }
 .deck-card-row .dc-info { flex: 1; min-width: 0; }
 .deck-card-row .dc-name { font-size: 0.68rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.deck-card-row .dc-sub { font-size: 0.58rem; color: var(–text2); white-space: normal; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.deck-card-row .dc-sub { font-size: 0.58rem; color: var(--text2); white-space: normal; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .deck-card-row .dc-btns { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
-.dc-btn { width: 28px; height: 28px; border-radius: 50%; border: none; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; background: var(–surface2); color: var(–text); }
-.dc-btn.rem { background: var(–ruby); color: #fff; }
-.dc-btn.add { background: var(–accent); color: #fff; }
-.dc-btn.add { background: var(–accent); color: #fff; }
-.dc-btn.rem { background: var(–ruby); color: #fff; }
+.dc-btn { width: 28px; height: 28px; border-radius: 50%; border: none; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; background: var(--surface2); color: var(--text); }
+.dc-btn.rem { background: var(--ruby); color: #fff; }
+.dc-btn.add { background: var(--accent); color: #fff; }
+.dc-btn.add { background: var(--accent); color: #fff; }
+.dc-btn.rem { background: var(--ruby); color: #fff; }
 .dc-count { font-size: 0.8rem; font-weight: bold; min-width: 14px; text-align: center; }
-.editor-search { padding: 6px 8px; background: var(–surface); border-bottom: 1px solid var(–border); }
-.editor-search input { width: 100%; background: var(–surface2); border: 1px solid var(–border); border-radius: 6px; padding: 5px 8px; color: var(–text); font-size: 0.78rem; }
-.deck-total { padding: 8px 10px; font-size: 0.78rem; color: var(–text2); }
-.deck-total span { color: var(–accent); font-weight: bold; }
-.ink-warning { color: var(–ruby); font-size: 0.72rem; padding: 4px 10px; }
+.editor-search { padding: 6px 8px; background: var(--surface); border-bottom: 1px solid var(--border); }
+.editor-search input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; color: var(--text); font-size: 0.78rem; }
+.deck-total { padding: 8px 10px; font-size: 0.78rem; color: var(--text2); }
+.deck-total span { color: var(--accent); font-weight: bold; }
+.ink-warning { color: var(--ruby); font-size: 0.72rem; padding: 4px 10px; }
 #loadingOverlay { display: none; position: fixed; inset: 0; z-index: 300; background: rgba(15,15,26,0.92); flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
 #loadingOverlay.show { display: flex; }
-.spinner { width: 40px; height: 40px; border: 3px solid var(–border); border-top-color: var(–accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+.spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-#loadProgress { font-size: 0.85rem; color: var(–text2); }
+#loadProgress { font-size: 0.85rem; color: var(--text2); }
 #cacheInfo { font-size: 0.72rem; color: #555; margin-top: 4px; }
-#prefetchBar { display:none; position:fixed; bottom:58px; left:0; right:0; z-index:99; background:var(–surface); border-top:1px solid var(–border); padding:4px 12px; font-size:0.68rem; color:var(–text2); }
-#prefetchBarInner { height:3px; background:var(–accent,#7c6dfa); border-radius:2px; margin-top:3px; transition:width 0.3s; width:0%; }
+#prefetchBar { display:none; position:fixed; bottom:58px; left:0; right:0; z-index:99; background:var(--surface); border-top:1px solid var(--border); padding:4px 12px; font-size:0.68rem; color:var(--text2); }
+#prefetchBarInner { height:3px; background:var(--accent,#7c6dfa); border-radius:2px; margin-top:3px; transition:width 0.3s; width:0%; }
+/* === inline-style refactoring === */
+.adv-section { padding: 14px 20px 0; }
+.adv-label { font-size: 0.72rem; color: var(--text2); margin-bottom: 8px; font-weight: bold; }
+.adv-range-input { position: absolute; width: 100%; appearance: none; -webkit-appearance: none; background: transparent; pointer-events: none; z-index: 2; }
+.adv-btn-sm { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); color: var(--text2); font-size: 0.8rem; cursor: pointer; }
+.adv-range-track { position: absolute; left: 0; right: 0; height: 4px; background: var(--border); border-radius: 2px; }
+.adv-range-fill { position: absolute; height: 4px; background: var(--accent); border-radius: 2px; }
+.adv-range-num { font-size: 0.75rem; color: var(--text2); text-align: center; }
+.adv-range-num-w20 { width: 20px; }
+.adv-range-num-w16 { width: 16px; }
+.adv-range-wrap { flex: 1; position: relative; height: 32px; display: flex; align-items: center; }
+.flex-row-c { display: flex; gap: 8px; align-items: center; }
+.flex-row-8 { display: flex; gap: 8px; }
+.flex-row-6-wrap { display: flex; gap: 6px; flex-wrap: wrap; }
+.flex-row-10-wrap { display: flex; gap: 10px; flex-wrap: wrap; }
+.flex-row-mt8-6-wrap { display: flex; margin-top: 8px; gap: 6px; flex-wrap: wrap; }
+.text-accent { color: var(--accent); }
+.btn-icon-close { background: none; border: none; color: var(--text2); font-size: 1.2rem; cursor: pointer; }
+
 </style>
 
 </head>
@@ -233,7 +252,7 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
   <div style="background:var(--surface);border-radius:14px;padding:20px;width:90%;max-width:360px;max-height:80vh;overflow-y:auto;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
       <h2 style="font-size:1rem;">デッキURLを貼り付け</h2>
-      <button id="importClose" style="background:none;border:none;color:var(--text2);font-size:1.2rem;cursor:pointer;">✕</button>
+      <button id="importClose" class="btn-icon-close">✕</button>
     </div>
     <p style="font-size:0.72rem;color:var(--text2);margin-bottom:10px;">
       タカラトミー デッキビルダーの「共有URL」をそのまま貼り付けてください。
@@ -249,17 +268,17 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
     <!-- ヘッダー（sticky） -->
     <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0;">
       <span style="font-weight:bold;font-size:0.95rem;">詳細検索</span>
-      <button id="advClose" style="background:none;border:none;color:var(--text2);font-size:1.2rem;cursor:pointer;">✕</button>
+      <button id="advClose" class="btn-icon-close">✕</button>
     </div>
     <!-- スクロール部分 -->
     <div style="overflow-y:auto;flex:1;padding-bottom:8px;">
       <!-- テキスト検索 -->
-      <div style="padding:14px 20px 0;">
+      <div class="adv-section">
         <input id="advTextInput" type="text" placeholder="テキストを検索..." style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text1);padding:8px 12px;font-size:0.85rem;box-sizing:border-box;">
       </div>
       <!-- 並び替え -->
-      <div style="padding:14px 20px 0;">
-        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">並び替え</div>
+      <div class="adv-section">
+        <div class="adv-label">並び替え</div>
         <select id="advSortSelect" style="width:100%;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text1);font-size:0.85rem;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%228%22><path d=%22M0 0l6 8 6-8z%22 fill=%22%23aaa%22/></svg>');background-repeat:no-repeat;background-position:right 12px center;">
           <option value="id_asc">ID（昇順）</option>
           <option value="id_desc">ID（降順）</option>
@@ -268,127 +287,127 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
         </select>
       </div>
       <!-- コレクション状況 -->
-      <div style="padding:14px 20px 0;">
-        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">コレクション状況</div>
-        <div style="display:flex;gap:8px;" id="advCollectionBtns">
-          <button data-val="owned" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:0.8rem;cursor:pointer;">持っている</button>
-          <button data-val="notowned" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:0.8rem;cursor:pointer;">持っていない</button>
+      <div class="adv-section">
+        <div class="adv-label">コレクション状況</div>
+        <div class="flex-row-8" id="advCollectionBtns">
+          <button data-val="owned" class="adv-btn-sm">持っている</button>
+          <button data-val="notowned" class="adv-btn-sm">持っていない</button>
         </div>
       </div>
       <!-- インクタイプ -->
-      <div style="padding:14px 20px 0;">
-        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">インクタイプ</div>
-        <div id="advInkGrid" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
+      <div class="adv-section">
+        <div class="adv-label">インクタイプ</div>
+        <div id="advInkGrid" class="flex-row-10-wrap"></div>
       </div>
       <!-- インクタイプ（シングル/デュアル） -->
-      <div style="padding:14px 20px 0;">
-        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">インクタイプ（シングル/デュアル）</div>
-        <div style="display:flex;gap:8px;" id="advInkTypeBtns">
-          <button data-val="single" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:0.8rem;cursor:pointer;">シングル</button>
-          <button data-val="dual" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:0.8rem;cursor:pointer;">デュアル</button>
+      <div class="adv-section">
+        <div class="adv-label">インクタイプ（シングル/デュアル）</div>
+        <div class="flex-row-8" id="advInkTypeBtns">
+          <button data-val="single" class="adv-btn-sm">シングル</button>
+          <button data-val="dual" class="adv-btn-sm">デュアル</button>
         </div>
       </div>
       <!-- インクウェル・シンボル -->
-      <div style="padding:14px 20px 0;">
-        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">インクウェル・シンボル</div>
-        <div style="display:flex;gap:8px;" id="advInkwellBtns">
-          <button data-val="yes" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:0.8rem;cursor:pointer;">あり</button>
-          <button data-val="no" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:0.8rem;cursor:pointer;">なし</button>
+      <div class="adv-section">
+        <div class="adv-label">インクウェル・シンボル</div>
+        <div class="flex-row-8" id="advInkwellBtns">
+          <button data-val="yes" class="adv-btn-sm">あり</button>
+          <button data-val="no" class="adv-btn-sm">なし</button>
         </div>
       </div>
       <!-- レアリティ -->
-      <div style="padding:14px 20px 0;">
-        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">レアリティ</div>
-        <div id="advRarityGrid" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
+      <div class="adv-section">
+        <div class="adv-label">レアリティ</div>
+        <div id="advRarityGrid" class="flex-row-10-wrap"></div>
       </div>
       <!-- タイプ -->
-      <div style="padding:14px 20px 0;">
-        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">タイプ</div>
-        <div id="advTypeGrid" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+      <div class="adv-section">
+        <div class="adv-label">タイプ</div>
+        <div id="advTypeGrid" class="flex-row-6-wrap"></div>
       </div>
       <!-- 能力 -->
-      <div style="padding:14px 20px 0;">
-        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">能力</div>
-        <div id="advKeywordGrid" style="display:flex;margin-top:8px;gap:6px;flex-wrap:wrap;"></div>
+      <div class="adv-section">
+        <div class="adv-label">能力</div>
+        <div id="advKeywordGrid" class="flex-row-mt8-6-wrap"></div>
       </div>
       <!-- クラス -->
-      <div style="padding:14px 20px 0;">
-        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">クラス</div>
-        <div id="advClassGrid" style="display:flex;margin-top:8px;gap:6px;flex-wrap:wrap;"></div>
+      <div class="adv-section">
+        <div class="adv-label">クラス</div>
+        <div id="advClassGrid" class="flex-row-mt8-6-wrap"></div>
       </div>
       <!-- セット -->
-      <div style="padding:14px 20px 0;">
-        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">セット</div>
-        <div id="advSetGrid" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+      <div class="adv-section">
+        <div class="adv-label">セット</div>
+        <div id="advSetGrid" class="flex-row-6-wrap"></div>
       </div>
       <!-- インクコスト スライダー -->
-      <div style="padding:14px 20px 0;">
-        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">インクコスト <span id="advCostLabel" style="color:var(--accent);">全て</span></div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <span style="font-size:0.75rem;color:var(--text2);width:16px;text-align:center;">0</span>
-          <div style="flex:1;position:relative;height:32px;display:flex;align-items:center;">
-            <div id="advCostTrack" style="position:absolute;left:0;right:0;height:4px;background:var(--border);border-radius:2px;"></div>
-            <div id="advCostFill" style="position:absolute;height:4px;background:var(--accent);border-radius:2px;"></div>
-            <input id="advCostMin" type="range" min="0" max="10" value="0" style="position:absolute;width:100%;appearance:none;-webkit-appearance:none;background:transparent;pointer-events:none;z-index:2;">
-            <input id="advCostMax" type="range" min="0" max="10" value="10" style="position:absolute;width:100%;appearance:none;-webkit-appearance:none;background:transparent;pointer-events:none;z-index:2;">
+      <div class="adv-section">
+        <div class="adv-label">インクコスト <span id="advCostLabel" class="text-accent">全て</span></div>
+        <div class="flex-row-c">
+          <span class="adv-range-num adv-range-num-w16">0</span>
+          <div class="adv-range-wrap">
+            <div id="advCostTrack" class="adv-range-track"></div>
+            <div id="advCostFill" class="adv-range-fill"></div>
+            <input id="advCostMin" type="range" min="0" max="10" value="0" class="adv-range-input">
+            <input id="advCostMax" type="range" min="0" max="10" value="10" class="adv-range-input">
           </div>
-          <span style="font-size:0.75rem;color:var(--text2);width:20px;text-align:center;">10</span>
+          <span class="adv-range-num adv-range-num-w20">10</span>
         </div>
       </div>
       <!-- 攻撃力 -->
-      <div style="padding:14px 20px 0;">
-        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">攻撃力（ストレングス）<span id="advStrLabel" style="color:var(--accent);">全て</span></div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <span style="font-size:0.75rem;color:var(--text2);width:16px;text-align:center;">0</span>
-          <div style="flex:1;position:relative;height:32px;display:flex;align-items:center;">
-            <div style="position:absolute;left:0;right:0;height:4px;background:var(--border);border-radius:2px;"></div>
-            <div id="advStrFill" style="position:absolute;height:4px;background:var(--accent);border-radius:2px;"></div>
-            <input id="advStrMin" type="range" min="0" max="12" value="0" style="position:absolute;width:100%;appearance:none;-webkit-appearance:none;background:transparent;pointer-events:none;z-index:2;">
-            <input id="advStrMax" type="range" min="0" max="12" value="12" style="position:absolute;width:100%;appearance:none;-webkit-appearance:none;background:transparent;pointer-events:none;z-index:2;">
+      <div class="adv-section">
+        <div class="adv-label">攻撃力（ストレングス）<span id="advStrLabel" class="text-accent">全て</span></div>
+        <div class="flex-row-c">
+          <span class="adv-range-num adv-range-num-w16">0</span>
+          <div class="adv-range-wrap">
+            <div class="adv-range-track"></div>
+            <div id="advStrFill" class="adv-range-fill"></div>
+            <input id="advStrMin" type="range" min="0" max="12" value="0" class="adv-range-input">
+            <input id="advStrMax" type="range" min="0" max="12" value="12" class="adv-range-input">
           </div>
-          <span style="font-size:0.75rem;color:var(--text2);width:20px;text-align:center;">12</span>
+          <span class="adv-range-num adv-range-num-w20">12</span>
         </div>
       </div>
       <!-- 意志力 -->
-      <div style="padding:14px 20px 0;">
-        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">意志力（ウィルパワー）<span id="advWpLabel" style="color:var(--accent);">全て</span></div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <span style="font-size:0.75rem;color:var(--text2);width:16px;text-align:center;">0</span>
-          <div style="flex:1;position:relative;height:32px;display:flex;align-items:center;">
-            <div style="position:absolute;left:0;right:0;height:4px;background:var(--border);border-radius:2px;"></div>
-            <div id="advWpFill" style="position:absolute;height:4px;background:var(--accent);border-radius:2px;"></div>
-            <input id="advWpMin" type="range" min="0" max="12" value="0" style="position:absolute;width:100%;appearance:none;-webkit-appearance:none;background:transparent;pointer-events:none;z-index:2;">
-            <input id="advWpMax" type="range" min="0" max="12" value="12" style="position:absolute;width:100%;appearance:none;-webkit-appearance:none;background:transparent;pointer-events:none;z-index:2;">
+      <div class="adv-section">
+        <div class="adv-label">意志力（ウィルパワー）<span id="advWpLabel" class="text-accent">全て</span></div>
+        <div class="flex-row-c">
+          <span class="adv-range-num adv-range-num-w16">0</span>
+          <div class="adv-range-wrap">
+            <div class="adv-range-track"></div>
+            <div id="advWpFill" class="adv-range-fill"></div>
+            <input id="advWpMin" type="range" min="0" max="12" value="0" class="adv-range-input">
+            <input id="advWpMax" type="range" min="0" max="12" value="12" class="adv-range-input">
           </div>
-          <span style="font-size:0.75rem;color:var(--text2);width:20px;text-align:center;">12</span>
+          <span class="adv-range-num adv-range-num-w20">12</span>
         </div>
       </div>
       <!-- ロア値 -->
-      <div style="padding:14px 20px 0;">
-        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">ロア値<span id="advLoreLabel" style="color:var(--accent);">全て</span></div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <span style="font-size:0.75rem;color:var(--text2);width:16px;text-align:center;">0</span>
-          <div style="flex:1;position:relative;height:32px;display:flex;align-items:center;">
-            <div style="position:absolute;left:0;right:0;height:4px;background:var(--border);border-radius:2px;"></div>
-            <div id="advLoreFill" style="position:absolute;height:4px;background:var(--accent);border-radius:2px;"></div>
-            <input id="advLoreMin" type="range" min="0" max="5" value="0" style="position:absolute;width:100%;appearance:none;-webkit-appearance:none;background:transparent;pointer-events:none;z-index:2;">
-            <input id="advLoreMax" type="range" min="0" max="5" value="5" style="position:absolute;width:100%;appearance:none;-webkit-appearance:none;background:transparent;pointer-events:none;z-index:2;">
+      <div class="adv-section">
+        <div class="adv-label">ロア値<span id="advLoreLabel" class="text-accent">全て</span></div>
+        <div class="flex-row-c">
+          <span class="adv-range-num adv-range-num-w16">0</span>
+          <div class="adv-range-wrap">
+            <div class="adv-range-track"></div>
+            <div id="advLoreFill" class="adv-range-fill"></div>
+            <input id="advLoreMin" type="range" min="0" max="5" value="0" class="adv-range-input">
+            <input id="advLoreMax" type="range" min="0" max="5" value="5" class="adv-range-input">
           </div>
-          <span style="font-size:0.75rem;color:var(--text2);width:20px;text-align:center;">5</span>
+          <span class="adv-range-num adv-range-num-w20">5</span>
         </div>
       </div>
       <!-- 移動コスト -->
-      <div style="padding:14px 20px 0;">
-        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">移動コスト <span id="advMcLabel" style="color:var(--accent);">全て</span></div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <span style="font-size:0.75rem;color:var(--text2);width:16px;text-align:center;">0</span>
-          <div style="flex:1;position:relative;height:32px;display:flex;align-items:center;">
-            <div style="position:absolute;left:0;right:0;height:4px;background:var(--border);border-radius:2px;"></div>
-            <div id="advMcFill" style="position:absolute;height:4px;background:var(--accent);border-radius:2px;"></div>
-            <input id="advMcMin" type="range" min="0" max="10" value="0" style="position:absolute;width:100%;appearance:none;-webkit-appearance:none;background:transparent;pointer-events:none;z-index:2;">
-            <input id="advMcMax" type="range" min="0" max="10" value="10" style="position:absolute;width:100%;appearance:none;-webkit-appearance:none;background:transparent;pointer-events:none;z-index:2;">
+      <div class="adv-section">
+        <div class="adv-label">移動コスト <span id="advMcLabel" class="text-accent">全て</span></div>
+        <div class="flex-row-c">
+          <span class="adv-range-num adv-range-num-w16">0</span>
+          <div class="adv-range-wrap">
+            <div class="adv-range-track"></div>
+            <div id="advMcFill" class="adv-range-fill"></div>
+            <input id="advMcMin" type="range" min="0" max="10" value="0" class="adv-range-input">
+            <input id="advMcMax" type="range" min="0" max="10" value="10" class="adv-range-input">
           </div>
-          <span style="font-size:0.75rem;color:var(--text2);width:20px;text-align:center;">10</span>
+          <span class="adv-range-num adv-range-num-w20">10</span>
         </div>
       </div>
     </div>
