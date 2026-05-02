@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ロルカナ コレクション v2-refactored</title>
+<title>Loreca</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -581,7 +581,7 @@ function showConfirm(msg) {
 // ═══════════════════════════════════════════
 // 画像プリフェッチ＆キャッシュ（Cache API）
 // ═══════════════════════════════════════════
-const IMG_CACHE_NAME = 'lorcana-img-v6';
+const IMG_CACHE_NAME = 'loreca-img-v6';
 const PREFETCH_CONCURRENCY = 8;
 
 async function prefetchAllImages(cards, onProgress) {
@@ -786,7 +786,7 @@ function makeImg(card, deckStyle){
 let db;
 function openDB(){
   return new Promise((res,rej)=>{
-    const req = indexedDB.open('lorcana', 4);
+    const req = indexedDB.open('loreca', 1);
     req.onupgradeneeded = e => {
       const d = e.target.result;
       if(!d.objectStoreNames.contains('collection')) d.createObjectStore('collection',{keyPath:'id'});
@@ -1350,7 +1350,7 @@ async function loadData(){
   // キャッシュチェック（ETag で更新検知）
   const cached = await loadCardCache();
   const now = Date.now();
-  const CARDS_URL = IMG_HOST + 'takaratomy_cards.json';
+  const CARDS_URL = IMG_HOST + 'loreca_cards.json';
   let res, etag;
 
   try {
@@ -1461,7 +1461,7 @@ async function loadData(){
 // ═══════════════════════════════════════════
 // 設定
 // ═══════════════════════════════════════════
-const SETTINGS_KEY = 'lorcana_settings';
+const SETTINGS_KEY = 'loreca_settings';
 const SETTINGS_DEFAULT = { gridCols: 3, defaultView: 'all' };
 
 function loadSettings() {
