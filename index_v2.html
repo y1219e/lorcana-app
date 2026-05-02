@@ -45,6 +45,18 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, sa
 .menu-drawer-header span { font-weight: bold; font-size: 0.95rem; }
 .menu-close-btn { background: none; border: none; color: var(--text2); font-size: 1.3rem; cursor: pointer; padding: 4px 8px; }
 .menu-drawer-body { flex: 1; overflow-y: auto; padding: 12px 0; }
+.menu-item { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; color: var(--text1); font-size: 0.92rem; cursor: pointer; border-bottom: 1px solid var(--border); background: none; border-left: none; border-right: none; border-top: none; width: 100%; text-align: left; }
+.menu-item:active { background: var(--surface2); }
+.menu-item-arrow { color: var(--text2); font-size: 0.8rem; }
+.subpage-overlay { display: none; position: fixed; inset: 0; z-index: 700; background: var(--bg); flex-direction: column; }
+.subpage-overlay.open { display: flex; }
+.subpage-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
+.subpage-back { background: none; border: none; color: var(--text2); font-size: 1.1rem; cursor: pointer; padding: 4px 8px; }
+.subpage-title { font-weight: bold; font-size: 0.95rem; }
+.subpage-body { flex: 1; overflow-y: auto; padding: 20px 20px 40px; }
+.disclaimer-section { margin-bottom: 24px; }
+.disclaimer-section h3 { font-size: 0.85rem; color: var(--accent); margin: 0 0 8px; }
+.disclaimer-section p { font-size: 0.82rem; color: var(--text2); line-height: 1.7; margin: 0; }
 .view-tab-bar { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); }
 .view-tab { flex: 1; padding: 8px 4px; background: none; border: none; color: var(--text2); font-size: 0.72rem; cursor: pointer; border-bottom: 2px solid transparent; }
 .view-tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: bold; }
@@ -424,7 +436,49 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
     <button class="menu-close-btn" id="menuCloseBtn">✕</button>
   </div>
   <div class="menu-drawer-body" id="menuDrawerBody">
-    <!-- メニュー項目はここに追加 -->
+    <button class="menu-item" id="menuSettings">⚙️ 設定<span class="menu-item-arrow">›</span></button>
+    <button class="menu-item" id="menuDisclaimer">📄 免責事項<span class="menu-item-arrow">›</span></button>
+  </div>
+</div>
+
+<!-- 設定サブページ -->
+<div class="subpage-overlay" id="settingsPage">
+  <div class="subpage-header">
+    <button class="subpage-back" id="settingsBack">‹</button>
+    <span class="subpage-title">設定</span>
+  </div>
+  <div class="subpage-body">
+    <!-- 設定項目は後から追加 -->
+  </div>
+</div>
+
+<!-- 免責事項サブページ -->
+<div class="subpage-overlay" id="disclaimerPage">
+  <div class="subpage-header">
+    <button class="subpage-back" id="disclaimerBack">‹</button>
+    <span class="subpage-title">免責事項</span>
+  </div>
+  <div class="subpage-body">
+    <div class="disclaimer-section">
+      <h3>本アプリについて</h3>
+      <p>本アプリは、Disney Lorcana トレーディングカードゲームのコレクション管理を目的とした非公式のファンメイドアプリです。宝島社・Ravensburger・The Walt Disney Company とは一切関係ありません。</p>
+    </div>
+    <div class="disclaimer-section">
+      <h3>著作権について</h3>
+      <p>カード名・カード画像・キャラクター名・ロゴ等に関する著作権および商標権は、The Walt Disney Company ならびに Ravensburger AG に帰属します。本アプリはこれらを営利目的で使用するものではありません。</p>
+    </div>
+    <div class="disclaimer-section">
+      <h3>カードデータについて</h3>
+      <p>カードデータは公開情報をもとに構成されています。内容の正確性・完全性・最新性については保証しません。公式情報と異なる場合は公式情報を優先してください。</p>
+    </div>
+    <div class="disclaimer-section">
+      <h3>免責事項</h3>
+      <p>本アプリの利用により生じたいかなる損害（データ消失・誤情報による損害等）についても、開発者は一切の責任を負いません。本アプリは現状のまま提供されており、動作を保証するものではありません。</p>
+    </div>
+    <div class="disclaimer-section">
+      <h3>プライバシーについて</h3>
+      <p>コレクションデータ・デッキデータはすべてお使いの端末内（IndexedDB）にのみ保存されます。外部サーバーへの送信は行いません。</p>
+    </div>
   </div>
 </div>
 
@@ -450,9 +504,15 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 // ───────────────────────────────────────────
 function openMenu()  { document.getElementById('menuDrawer').classList.add('open'); document.getElementById('menuOverlay').classList.add('open'); }
 function closeMenu() { document.getElementById('menuDrawer').classList.remove('open'); document.getElementById('menuOverlay').classList.remove('open'); }
+function openSubpage(id)  { closeMenu(); document.getElementById(id).classList.add('open'); }
+function closeSubpage(id) { document.getElementById(id).classList.remove('open'); }
 document.getElementById('menuBtn').addEventListener('click', openMenu);
 document.getElementById('menuCloseBtn').addEventListener('click', closeMenu);
 document.getElementById('menuOverlay').addEventListener('click', closeMenu);
+document.getElementById('menuSettings').addEventListener('click', () => openSubpage('settingsPage'));
+document.getElementById('menuDisclaimer').addEventListener('click', () => openSubpage('disclaimerPage'));
+document.getElementById('settingsBack').addEventListener('click', () => closeSubpage('settingsPage'));
+document.getElementById('disclaimerBack').addEventListener('click', () => closeSubpage('disclaimerPage'));
 
 // ───────────────────────────────────────────
 // 共通ダイアログ
