@@ -732,10 +732,11 @@ async function loadCardCache() {
   });
 }
 async function saveCardCache(sets, cards, etag) {
-  return new Promise(r => {
+  return new Promise((res, rej) => {
     const tx = db.transaction('meta', 'readwrite');
     tx.objectStore('meta').put({ id: CARD_CACHE_KEY, sets, cards, etag: etag ?? null, savedAt: Date.now() });
-    tx.oncomplete = () => r();
+    tx.oncomplete = () => res();
+    tx.onerror   = () => rej(tx.error);
   });
 }
 
@@ -744,12 +745,6 @@ async function saveCardCache(sets, cards, etag) {
 // ═══════════════════════════════════════════
 
 
-function buildImageUrls(card){
-  if(card.card_file) {
-    return [IMG_HOST + card.card_file + '.png'];
-  }
-  return [''];
-}
 async function resolveImgSrc(url) {
   if ('caches' in window) {
     const cache = await caches.open(IMG_CACHE_NAME);
@@ -1052,7 +1047,6 @@ async function importDeckFromUrl(url) {
     throw new Error('URLまたはdsコードの形式が正しくありません。');
   }
   if (dsCodes.length === 0) throw new Error('カード情報が空です');
-  if (dsCodes.length === 0) throw new Error('カード情報が空です');
   if (allCards.length === 0) throw new Error('カードデータがまだ読み込まれていません。しばらく待ってから再度お試しください。');
   const cards = {};
   const notFound = [];
@@ -1228,11 +1222,18 @@ function renderDeckEditor(){
     const card=allCards.find(c=>c.id===cardId); if(!card) return;
     const row=document.createElement('div'); row.className='deck-card-row';
     const rowImg=makeImg(card,'width:36px;height:50px;border-radius:4px;flex-shrink:0;'); row.appendChild(rowImg);
+    const di=document.createElement('div'); di.className='dc-info';
+    const dn=document.createElement('div'); dn.className='dc-name'; dn.textContent=card.name;
+    const ds=document.createElement('div'); ds.className='dc-sub'; if(card.version) ds.textContent=card.version;
+    di.appendChild(dn); di.appendChild(ds);
     row.appendChild(di);
     const db2=document.createElement('div'); db2.className='dc-btns';
-    db2.innerHTML=`<button class="dc-btn rem" style="background:#e74c3c;color:#fff;">－</button><span class="dc-count">${count}</span><button class="dc-btn add" style="background:#7c6dfa;color:#fff;">＋</button>`;
-    db2.querySelector('.rem').addEventListener('click',()=>{ currentDeck.cards[cardId]=Math.max(0,count-1); renderDeckEditor(); });
-    db2.querySelector('.add').addEventListener('click',()=>{
+    const remBtn=document.createElement('button'); remBtn.className='dc-btn rem'; remBtn.textContent='－';
+    const cntSpan=document.createElement('span'); cntSpan.className='dc-count'; cntSpan.textContent=count;
+    const addBtn=document.createElement('button'); addBtn.className='dc-btn add'; addBtn.textContent='＋';
+    remBtn.addEventListener('click',()=>{ currentDeck.cards[cardId]=Math.max(0,count-1); renderDeckEditor(); });
+    db2.appendChild(remBtn); db2.appendChild(cntSpan); db2.appendChild(addBtn);
+    addBtn.addEventListener('click',()=>{
       if(total>=60||count>=4) return;
       const cardInks=card.inks??(card.ink?[card.ink]:[]);
       const curInks=deckInks();
@@ -1265,7 +1266,7 @@ function renderEditorCardList(){
     di.appendChild(dn); di.appendChild(ds);
     row.appendChild(di);
     const db2=document.createElement('div'); db2.className='dc-btns';
-    const ab=document.createElement('button'); ab.className='dc-btn add'; ab.textContent='＋'; ab.disabled=!canAdd; ab.style.opacity=canAdd?'1':'0.3'; ab.style.background='#7c6dfa'; ab.style.color='#fff';
+    const ab=document.createElement('button'); ab.className='dc-btn add'; ab.textContent='＋'; ab.disabled=!canAdd; ab.style.opacity=canAdd?'1':'0.3';
     ab.addEventListener('click',()=>{ if(!canAdd) return; currentDeck.cards[card.id]=(currentDeck.cards[card.id]??0)+1; renderDeckEditor(); });
     const cs=document.createElement('span'); cs.className='dc-count'; cs.textContent=count||'';
     db2.appendChild(ab); db2.appendChild(cs); row.appendChild(db2);
@@ -1518,7 +1519,7 @@ function initSettings() {
   await openDB();
   const rows = await dbGetAll('collection');
   collection = {}; rows.forEach(r => { collection[r.id] = r; });
-  try { const wRows = await dbGetAll('wishlist'); wishlist = new Set(wRows.map(r=>r.id)); } catch(e) { wishlist = new Set(); }
+  try { const wRows = await dbGetAll('wishlist'); wishlist = new Set(wRows.map(r=>r.id)); } catch(e) { console.warn('[startup] wishlist load failed:', e); wishlist = new Set(); }
   decks = await dbGetAll('decks');
   await loadData();
   renderCardGrid();
