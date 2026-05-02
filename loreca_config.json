@@ -1,0 +1,38 @@
+{
+  "sets": [
+    {"code":"1",  "name":"ＴＨＥ ＦＩＲＳＴ ＣＨＡＰＴＥＲ 物語のはじまり",                        "banner":"bnr_01st_the-first-chapter.webp"},
+    {"code":"2",  "name":"ＲＩＳＥ ＯＦ ＴＨＥ ＦＬＯＯＤＢＯＲＮ フラッドボーンの渾沌",            "banner":"bnr_02nd_rise-of-the-floodborn.webp"},
+    {"code":"3",  "name":"ＩＮＴＯ ＴＨＥ ＩＮＫＬＡＮＤＳ インクランド探訪",                      "banner":"bnr_03rd_into-the-inklands.webp"},
+    {"code":"4",  "name":"ＵＲＳＵＬＡ'Ｓ ＲＥＴＵＲＮ 逆襲のアースラ",                            "banner":"bnr_04th_ursula's-return.webp"},
+    {"code":"5",  "name":"ＳＨＩＭＭＥＲＩＮＧ ＳＫＩＥＳ 星々の輝き",                             "banner":"bnr_05th_shimmering-skies.webp"},
+    {"code":"6",  "name":"ＡＺＵＲＩＴＥ ＳＥＡ 大いなるアズライト",                               "banner":"bnr_06th_azurite-sea.webp"},
+    {"code":"7",  "name":"ＡＲＣＨＡＺＩＡＳ ＩＳＬＡＮＤ アーケイジアと魔法の島",                   "banner":"bnr_07th_archazias-island.webp"},
+    {"code":"8",  "name":"ＲＥＩＧＮ ＯＦ ＪＡＦＡＲ ジャファーの王権",                             "banner":"bnr_08th_reign-of-jafar.webp"},
+    {"code":"9",  "name":"ＦＡＢＬＥＤ 物語のおもいで（特別プロモーションパック）",                    "banner":"bnr_09th_fabled.webp"},
+    {"code":"10", "name":"ＷＨＩＳＰＥＲＳ ＩＮ ＴＨＥ ＷＥＬＬ（キュレーターズ・ライブラリー）",      "banner":"bnr_10th_whispers-in-the-well.webp"},
+    {"code":"11", "name":"ＷＩＮＴＥＲＳＰＥＬＬ（キュレーターズ・ライブラリー）",                     "banner":"bnr_11th_winterspell.webp"},
+    {"code":"12", "name":"ＷＩＬＤＳ ＵＮＫＮＯＷＮ 未知なる彼方へ！",                             "banner":"bnr_12th_wilds-unknown.webp"}
+  ],
+  "sleeves": [
+    {"id":"official_01"},
+    {"id":"official_02"},
+    {"id":"official_03"},
+    {"id":"official_04"},
+    {"id":"official_05"},
+    {"id":"official_06"},
+    {"id":"official_07"},
+    {"id":"official_08"},
+    {"id":"official_09"},
+    {"id":"official_10"},
+    {"id":"official_11"},
+    {"id":"official_12"},
+    {"id":"official_13"},
+    {"id":"official_14"},
+    {"id":"official_15"},
+    {"id":"official_16"},
+    {"id":"unofficial_01"},
+    {"id":"unofficial_02"},
+    {"id":"unofficial_03"},
+    {"id":"unofficial_04"}
+  ]
+}

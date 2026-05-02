@@ -702,28 +702,7 @@ const RARITY_IMG = {
   'エピック':         "https://pub-1ffff5ba3a074d538aa9f3027d3c97dc.r2.dev/icons/ico_rarity/ico_rarity_epic.svg",
   'アイコニック':     "https://pub-1ffff5ba3a074d538aa9f3027d3c97dc.r2.dev/icons/ico_rarity/ico_rarity_iconic.svg",};
 
-const DECK_SLEEVES = [
-  { id: 'official_01',   src: IMG_HOST + 'sleeves/slv_official_01.webp' },
-  { id: 'official_02',   src: IMG_HOST + 'sleeves/slv_official_02.webp' },
-  { id: 'official_03',   src: IMG_HOST + 'sleeves/slv_official_03.webp' },
-  { id: 'official_04',   src: IMG_HOST + 'sleeves/slv_official_04.webp' },
-  { id: 'official_05',   src: IMG_HOST + 'sleeves/slv_official_05.webp' },
-  { id: 'official_06',   src: IMG_HOST + 'sleeves/slv_official_06.webp' },
-  { id: 'official_07',   src: IMG_HOST + 'sleeves/slv_official_07.webp' },
-  { id: 'official_08',   src: IMG_HOST + 'sleeves/slv_official_08.webp' },
-  { id: 'official_09',   src: IMG_HOST + 'sleeves/slv_official_09.webp' },
-  { id: 'official_10',   src: IMG_HOST + 'sleeves/slv_official_10.webp' },
-  { id: 'official_11',   src: IMG_HOST + 'sleeves/slv_official_11.webp' },
-  { id: 'official_12',   src: IMG_HOST + 'sleeves/slv_official_12.webp' },
-  { id: 'official_13',   src: IMG_HOST + 'sleeves/slv_official_13.webp' },
-  { id: 'official_14',   src: IMG_HOST + 'sleeves/slv_official_14.webp' },
-  { id: 'official_15',   src: IMG_HOST + 'sleeves/slv_official_15.webp' },
-  { id: 'official_16',   src: IMG_HOST + 'sleeves/slv_official_16.webp' },
-  { id: 'unofficial_01', src: IMG_HOST + 'sleeves/slv_unofficial_01.webp' },
-  { id: 'unofficial_02', src: IMG_HOST + 'sleeves/slv_unofficial_02.webp' },
-  { id: 'unofficial_03', src: IMG_HOST + 'sleeves/slv_unofficial_03.webp' },
-  { id: 'unofficial_04', src: IMG_HOST + 'sleeves/slv_unofficial_04.webp' }
-];
+let DECK_SLEEVES = [];  // loreca_config.json から起動時に読み込む
 
 
 function makeRarityIcon(rarity) {
@@ -1355,12 +1334,17 @@ async function loadData(){
   const cInfo   = document.getElementById('cacheInfo');
   overlay.classList.add('show');
 
-  // sets.json を取得（バナーパス・セット名用）
+  // loreca_config.json を取得（セット情報・スリーブ一覧）
   try {
-    const r = await fetch('./sets.json');
-    setsData = await r.json();
+    const r = await fetch('./loreca_config.json');
+    const config = await r.json();
+    setsData    = config.sets    ?? [];
+    DECK_SLEEVES = (config.sleeves ?? []).map(s => ({
+      id:  s.id,
+      src: IMG_HOST + 'sleeves/slv_' + s.id + '.webp'
+    }));
   } catch(e) {
-    console.warn('[loadData] sets.json fetch failed:', e);
+    console.warn('[loadData] loreca_config.json fetch failed:', e);
   }
 
   // キャッシュチェック（ETag で更新検知）
