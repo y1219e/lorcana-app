@@ -35,7 +35,16 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, sa
 .chip.ruby { border-color: var(--ruby); } .chip.ruby.active { background: var(--ruby); border-color: var(--ruby); }
 .chip.sapphire { border-color: var(--sapphire); } .chip.sapphire.active { background: var(--sapphire); border-color: var(--sapphire); }
 .chip.steel { border-color: var(--steel); } .chip.steel.active { background: var(--steel); border-color: var(--steel); }
-.search-bar { padding: 8px 12px; background: var(--surface); border-bottom: 1px solid var(--border); }
+.search-bar { padding: 8px 12px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+.menu-btn { flex-shrink: 0; width: 36px; height: 36px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text1); font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+#menuDrawer { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: var(--surface); z-index: 600; transition: left 0.25s ease; box-shadow: 2px 0 16px rgba(0,0,0,0.4); display: flex; flex-direction: column; }
+#menuDrawer.open { left: 0; }
+#menuOverlay { display: none; position: fixed; inset: 0; z-index: 590; background: rgba(0,0,0,0.5); }
+#menuOverlay.open { display: block; }
+.menu-drawer-header { display: flex; align-items: center; justify-content: space-between; padding: 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.menu-drawer-header span { font-weight: bold; font-size: 0.95rem; }
+.menu-close-btn { background: none; border: none; color: var(--text2); font-size: 1.3rem; cursor: pointer; padding: 4px 8px; }
+.menu-drawer-body { flex: 1; overflow-y: auto; padding: 12px 0; }
 .view-tab-bar { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); }
 .view-tab { flex: 1; padding: 8px 4px; background: none; border: none; color: var(--text2); font-size: 0.72rem; cursor: pointer; border-bottom: 2px solid transparent; }
 .view-tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: bold; }
@@ -199,7 +208,11 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
   </div>
 </div>
 <div class="page active" id="pageCards">
-  <div class="page-header"><img class="page-header-logo" src="https://pub-1ffff5ba3a074d538aa9f3027d3c97dc.r2.dev/logos/logo_app.webp" alt="ロゴ"><span class="badge" id="cardCountBadge">0</span></div>  <div class="search-bar"><input type="text" id="cardSearch" placeholder="カード名で検索…"></div>
+  <div class="page-header"><img class="page-header-logo" src="https://pub-1ffff5ba3a074d538aa9f3027d3c97dc.r2.dev/logos/logo_app.webp" alt="ロゴ"><span class="badge" id="cardCountBadge">0</span></div>
+  <div class="search-bar">
+    <button class="menu-btn" id="menuBtn" aria-label="メニュー">≡</button>
+    <input type="text" id="cardSearch" placeholder="カード名で検索…" style="flex:1;">
+  </div>
   <div class="view-tab-bar">
     <button class="view-tab active" data-view="all">全てのカード</button>
     <button class="view-tab" data-view="collection">マイコレクション</button>
@@ -404,6 +417,17 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
   </div>
 </div>
 
+<div id="menuOverlay"></div>
+<div id="menuDrawer">
+  <div class="menu-drawer-header">
+    <span>メニュー</span>
+    <button class="menu-close-btn" id="menuCloseBtn">✕</button>
+  </div>
+  <div class="menu-drawer-body" id="menuDrawerBody">
+    <!-- メニュー項目はここに追加 -->
+  </div>
+</div>
+
 <div class="modal-overlay" id="dialogModal">
   <div class="dialog-box">
     <p class="dialog-msg" id="dialogMsg"></p>
@@ -421,6 +445,15 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 </nav>
 
 <script>
+// ───────────────────────────────────────────
+// ハンバーガーメニュー
+// ───────────────────────────────────────────
+function openMenu()  { document.getElementById('menuDrawer').classList.add('open'); document.getElementById('menuOverlay').classList.add('open'); }
+function closeMenu() { document.getElementById('menuDrawer').classList.remove('open'); document.getElementById('menuOverlay').classList.remove('open'); }
+document.getElementById('menuBtn').addEventListener('click', openMenu);
+document.getElementById('menuCloseBtn').addEventListener('click', closeMenu);
+document.getElementById('menuOverlay').addEventListener('click', closeMenu);
+
 // ───────────────────────────────────────────
 // 共通ダイアログ
 // ───────────────────────────────────────────
