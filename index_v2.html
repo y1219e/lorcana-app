@@ -25,8 +25,6 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, sa
 .page-header h1 { flex: 1; text-align: center; font-size: 1rem; }
 .page-header h1 { font-size: 1rem; flex: 1; }
 .badge { background: var(--accent); color: #fff; font-size: 0.65rem; padding: 2px 7px; border-radius: 10px; }
-.filter-bar { padding: 10px 12px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.filter-bar::-webkit-scrollbar { display: none; }
 .chip { flex-shrink: 0; padding: 5px 12px; border-radius: 16px; border: 1px solid var(--border); background: var(--surface2); color: var(--text2); font-size: 0.72rem; cursor: pointer; white-space: nowrap; }
 .chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 .chip.amber { border-color: var(--amber); } .chip.amber.active { background: var(--amber); border-color: var(--amber); color: #000; }
@@ -77,8 +75,8 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, sa
 .card-item .card-info { padding: 4px 5px; }
 .card-item .card-name { font-size: 0.62rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 2px; }
 .card-item .card-sub { font-size: 0.55rem; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 1px; }
-.card-item .own-badge { position: absolute; top: 4px; right: 4px; background: #000; color: #fff; font-size: 0.65rem; font-weight: bold; padding: 1px 5px; border-radius: 8px; border: 1px solid #555; }
-.own-badge.foil { border: 2px solid #c9a84c; box-shadow: 0 0 4px rgba(201,168,76,0.6); }
+.card-item .own-badge { position: absolute; top: 4px; right: 4px; background: #fff; color: #000; font-size: 0.65rem; font-weight: bold; padding: 1px 5px; border-radius: 8px; border: 1px solid #ccc; }
+.own-badge.foil { border: 2px solid #c9a84c; box-shadow: 0 0 4px rgba(201,168,76,0.6); background: #c9a84c; color: #000; }
 .img-placeholder { width: 100%; aspect-ratio: 429/600; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 0.55rem; color: #555; text-align: center; padding: 6px; }
 .ink-dot { display: inline-flex; align-items: center; width: 16px; height: 16px; margin-right: 0; vertical-align: middle; flex-shrink: 0; }
 .ink-dot img { width: 100%; height: 100%; object-fit: contain; display: block; }
@@ -235,16 +233,6 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
     <button class="view-tab active" data-view="all">全てのカード</button>
     <button class="view-tab" data-view="collection">マイコレクション</button>
     <button class="view-tab" data-view="wishlist">ウィッシュリスト</button>
-  </div>
-  <div class="filter-bar" id="setFilter"></div>
-  <div class="filter-bar" id="inkFilter">
-    <button class="chip active" data-ink="">全て</button>
-    <button class="chip" data-ink="アンバー"></button>
-    <button class="chip" data-ink="アメジスト"></button>
-    <button class="chip" data-ink="エメラルド"></button>
-    <button class="chip" data-ink="ルビー"></button>
-    <button class="chip" data-ink="サファイア"></button>
-    <button class="chip" data-ink="スティール"></button>
   </div>
   <div class="card-grid" id="cardGrid"></div>
 </div>
@@ -817,7 +805,7 @@ function dbGetAll(store){ return new Promise(r=>{ const tx=db.transaction(store,
 // ═══════════════════════════════════════════
 // アプリ状態
 // ═══════════════════════════════════════════
-let allCards=[],sets=[],setsData=[],collection={},wishlist=new Set(),cardView='all',advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),keywords:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,strMin:null,strMax:null,wpMin:null,wpMax:null,loreMin:null,loreMax:null,mcMin:null,mcMax:null,inkwell:null,inkType:null,collectionStatus:null,textQ:'',sortOrder:'id_asc'},decks=[],filterSets=new Set(),filterInks=new Set(),searchQ='',currentCard=null,currentDeck=null;
+let allCards=[],sets=[],setsData=[],collection={},wishlist=new Set(),cardView='all',advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),keywords:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,strMin:null,strMax:null,wpMin:null,wpMax:null,loreMin:null,loreMax:null,mcMin:null,mcMax:null,inkwell:null,inkType:null,collectionStatus:null,textQ:'',sortOrder:'id_asc'},decks=[],searchQ='',currentCard=null,currentDeck=null;
 
 function filteredCards(){
   return allCards.filter(c=>{
@@ -825,11 +813,6 @@ function filteredCards(){
     if(cardView==='wishlist' && !wishlist.has(c.id)) return false;
     if(advFilter.collectionStatus==='owned' && ownedTotal(c.id)===0) return false;
     if(advFilter.collectionStatus==='notowned' && ownedTotal(c.id)>0) return false;
-    if(filterSets.size>0 && !filterSets.has(c.set?.code)) return false;
-    if(filterInks.size>0){
-      const cardInks = c.inks ?? (c.ink ? [c.ink] : []);
-      if(!cardInks.some(ink => filterInks.has(ink))) return false;
-    }
     if(searchQ){ const q=searchQ.toLowerCase(); if(!(c.name?.toLowerCase().includes(q)||c.version?.toLowerCase().includes(q))) return false; }
     if(advFilter.rarities.size>0 && !advFilter.rarities.has(c.rarity)) return false;
     // タイプフィルター
@@ -925,28 +908,6 @@ function renderCardGrid(){
   });
 }
 
-function renderSetFilter(){
-  const bar=document.getElementById('setFilter');
-  bar.innerHTML='<button class="chip active" data-set="">全て</button>';
-  sets.forEach(s=>{ const btn=document.createElement('button'); btn.className='chip'; btn.dataset.set=s.code; btn.textContent=`第${s.code}弾`; bar.appendChild(btn); });
-  bar.querySelectorAll('.chip').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      const setCode = btn.dataset.set;
-      const allBtn = bar.querySelector('[data-set=""]');
-      if(setCode===''){
-        filterSets.clear();
-        bar.querySelectorAll('.chip').forEach(b=>b.classList.remove('active'));
-        allBtn.classList.add('active');
-      } else {
-        allBtn.classList.remove('active');
-        if(filterSets.has(setCode)){ filterSets.delete(setCode); btn.classList.remove('active'); }
-        else { filterSets.add(setCode); btn.classList.add('active'); }
-        if(filterSets.size===0) allBtn.classList.add('active');
-      }
-      renderCardGrid();
-    });
-  });
-}
 
 function openCardModal(card){
   currentCard=card;
@@ -1152,22 +1113,15 @@ function addProg(parent,label,owned,total,setCode,bannerUrl){
   div.innerHTML = bannerHtml + '<h3>' + label + '</h3><div class="progress-bar-wrap"><div class="progress-bar" style="width:' + pct + '%"></div></div><div class="progress-nums">' + owned + ' / ' + total + ' (' + pct + '%)</div>';
   if(setCode){
     div.addEventListener('click',()=>{
-      // filterSetsをこの弾だけに設定
-      filterSets.clear();
-      filterSets.add(setCode);
+      // 詳細検索のセットフィルターにこの弾だけを設定
+      advFilter.sets.clear();
+      advFilter.sets.add(setCode);
       // カードタブに切り替え
       document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
       document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
       document.querySelector('[data-page="pageCards"]').classList.add('active');
       document.getElementById('pageCards').classList.add('active');
       document.getElementById('advSearchBtn').style.display='flex';
-      // セットフィルターチップのUI更新
-      const bar=document.getElementById('setFilter');
-      bar.querySelectorAll('.chip').forEach(btn=>{
-        if(btn.dataset.set==='') btn.classList.remove('active');
-        else if(btn.dataset.set===setCode) btn.classList.add('active');
-        else btn.classList.remove('active');
-      });
       renderCardGrid();
       window.scrollTo(0,0);
     });
@@ -1325,29 +1279,6 @@ document.getElementById('cacheRefreshBtn').addEventListener('click', async()=>{
 });
 document.getElementById('cardSearch').addEventListener('input',e=>{ searchQ=e.target.value; renderCardGrid(); });
 
-// インクフィルターチップにSVGアイコン＋名前を挿入
-document.getElementById('inkFilter').querySelectorAll('.chip[data-ink]').forEach(btn=>{
-  const ink = btn.dataset.ink;
-  if(ink) {
-    btn.appendChild(makeInkDot(ink));
-    btn.appendChild(document.createTextNode(ink));
-  }
-  btn.addEventListener('click',()=>{
-    const bar = document.getElementById('inkFilter');
-    const allBtn = bar.querySelector('[data-ink=""]');
-    if(ink===''){
-      filterInks.clear();
-      bar.querySelectorAll('.chip').forEach(b=>b.classList.remove('active'));
-      allBtn.classList.add('active');
-    } else {
-      allBtn.classList.remove('active');
-      if(filterInks.has(ink)){ filterInks.delete(ink); btn.classList.remove('active'); }
-      else { filterInks.add(ink); btn.classList.add('active'); }
-      if(filterInks.size===0) allBtn.classList.add('active');
-    }
-    renderCardGrid();
-  });
-});
 
 // ═══════════════════════════════════════════
 // データ取得（並列fetch + IndexedDBキャッシュ）
@@ -1467,7 +1398,6 @@ async function loadData(){
       retryBtn.addEventListener('click', async () => {
         retryBtn.remove();
         await loadData();
-        renderSetFilter();
         renderCardGrid();
       });
       overlay.appendChild(retryBtn);
@@ -1541,7 +1471,6 @@ function initSettings() {
   try { const wRows = await dbGetAll('wishlist'); wishlist = new Set(wRows.map(r=>r.id)); } catch(e) { wishlist = new Set(); }
   decks = await dbGetAll('decks');
   await loadData();
-  renderSetFilter();
   renderCardGrid();
   initSettings();
 
