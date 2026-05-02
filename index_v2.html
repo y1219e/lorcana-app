@@ -261,7 +261,7 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
   <div class="page-header"><img class="page-header-logo" src="https://pub-1ffff5ba3a074d538aa9f3027d3c97dc.r2.dev/logos/logo_app.webp" alt="ロゴ"><span class="badge" id="cardCountBadge">0</span></div>
   <div class="search-bar">
     <button class="menu-btn" id="menuBtn" aria-label="メニュー">≡</button>
-    <input type="text" id="cardSearch" placeholder="カード名で検索…" style="flex:1;">
+    <input type="text" id="cardSearch" placeholder="カード名・テキストで検索…" style="flex:1;">
   </div>
   <div class="view-tab-bar">
     <button class="view-tab active" data-view="all">全てのカード</button>
@@ -306,7 +306,7 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
     </div>
     <div class="adv-modal-body">
       <div class="adv-section">
-        <input id="advTextInput" class="adv-input" type="text" placeholder="テキストを検索...">
+        <input id="advTextInput" class="adv-input" type="text" placeholder="カード名・バージョン・テキストで検索…">
       </div>
       <div class="adv-section">
         <div class="adv-label">並び替え</div>
@@ -846,13 +846,19 @@ let searchQ = '';
 let currentCard = null;
 let currentDeck = null;
 
+function cardMatchesQuery(c, q) {
+  return (c.name?.toLowerCase().includes(q)) ||
+         (c.version?.toLowerCase().includes(q)) ||
+         (c.text?.toLowerCase().includes(q));
+}
+
 function filteredCards(){
   return allCards.filter(c=>{
     if(cardView==='collection' && ownedTotal(c.id)===0) return false;
     if(cardView==='wishlist' && !wishlist.has(c.id)) return false;
     if(advFilter.collectionStatus==='owned' && ownedTotal(c.id)===0) return false;
     if(advFilter.collectionStatus==='notowned' && ownedTotal(c.id)>0) return false;
-    if(searchQ){ const q=searchQ.toLowerCase(); if(!(c.name?.toLowerCase().includes(q)||c.version?.toLowerCase().includes(q))) return false; }
+    if(searchQ && !cardMatchesQuery(c, searchQ.toLowerCase())) return false;
     if(advFilter.rarities.size>0 && !advFilter.rarities.has(c.rarity)) return false;
     // タイプフィルター
     // action_song = card_type が アクション かつ classifications に「歌」を含む
@@ -888,7 +894,7 @@ function filteredCards(){
     }
     if(advFilter.inkwell===true && !c.inkwell) return false;
     if(advFilter.inkwell===false && c.inkwell) return false;
-    if(advFilter.textQ){ const tq=advFilter.textQ.toLowerCase(); if(!(c.text??'').toLowerCase().includes(tq)) return false; }
+    if(advFilter.textQ && !cardMatchesQuery(c, advFilter.textQ.toLowerCase())) return false;
     return true;
   });
 }
@@ -1328,7 +1334,16 @@ document.getElementById('menuCacheRefresh').addEventListener('click', async()=>{
   await dbDelete('meta', CARD_CACHE_KEY);
   location.reload();
 });
-document.getElementById('cardSearch').addEventListener('input',e=>{ searchQ=e.target.value; renderCardGrid(); });
+let _searchTimer;
+const _cardSearchEl = document.getElementById('cardSearch');
+_cardSearchEl.addEventListener('input', e => {
+  searchQ = e.target.value;
+  clearTimeout(_searchTimer);
+  _searchTimer = setTimeout(() => renderCardGrid(), 200);
+});
+_cardSearchEl.addEventListener('keydown', e => {
+  if (e.key === 'Enter') { clearTimeout(_searchTimer); renderCardGrid(); }
+});
 
 
 // ═══════════════════════════════════════════
@@ -1690,7 +1705,12 @@ function initSettings() {
     // テキスト
     const ti=document.getElementById('advTextInput');
     ti.value=advFilter.textQ??'';
-    ti.oninput=()=>{ advFilter.textQ=ti.value; document.getElementById('advApply').textContent='結果を表示（'+filteredCards().length+'件）'; };
+    let _advTextTimer;
+    ti.oninput=()=>{
+      advFilter.textQ=ti.value;
+      clearTimeout(_advTextTimer);
+      _advTextTimer=setTimeout(()=>{ document.getElementById('advApply').textContent='結果を表示（'+filteredCards().length+'件）'; }, 200);
+    };
 
     // コレクション状況
     document.getElementById('advCollectionBtns').querySelectorAll('button').forEach(btn=>{
