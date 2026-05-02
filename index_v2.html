@@ -3,7 +3,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ロルカナ コレクション v2-refactored</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -23,7 +23,6 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, sa
 .page-header { background: var(--surface); padding: 8px 16px; position: sticky; top: 0; z-index: 50; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; justify-content: space-between; }
 .page-header-logo { height: 44px; width: auto; flex-shrink: 0; }
 .page-header h1 { flex: 1; text-align: center; font-size: 1rem; }
-.page-header h1 { font-size: 1rem; flex: 1; }
 .badge { background: var(--accent); color: #fff; font-size: 0.65rem; padding: 2px 7px; border-radius: 10px; }
 .chip { flex-shrink: 0; padding: 5px 12px; border-radius: 16px; border: 1px solid var(--border); background: var(--surface2); color: var(--text2); font-size: 0.72rem; cursor: pointer; white-space: nowrap; }
 .chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
@@ -34,7 +33,7 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, sa
 .chip.sapphire { border-color: var(--sapphire); } .chip.sapphire.active { background: var(--sapphire); border-color: var(--sapphire); }
 .chip.steel { border-color: var(--steel); } .chip.steel.active { background: var(--steel); border-color: var(--steel); }
 .search-bar { padding: 8px 12px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
-.menu-btn { flex-shrink: 0; width: 36px; height: 36px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text1); font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.menu-btn { flex-shrink: 0; width: 36px; height: 36px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 #menuDrawer { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: var(--surface); z-index: 600; transition: left 0.25s ease; box-shadow: 2px 0 16px rgba(0,0,0,0.4); display: flex; flex-direction: column; }
 #menuDrawer.open { left: 0; }
 #menuOverlay { display: none; position: fixed; inset: 0; z-index: 590; background: rgba(0,0,0,0.5); }
@@ -43,7 +42,7 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, sa
 .menu-drawer-header span { font-weight: bold; font-size: 0.95rem; }
 .menu-close-btn { background: none; border: none; color: var(--text2); font-size: 1.3rem; cursor: pointer; padding: 4px 8px; }
 .menu-drawer-body { flex: 1; overflow-y: auto; padding: 12px 0; }
-.menu-item { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; color: var(--text1); font-size: 0.92rem; cursor: pointer; border-bottom: 1px solid var(--border); background: none; border-left: none; border-right: none; border-top: none; width: 100%; text-align: left; }
+.menu-item { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; color: var(--text); font-size: 0.92rem; cursor: pointer; border-bottom: 1px solid var(--border); background: none; border-left: none; border-right: none; border-top: none; width: 100%; text-align: left; }
 .menu-item:active { background: var(--surface2); }
 .menu-item-arrow { color: var(--text2); font-size: 0.8rem; }
 .subpage-overlay { display: none; position: fixed; inset: 0; z-index: 700; background: var(--bg); flex-direction: column; }
@@ -109,60 +108,95 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, sa
 #sleevePicker { display: none; }
 #sleevePicker.open { display: block !important; }
 .sleeve-option { width: 56px; height: 77px; border-radius: 5px; object-fit: cover; object-position: center top; cursor: pointer; border: 2px solid transparent; transition: border-color 0.15s; }
-.sleeve-option.selected { border-color: var(–accent); }
-.sleeve-option-none { width: 56px; height: 77px; border-radius: 5px; background: var(–surface); border: 2px solid var(–border); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
-.sleeve-option-none.selected { border-color: var(–accent); }
-.deck-sleeve { width: 48px; height: 66px; border-radius: 5px; object-fit: cover; object-position: center top; flex-shrink: 0; background: var(–surface2); }
-.deck-sleeve-placeholder { width: 48px; height: 66px; border-radius: 5px; background: var(–surface2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
+.sleeve-option.selected { border-color: var(--accent); }
+.sleeve-option-none { width: 56px; height: 77px; border-radius: 5px; background: var(--surface); border: 2px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
+.sleeve-option-none.selected { border-color: var(--accent); }
+.deck-sleeve { width: 48px; height: 66px; border-radius: 5px; object-fit: cover; object-position: center top; flex-shrink: 0; background: var(--surface2); }
+.deck-sleeve-placeholder { width: 48px; height: 66px; border-radius: 5px; background: var(--surface2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
 .deck-card h3 { font-size: 0.9rem; }
-.deck-card .deck-meta { font-size: 0.72rem; color: var(–text2); margin-top: 3px; }
-.deck-card .deck-count { font-size: 1.1rem; font-weight: bold; color: var(–accent); }
-.add-deck-btn { display: block; width: calc(100% - 20px); margin: 0 10px; padding: 13px; background: var(–accent); border: none; border-radius: 10px; color: #fff; font-size: 0.95rem; cursor: pointer; }
-#deckEditor { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100vw; height: 100vh; z-index: 9999; background: var(–bg); overflow: hidden; }
+.deck-card .deck-meta { font-size: 0.72rem; color: var(--text2); margin-top: 3px; }
+.deck-card .deck-count { font-size: 1.1rem; font-weight: bold; color: var(--accent); }
+.add-deck-btn { display: block; width: calc(100% - 20px); margin: 0 10px; padding: 13px; background: var(--accent); border: none; border-radius: 10px; color: #fff; font-size: 0.95rem; cursor: pointer; }
+#deckEditor { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100vw; height: 100vh; z-index: 9999; background: var(--bg); overflow: hidden; }
 #deckEditor.open { display: flex; flex-direction: column; }
 body.deck-editing .page, body.deck-editing nav { display: none !important; }
-.editor-header { background: var(–surface); padding: 8px 10px; border-bottom: 1px solid var(–border); display: flex; flex-direction: column; gap: 0; }
-.editor-header input { flex: 1; background: var(–surface2); border: 1px solid var(–border); border-radius: 6px; padding: 5px 10px; color: var(–text); font-size: 0.85rem; }
-.btn-sm { padding: 5px 10px; border-radius: 8px; border: none; cursor: pointer; font-size: 0.75rem; font-weight: bold; background: var(–surface2); color: var(–text); white-space: nowrap; }
-.btn-save { background: var(–accent); color: #fff; }
-.btn-del { background: var(–ruby); color: #fff; }
-.btn-back { background: var(–surface2); color: var(–text); border: 1px solid var(–border); }
+.editor-header { background: var(--surface); padding: 8px 10px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 0; }
+.editor-header input { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; color: var(--text); font-size: 0.85rem; }
+.btn-sm { padding: 5px 10px; border-radius: 8px; border: none; cursor: pointer; font-size: 0.75rem; font-weight: bold; background: var(--surface2); color: var(--text); white-space: nowrap; }
+.btn-save { background: var(--accent); color: #fff; }
+.btn-del { background: var(--ruby); color: #fff; }
+.btn-back { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
 .editor-body { display: flex; flex: 1; overflow: hidden; }
-.editor-left { width: 55%; border-right: 1px solid var(–border); overflow-y: auto; }
+.editor-left { width: 55%; border-right: 1px solid var(--border); overflow-y: auto; }
 .editor-right { width: 45%; overflow-y: auto; }
-.editor-section-title { padding: 8px 10px; font-size: 0.72rem; color: var(–text2); background: var(–surface); border-bottom: 1px solid var(–border); }
-.deck-card-row { display: flex; align-items: center; padding: 6px 8px; border-bottom: 1px solid var(–border); gap: 6px; }
+.editor-section-title { padding: 8px 10px; font-size: 0.72rem; color: var(--text2); background: var(--surface); border-bottom: 1px solid var(--border); }
+.deck-card-row { display: flex; align-items: center; padding: 6px 8px; border-bottom: 1px solid var(--border); gap: 6px; }
 .deck-card-row img { width: 36px; border-radius: 4px; flex-shrink: 0; }
 .deck-card-row .dc-info { flex: 1; min-width: 0; }
 .deck-card-row .dc-name { font-size: 0.68rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.deck-card-row .dc-sub { font-size: 0.58rem; color: var(–text2); white-space: normal; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.deck-card-row .dc-sub { font-size: 0.58rem; color: var(--text2); white-space: normal; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .deck-card-row .dc-btns { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
-.dc-btn { width: 28px; height: 28px; border-radius: 50%; border: none; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; background: var(–surface2); color: var(–text); }
-.dc-btn.rem { background: var(–ruby); color: #fff; }
-.dc-btn.add { background: var(–accent); color: #fff; }
-.dc-btn.add { background: var(–accent); color: #fff; }
-.dc-btn.rem { background: var(–ruby); color: #fff; }
+.dc-btn { width: 28px; height: 28px; border-radius: 50%; border: none; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; background: var(--surface2); color: var(--text); }
+.dc-btn.rem { background: var(--ruby); color: #fff; }
+.dc-btn.add { background: var(--accent); color: #fff; }
 .dc-count { font-size: 0.8rem; font-weight: bold; min-width: 14px; text-align: center; }
-.editor-search { padding: 6px 8px; background: var(–surface); border-bottom: 1px solid var(–border); }
-.editor-search input { width: 100%; background: var(–surface2); border: 1px solid var(–border); border-radius: 6px; padding: 5px 8px; color: var(–text); font-size: 0.78rem; }
-.deck-total { padding: 8px 10px; font-size: 0.78rem; color: var(–text2); }
-.deck-total span { color: var(–accent); font-weight: bold; }
-.ink-warning { color: var(–ruby); font-size: 0.72rem; padding: 4px 10px; }
+.editor-search { padding: 6px 8px; background: var(--surface); border-bottom: 1px solid var(--border); }
+.editor-search input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; color: var(--text); font-size: 0.78rem; }
+.deck-total { padding: 8px 10px; font-size: 0.78rem; color: var(--text2); }
+.deck-total span { color: var(--accent); font-weight: bold; }
+.ink-warning { color: var(--ruby); font-size: 0.72rem; padding: 4px 10px; }
 #loadingOverlay { display: none; position: fixed; inset: 0; z-index: 300; background: rgba(15,15,26,0.92); flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
 #loadingOverlay.show { display: flex; }
-.spinner { width: 40px; height: 40px; border: 3px solid var(–border); border-top-color: var(–accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+.spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-#loadProgress { font-size: 0.85rem; color: var(–text2); }
+#loadProgress { font-size: 0.85rem; color: var(--text2); }
 #cacheInfo { font-size: 0.72rem; color: #555; margin-top: 4px; }
-#prefetchBar { display:none; position:fixed; bottom:58px; left:0; right:0; z-index:99; background:var(–surface); border-top:1px solid var(–border); padding:4px 12px; font-size:0.68rem; color:var(–text2); }
-#prefetchBarInner { height:3px; background:var(–accent,#7c6dfa); border-radius:2px; margin-top:3px; transition:width 0.3s; width:0%; }
+#prefetchBar { display:none; position:fixed; bottom:58px; left:0; right:0; z-index:99; background:var(--surface); border-top:1px solid var(--border); padding:4px 12px; font-size:0.68rem; color:var(--text2); }
+#prefetchBarInner { height:3px; background:var(--accent,#7c6dfa); border-radius:2px; margin-top:3px; transition:width 0.3s; width:0%; }
 #dialogModal { z-index: 500; }
 .dialog-box { background: var(--surface2); border-radius: 14px; padding: 24px 20px 16px; width: calc(100% - 48px); max-width: 300px; box-shadow: 0 4px 24px rgba(0,0,0,0.5); }
-.dialog-msg { margin: 0 0 20px; color: var(--text1); font-size: 0.92rem; line-height: 1.55; white-space: pre-wrap; }
+.dialog-msg { margin: 0 0 20px; color: var(--text); font-size: 0.92rem; line-height: 1.55; white-space: pre-wrap; }
 .dialog-btns { display: flex; gap: 10px; }
 .dialog-btns button { flex: 1; padding: 10px; border-radius: 8px; font-size: 0.9rem; cursor: pointer; border: none; }
 .dialog-btn-cancel { background: var(--surface); border: 1px solid var(--border) !important; color: var(--text2); }
 .dialog-btn-ok { background: var(--accent); color: #fff; }
+/* 詳細検索モーダル */
+.adv-modal-box { background: var(--surface); width: 100%; border-radius: 16px 16px 0 0; max-height: 85vh; display: flex; flex-direction: column; }
+.adv-modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.adv-modal-header span { font-weight: bold; font-size: 0.95rem; }
+.adv-modal-header button { background: none; border: none; color: var(--text2); font-size: 1.2rem; cursor: pointer; }
+.adv-modal-body { overflow-y: auto; flex: 1; padding-bottom: 8px; }
+.adv-modal-footer { padding: 12px 20px; border-top: 1px solid var(--border); flex-shrink: 0; background: var(--surface); display: flex; gap: 8px; }
+.adv-modal-footer button:first-child { padding: 13px 16px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; color: var(--text2); font-size: 0.85rem; cursor: pointer; white-space: nowrap; }
+.adv-modal-footer button:last-child { flex: 1; padding: 13px; background: var(--accent); border: none; border-radius: 10px; color: #fff; font-size: 0.95rem; font-weight: bold; cursor: pointer; }
+.adv-section { padding: 14px 20px 0; }
+.adv-label { font-size: 0.72rem; color: var(--text2); margin-bottom: 8px; font-weight: bold; }
+.adv-label-val { color: var(--accent); }
+.adv-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.adv-row-nowrap { display: flex; gap: 10px; flex-wrap: wrap; }
+.adv-toggle { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); color: var(--text2); font-size: 0.8rem; cursor: pointer; }
+.adv-toggle.active { background: rgba(124,109,250,0.2); border-color: var(--accent); color: var(--accent); }
+.adv-chip { padding: 5px 12px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface2); color: var(--text2); font-size: 0.78rem; cursor: pointer; }
+.adv-chip.active { background: rgba(124,109,250,0.2); border-color: var(--accent); color: var(--accent); }
+.adv-icon-wrap { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid var(--border); transition: border-color 0.15s, background 0.15s; cursor: pointer; }
+.adv-icon-wrap.active { border-color: var(--accent); background: rgba(124,109,250,0.2); }
+.adv-icon-dot { width: 32px; height: 32px; }
+.adv-icon-dot img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.adv-icon-span { display: inline-flex; width: 32px; height: 32px; align-items: center; justify-content: center; }
+.adv-icon-span img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.adv-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 8px 12px; font-size: 0.85rem; box-sizing: border-box; }
+.adv-select { width: 100%; padding: 10px 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.85rem; cursor: pointer; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M0 0l6 8 6-8z' fill='%23aaa'/></svg>"); background-repeat: no-repeat; background-position: right 12px center; }
+.adv-slider-row { display: flex; gap: 8px; align-items: center; }
+.adv-slider-num { font-size: 0.75rem; color: var(--text2); text-align: center; }
+.adv-slider-num.lo { width: 16px; }
+.adv-slider-num.hi { width: 20px; }
+.adv-slider-track { flex: 1; position: relative; height: 32px; display: flex; align-items: center; }
+.adv-slider-track-bg { position: absolute; left: 0; right: 0; height: 4px; background: var(--border); border-radius: 2px; }
+.adv-slider-fill { position: absolute; height: 4px; background: var(--accent); border-radius: 2px; }
+.adv-slider-input { position: absolute; width: 100%; appearance: none; -webkit-appearance: none; background: transparent; pointer-events: none; z-index: 2; }
+/* インポートモーダル */
+.import-modal-box { background: var(--surface); border-radius: 14px; padding: 20px; width: 90%; max-width: 360px; max-height: 80vh; overflow-y: auto; }
+.import-modal-box textarea { width: 100%; height: 80px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 8px; font-size: 0.8rem; resize: none; box-sizing: border-box; }
 </style>
 
 </head>
@@ -203,7 +237,7 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
       <input type="text" id="deckNameInput" placeholder="デッキ名" style="flex:1;min-width:0;">
     </div>
     <div style="display:flex;align-items:center;gap:6px;width:100%;margin-top:6px;">
-      <button class="btn-sm" id="sleevePickerBtn" style="padding:4px 8px;font-size:0.75rem;background:#16213e;color:#eee;flex:1;" onclick="document.getElementById('sleevePicker').classList.toggle('open')">🖼️ 画像</button>
+      <button class="btn-sm" id="sleevePickerBtn" style="padding:4px 8px;font-size:0.75rem;background:#16213e;color:#eee;flex:1;">🖼️ 画像</button>
       <button class="btn-sm btn-save" id="editorSave" style="background:#7c6dfa;color:#fff;flex:1;">保存</button>
       <button class="btn-sm btn-del" id="editorDel" style="display:none;background:#e74c3c;color:#fff;flex:1;">削除</button>
     </div>
@@ -244,7 +278,7 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 <div class="page" id="pageDecks">
   <div class="page-header"><img class="page-header-logo" src="https://pub-1ffff5ba3a074d538aa9f3027d3c97dc.r2.dev/logos/logo_app.webp" alt="ロゴ"></div>  <div style="padding:10px;display:flex;gap:8px;">
     <button id="addDeckBtn" style="flex:1;padding:13px;background:var(--accent);border:none;border-radius:10px;color:#fff;font-size:0.9rem;cursor:pointer;">＋ 新しいデッキを作る</button>
-    <button id="importDeckBtn" style="flex:1;padding:13px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text1);font-size:0.9rem;cursor:pointer;">🔗 URLから読み込む</button>
+    <button id="importDeckBtn" style="flex:1;padding:13px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:0.9rem;cursor:pointer;">🔗 URLから読み込む</button>
   </div>
   <div class="deck-list" id="deckList"></div>
 </div>
@@ -252,172 +286,151 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 <!-- URLインポートモーダル -->
 
 <div class="modal-overlay" id="importModal" style="align-items:center;justify-content:center;z-index:300;">
-  <div style="background:var(--surface);border-radius:14px;padding:20px;width:90%;max-width:360px;max-height:80vh;overflow-y:auto;">
+  <div class="import-modal-box">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
       <h2 style="font-size:1rem;">デッキURLを貼り付け</h2>
       <button id="importClose" style="background:none;border:none;color:var(--text2);font-size:1.2rem;cursor:pointer;">✕</button>
     </div>
-    <p style="font-size:0.72rem;color:var(--text2);margin-bottom:10px;">
-      タカラトミー デッキビルダーの「共有URL」をそのまま貼り付けてください。
-    </p>
-    <textarea id="importUrlInput" style="width:100%;height:80px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text1);padding:8px;font-size:0.8rem;resize:none;box-sizing:border-box;" placeholder="https://www.takaratomy.co.jp/products/disneylorcana/deckbuilder/deck/?cs=...&ds=..."></textarea>
+    <p style="font-size:0.72rem;color:var(--text2);margin-bottom:10px;">タカラトミー デッキビルダーの「共有URL」をそのまま貼り付けてください。</p>
+    <textarea id="importUrlInput" placeholder="https://www.takaratomy.co.jp/products/disneylorcana/deckbuilder/deck/?cs=...&ds=..."></textarea>
     <div id="importError" style="color:#f55;font-size:0.72rem;margin-top:6px;display:none;"></div>
     <button id="importExecBtn" style="margin-top:10px;width:100%;padding:10px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:0.9rem;cursor:pointer;">読み込む</button>
   </div>
 </div>
 <!-- 詳細検索モーダル -->
 <div class="modal-overlay" id="advSearchModal" style="align-items:flex-end;z-index:250;">
-  <div style="background:var(--surface);width:100%;border-radius:16px 16px 0 0;max-height:85vh;display:flex;flex-direction:column;">
-    <!-- ヘッダー（sticky） -->
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0;">
-      <span style="font-weight:bold;font-size:0.95rem;">詳細検索</span>
-      <button id="advClose" style="background:none;border:none;color:var(--text2);font-size:1.2rem;cursor:pointer;">✕</button>
+  <div class="adv-modal-box">
+    <div class="adv-modal-header">
+      <span>詳細検索</span>
+      <button id="advClose">✕</button>
     </div>
-    <!-- スクロール部分 -->
-    <div style="overflow-y:auto;flex:1;padding-bottom:8px;">
-      <!-- テキスト検索 -->
-      <div style="padding:14px 20px 0;">
-        <input id="advTextInput" type="text" placeholder="テキストを検索..." style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text1);padding:8px 12px;font-size:0.85rem;box-sizing:border-box;">
+    <div class="adv-modal-body">
+      <div class="adv-section">
+        <input id="advTextInput" class="adv-input" type="text" placeholder="テキストを検索...">
       </div>
-      <!-- 並び替え -->
-      <div style="padding:14px 20px 0;">
-        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">並び替え</div>
-        <select id="advSortSelect" style="width:100%;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text1);font-size:0.85rem;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%228%22><path d=%22M0 0l6 8 6-8z%22 fill=%22%23aaa%22/></svg>');background-repeat:no-repeat;background-position:right 12px center;">
+      <div class="adv-section">
+        <div class="adv-label">並び替え</div>
+        <select id="advSortSelect" class="adv-select">
           <option value="id_asc">ID（昇順）</option>
           <option value="id_desc">ID（降順）</option>
           <option value="cost_asc">インクコスト（昇順）</option>
           <option value="cost_desc">インクコスト（降順）</option>
         </select>
       </div>
-      <!-- コレクション状況 -->
-      <div style="padding:14px 20px 0;">
-        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">コレクション状況</div>
-        <div style="display:flex;gap:8px;" id="advCollectionBtns">
-          <button data-val="owned" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:0.8rem;cursor:pointer;">持っている</button>
-          <button data-val="notowned" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:0.8rem;cursor:pointer;">持っていない</button>
+      <div class="adv-section">
+        <div class="adv-label">コレクション状況</div>
+        <div class="adv-row" id="advCollectionBtns">
+          <button class="adv-toggle" data-val="owned">持っている</button>
+          <button class="adv-toggle" data-val="notowned">持っていない</button>
         </div>
       </div>
-      <!-- インクタイプ -->
-      <div style="padding:14px 20px 0;">
-        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">インクタイプ</div>
-        <div id="advInkGrid" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
+      <div class="adv-section">
+        <div class="adv-label">インクタイプ</div>
+        <div class="adv-row-nowrap" id="advInkGrid"></div>
       </div>
-      <!-- インクタイプ（シングル/デュアル） -->
-      <div style="padding:14px 20px 0;">
-        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">インクタイプ（シングル/デュアル）</div>
-        <div style="display:flex;gap:8px;" id="advInkTypeBtns">
-          <button data-val="single" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:0.8rem;cursor:pointer;">シングル</button>
-          <button data-val="dual" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:0.8rem;cursor:pointer;">デュアル</button>
+      <div class="adv-section">
+        <div class="adv-label">インクタイプ（シングル/デュアル）</div>
+        <div class="adv-row" id="advInkTypeBtns">
+          <button class="adv-toggle" data-val="single">シングル</button>
+          <button class="adv-toggle" data-val="dual">デュアル</button>
         </div>
       </div>
-      <!-- インクウェル・シンボル -->
-      <div style="padding:14px 20px 0;">
-        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">インクウェル・シンボル</div>
-        <div style="display:flex;gap:8px;" id="advInkwellBtns">
-          <button data-val="yes" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:0.8rem;cursor:pointer;">あり</button>
-          <button data-val="no" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:0.8rem;cursor:pointer;">なし</button>
+      <div class="adv-section">
+        <div class="adv-label">インクウェル・シンボル</div>
+        <div class="adv-row" id="advInkwellBtns">
+          <button class="adv-toggle" data-val="yes">あり</button>
+          <button class="adv-toggle" data-val="no">なし</button>
         </div>
       </div>
-      <!-- レアリティ -->
-      <div style="padding:14px 20px 0;">
-        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">レアリティ</div>
-        <div id="advRarityGrid" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
+      <div class="adv-section">
+        <div class="adv-label">レアリティ</div>
+        <div class="adv-row-nowrap" id="advRarityGrid"></div>
       </div>
-      <!-- タイプ -->
-      <div style="padding:14px 20px 0;">
-        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">タイプ</div>
-        <div id="advTypeGrid" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+      <div class="adv-section">
+        <div class="adv-label">タイプ</div>
+        <div class="adv-row" id="advTypeGrid"></div>
       </div>
-      <!-- 能力 -->
-      <div style="padding:14px 20px 0;">
-        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">能力</div>
-        <div id="advKeywordGrid" style="display:flex;margin-top:8px;gap:6px;flex-wrap:wrap;"></div>
+      <div class="adv-section">
+        <div class="adv-label">能力</div>
+        <div class="adv-row" id="advKeywordGrid"></div>
       </div>
-      <!-- クラス -->
-      <div style="padding:14px 20px 0;">
-        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">クラス</div>
-        <div id="advClassGrid" style="display:flex;margin-top:8px;gap:6px;flex-wrap:wrap;"></div>
+      <div class="adv-section">
+        <div class="adv-label">クラス</div>
+        <div class="adv-row" id="advClassGrid"></div>
       </div>
-      <!-- セット -->
-      <div style="padding:14px 20px 0;">
-        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">セット</div>
-        <div id="advSetGrid" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+      <div class="adv-section">
+        <div class="adv-label">セット</div>
+        <div class="adv-row" id="advSetGrid"></div>
       </div>
-      <!-- インクコスト スライダー -->
-      <div style="padding:14px 20px 0;">
-        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">インクコスト <span id="advCostLabel" style="color:var(--accent);">全て</span></div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <span style="font-size:0.75rem;color:var(--text2);width:16px;text-align:center;">0</span>
-          <div style="flex:1;position:relative;height:32px;display:flex;align-items:center;">
-            <div id="advCostTrack" style="position:absolute;left:0;right:0;height:4px;background:var(--border);border-radius:2px;"></div>
-            <div id="advCostFill" style="position:absolute;height:4px;background:var(--accent);border-radius:2px;"></div>
-            <input id="advCostMin" type="range" min="0" max="10" value="0" style="position:absolute;width:100%;appearance:none;-webkit-appearance:none;background:transparent;pointer-events:none;z-index:2;">
-            <input id="advCostMax" type="range" min="0" max="10" value="10" style="position:absolute;width:100%;appearance:none;-webkit-appearance:none;background:transparent;pointer-events:none;z-index:2;">
+      <div class="adv-section">
+        <div class="adv-label">インクコスト <span id="advCostLabel" class="adv-label-val">全て</span></div>
+        <div class="adv-slider-row">
+          <span class="adv-slider-num lo">0</span>
+          <div class="adv-slider-track">
+            <div class="adv-slider-track-bg"></div>
+            <div id="advCostFill" class="adv-slider-fill"></div>
+            <input id="advCostMin" class="adv-slider-input" type="range" min="0" max="10" value="0">
+            <input id="advCostMax" class="adv-slider-input" type="range" min="0" max="10" value="10">
           </div>
-          <span style="font-size:0.75rem;color:var(--text2);width:20px;text-align:center;">10</span>
+          <span class="adv-slider-num hi">10</span>
         </div>
       </div>
-      <!-- 攻撃力 -->
-      <div style="padding:14px 20px 0;">
-        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">攻撃力（ストレングス）<span id="advStrLabel" style="color:var(--accent);">全て</span></div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <span style="font-size:0.75rem;color:var(--text2);width:16px;text-align:center;">0</span>
-          <div style="flex:1;position:relative;height:32px;display:flex;align-items:center;">
-            <div style="position:absolute;left:0;right:0;height:4px;background:var(--border);border-radius:2px;"></div>
-            <div id="advStrFill" style="position:absolute;height:4px;background:var(--accent);border-radius:2px;"></div>
-            <input id="advStrMin" type="range" min="0" max="12" value="0" style="position:absolute;width:100%;appearance:none;-webkit-appearance:none;background:transparent;pointer-events:none;z-index:2;">
-            <input id="advStrMax" type="range" min="0" max="12" value="12" style="position:absolute;width:100%;appearance:none;-webkit-appearance:none;background:transparent;pointer-events:none;z-index:2;">
+      <div class="adv-section">
+        <div class="adv-label">攻撃力（ストレングス）<span id="advStrLabel" class="adv-label-val">全て</span></div>
+        <div class="adv-slider-row">
+          <span class="adv-slider-num lo">0</span>
+          <div class="adv-slider-track">
+            <div class="adv-slider-track-bg"></div>
+            <div id="advStrFill" class="adv-slider-fill"></div>
+            <input id="advStrMin" class="adv-slider-input" type="range" min="0" max="12" value="0">
+            <input id="advStrMax" class="adv-slider-input" type="range" min="0" max="12" value="12">
           </div>
-          <span style="font-size:0.75rem;color:var(--text2);width:20px;text-align:center;">12</span>
+          <span class="adv-slider-num hi">12</span>
         </div>
       </div>
-      <!-- 意志力 -->
-      <div style="padding:14px 20px 0;">
-        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">意志力（ウィルパワー）<span id="advWpLabel" style="color:var(--accent);">全て</span></div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <span style="font-size:0.75rem;color:var(--text2);width:16px;text-align:center;">0</span>
-          <div style="flex:1;position:relative;height:32px;display:flex;align-items:center;">
-            <div style="position:absolute;left:0;right:0;height:4px;background:var(--border);border-radius:2px;"></div>
-            <div id="advWpFill" style="position:absolute;height:4px;background:var(--accent);border-radius:2px;"></div>
-            <input id="advWpMin" type="range" min="0" max="12" value="0" style="position:absolute;width:100%;appearance:none;-webkit-appearance:none;background:transparent;pointer-events:none;z-index:2;">
-            <input id="advWpMax" type="range" min="0" max="12" value="12" style="position:absolute;width:100%;appearance:none;-webkit-appearance:none;background:transparent;pointer-events:none;z-index:2;">
+      <div class="adv-section">
+        <div class="adv-label">意志力（ウィルパワー）<span id="advWpLabel" class="adv-label-val">全て</span></div>
+        <div class="adv-slider-row">
+          <span class="adv-slider-num lo">0</span>
+          <div class="adv-slider-track">
+            <div class="adv-slider-track-bg"></div>
+            <div id="advWpFill" class="adv-slider-fill"></div>
+            <input id="advWpMin" class="adv-slider-input" type="range" min="0" max="12" value="0">
+            <input id="advWpMax" class="adv-slider-input" type="range" min="0" max="12" value="12">
           </div>
-          <span style="font-size:0.75rem;color:var(--text2);width:20px;text-align:center;">12</span>
+          <span class="adv-slider-num hi">12</span>
         </div>
       </div>
-      <!-- ロア値 -->
-      <div style="padding:14px 20px 0;">
-        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">ロア値<span id="advLoreLabel" style="color:var(--accent);">全て</span></div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <span style="font-size:0.75rem;color:var(--text2);width:16px;text-align:center;">0</span>
-          <div style="flex:1;position:relative;height:32px;display:flex;align-items:center;">
-            <div style="position:absolute;left:0;right:0;height:4px;background:var(--border);border-radius:2px;"></div>
-            <div id="advLoreFill" style="position:absolute;height:4px;background:var(--accent);border-radius:2px;"></div>
-            <input id="advLoreMin" type="range" min="0" max="5" value="0" style="position:absolute;width:100%;appearance:none;-webkit-appearance:none;background:transparent;pointer-events:none;z-index:2;">
-            <input id="advLoreMax" type="range" min="0" max="5" value="5" style="position:absolute;width:100%;appearance:none;-webkit-appearance:none;background:transparent;pointer-events:none;z-index:2;">
+      <div class="adv-section">
+        <div class="adv-label">ロア値<span id="advLoreLabel" class="adv-label-val">全て</span></div>
+        <div class="adv-slider-row">
+          <span class="adv-slider-num lo">0</span>
+          <div class="adv-slider-track">
+            <div class="adv-slider-track-bg"></div>
+            <div id="advLoreFill" class="adv-slider-fill"></div>
+            <input id="advLoreMin" class="adv-slider-input" type="range" min="0" max="5" value="0">
+            <input id="advLoreMax" class="adv-slider-input" type="range" min="0" max="5" value="5">
           </div>
-          <span style="font-size:0.75rem;color:var(--text2);width:20px;text-align:center;">5</span>
+          <span class="adv-slider-num hi">5</span>
         </div>
       </div>
-      <!-- 移動コスト -->
-      <div style="padding:14px 20px 0;">
-        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:8px;font-weight:bold;">移動コスト <span id="advMcLabel" style="color:var(--accent);">全て</span></div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <span style="font-size:0.75rem;color:var(--text2);width:16px;text-align:center;">0</span>
-          <div style="flex:1;position:relative;height:32px;display:flex;align-items:center;">
-            <div style="position:absolute;left:0;right:0;height:4px;background:var(--border);border-radius:2px;"></div>
-            <div id="advMcFill" style="position:absolute;height:4px;background:var(--accent);border-radius:2px;"></div>
-            <input id="advMcMin" type="range" min="0" max="10" value="0" style="position:absolute;width:100%;appearance:none;-webkit-appearance:none;background:transparent;pointer-events:none;z-index:2;">
-            <input id="advMcMax" type="range" min="0" max="10" value="10" style="position:absolute;width:100%;appearance:none;-webkit-appearance:none;background:transparent;pointer-events:none;z-index:2;">
+      <div class="adv-section">
+        <div class="adv-label">移動コスト <span id="advMcLabel" class="adv-label-val">全て</span></div>
+        <div class="adv-slider-row">
+          <span class="adv-slider-num lo">0</span>
+          <div class="adv-slider-track">
+            <div class="adv-slider-track-bg"></div>
+            <div id="advMcFill" class="adv-slider-fill"></div>
+            <input id="advMcMin" class="adv-slider-input" type="range" min="0" max="10" value="0">
+            <input id="advMcMax" class="adv-slider-input" type="range" min="0" max="10" value="10">
           </div>
-          <span style="font-size:0.75rem;color:var(--text2);width:20px;text-align:center;">10</span>
+          <span class="adv-slider-num hi">10</span>
         </div>
       </div>
     </div>
-    <!-- 結果を表示・リセットボタン（常時表示） -->
-    <div style="padding:12px 20px;border-top:1px solid var(--border);flex-shrink:0;background:var(--surface);display:flex;gap:8px;">
-      <button id="advReset2" style="padding:13px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text2);font-size:0.85rem;cursor:pointer;white-space:nowrap;">リセット</button>
-      <button id="advApply" style="flex:1;padding:13px;background:var(--accent);border:none;border-radius:10px;color:#fff;font-size:0.95rem;font-weight:bold;cursor:pointer;">結果を表示</button>
+    <div class="adv-modal-footer">
+      <button id="advReset2">リセット</button>
+      <button id="advApply">結果を表示</button>
     </div>
   </div>
 </div>
@@ -521,6 +534,16 @@ document.getElementById('menuSettings').addEventListener('click', () => openSubp
 document.getElementById('menuDisclaimer').addEventListener('click', () => openSubpage('disclaimerPage'));
 document.getElementById('settingsBack').addEventListener('click', () => closeSubpage('settingsPage'));
 document.getElementById('disclaimerBack').addEventListener('click', () => closeSubpage('disclaimerPage'));
+
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (document.getElementById('settingsPage').classList.contains('open'))  { closeSubpage('settingsPage'); return; }
+  if (document.getElementById('disclaimerPage').classList.contains('open')){ closeSubpage('disclaimerPage'); return; }
+  if (document.getElementById('menuDrawer').classList.contains('open'))    { closeMenu(); return; }
+  if (document.getElementById('advSearchModal').classList.contains('open')){ document.getElementById('advSearchModal').classList.remove('open'); return; }
+  if (document.getElementById('importModal').classList.contains('open'))   { document.getElementById('importModal').classList.remove('open'); return; }
+  if (document.getElementById('cardModal').classList.contains('open'))     { document.getElementById('cardModal').classList.remove('open'); currentCard=null; return; }
+});
 
 // ───────────────────────────────────────────
 // 共通ダイアログ
@@ -748,22 +771,15 @@ function buildImageUrls(card){
   }
   return [''];
 }
-// メモリキャッシュ（ObjectURL）
-const _imgUrlCache = new Map();
-
 async function resolveImgSrc(url) {
-  if (_imgUrlCache.has(url)) return _imgUrlCache.get(url);
   if ('caches' in window) {
     const cache = await caches.open(IMG_CACHE_NAME);
     const hit = await cache.match(url);
     if (hit) {
       const blob = await hit.blob();
-      const objUrl = URL.createObjectURL(blob);
-      _imgUrlCache.set(url, objUrl);
-      return objUrl;
+      return URL.createObjectURL(blob);
     }
   }
-  // キャッシュなし → 通常URLで表示（ブラウザが取得）
   return url;
 }
 
@@ -774,7 +790,13 @@ function makeImg(card, deckStyle){
   img.onerror = () => { const ph=document.createElement('div'); ph.className='img-placeholder'; ph.textContent=card.name; img.replaceWith(ph); };
   if(card.card_file) {
     const url = IMG_HOST + card.card_file + '.png';
-    resolveImgSrc(url).then(src => { img.src = src; });
+    resolveImgSrc(url).then(src => {
+      img.src = src;
+      if(src.startsWith('blob:')) {
+        img.onload  = () => URL.revokeObjectURL(src);
+        img.onerror = () => URL.revokeObjectURL(src);
+      }
+    });
   }
   return img;
 }
@@ -805,7 +827,24 @@ function dbGetAll(store){ return new Promise(r=>{ const tx=db.transaction(store,
 // ═══════════════════════════════════════════
 // アプリ状態
 // ═══════════════════════════════════════════
-let allCards=[],sets=[],setsData=[],collection={},wishlist=new Set(),cardView='all',advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),keywords:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,strMin:null,strMax:null,wpMin:null,wpMax:null,loreMin:null,loreMax:null,mcMin:null,mcMax:null,inkwell:null,inkType:null,collectionStatus:null,textQ:'',sortOrder:'id_asc'},decks=[],searchQ='',currentCard=null,currentDeck=null;
+let allCards = [];
+let sets = [];
+let setsData = [];
+let collection = {};
+let wishlist = new Set();
+let cardView = 'all';
+let advFilter = {
+  rarities: new Set(), types: new Set(), classifications: new Set(),
+  keywords: new Set(), inks: new Set(), sets: new Set(),
+  costMin: null, costMax: null, strMin: null, strMax: null,
+  wpMin: null, wpMax: null, loreMin: null, loreMax: null,
+  mcMin: null, mcMax: null, inkwell: null, inkType: null,
+  collectionStatus: null, textQ: '', sortOrder: 'id_asc',
+};
+let decks = [];
+let searchQ = '';
+let currentCard = null;
+let currentDeck = null;
 
 function filteredCards(){
   return allCards.filter(c=>{
@@ -1107,10 +1146,18 @@ function addProg(parent,label,owned,total,setCode,bannerUrl){
   const pct=total>0?Math.round(owned/total*100):0;
   const div=document.createElement('div'); div.className='progress-card';
   if(setCode) div.style.cursor='pointer';
-  const bannerHtml = bannerUrl
-    ? '<img src="' + bannerUrl + '" style="width:100%;border-radius:6px;margin-bottom:6px;display:block;" alt="' + label + '">'
-    : '';
-  div.innerHTML = bannerHtml + '<h3>' + label + '</h3><div class="progress-bar-wrap"><div class="progress-bar" style="width:' + pct + '%"></div></div><div class="progress-nums">' + owned + ' / ' + total + ' (' + pct + '%)</div>';
+  if(bannerUrl){
+    const img=document.createElement('img');
+    img.src=bannerUrl; img.alt=label;
+    img.style.cssText='width:100%;border-radius:6px;margin-bottom:6px;display:block;';
+    div.appendChild(img);
+  }
+  const h3=document.createElement('h3'); h3.textContent=label; div.appendChild(h3);
+  const wrap=document.createElement('div'); wrap.className='progress-bar-wrap';
+  const bar=document.createElement('div'); bar.className='progress-bar'; bar.style.width=pct+'%';
+  wrap.appendChild(bar); div.appendChild(wrap);
+  const nums=document.createElement('div'); nums.className='progress-nums';
+  nums.textContent=owned+' / '+total+' ('+pct+'%)'; div.appendChild(nums);
   if(setCode){
     div.addEventListener('click',()=>{
       // 詳細検索のセットフィルターにこの弾だけを設定
@@ -1242,6 +1289,7 @@ function renderEditorCardList(){
 }
 
 document.getElementById('editorSearch').addEventListener('input',renderEditorCardList);
+document.getElementById('sleevePickerBtn').addEventListener('click',()=>document.getElementById('sleevePicker').classList.toggle('open'));
 document.getElementById('editorBack').addEventListener('click',closeDeckEditor);
 document.getElementById('editorSave').addEventListener('click',async()=>{
   currentDeck.name=document.getElementById('deckNameInput').value||'名称未設定';
@@ -1497,10 +1545,9 @@ function initSettings() {
 
     function makeToggleBtn(label, activeSet, key, container){
     const btn=document.createElement('button');
+    btn.className='adv-chip' + (activeSet.has(key) ? ' active' : '');
     btn.textContent=label;
     btn.dataset.key=key;
-    const active=activeSet.has(key);
-    btn.style.cssText='padding:5px 12px;border-radius:14px;border:1px solid '+(active?'var(--accent)':'var(--border)')+';background:'+(active?'rgba(124,109,250,0.2)':'var(--surface2)')+';color:'+(active?'var(--accent)':'var(--text2)')+';font-size:0.78rem;cursor:pointer;';
     btn.addEventListener('click',()=>{ if(activeSet.has(key)) activeSet.delete(key); else activeSet.add(key); buildAdvUI(); });
     container.appendChild(btn);
   }
@@ -1518,35 +1565,27 @@ function initSettings() {
     const inkGrid=document.getElementById('advInkGrid');
     inkGrid.innerHTML='';
     ['アンバー','アメジスト','エメラルド','ルビー','サファイア','スティール'].forEach(ink=>{
-      const wrap=document.createElement('div');
-      wrap.style.cssText='cursor:pointer;';
       const iconWrap=document.createElement('div');
-      const active=advFilter.inks.has(ink);
-      iconWrap.style.cssText='width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid '+(active?'var(--accent)':'var(--border)')+';background:'+(active?'rgba(124,109,250,0.2)':'')+';transition:all 0.15s;';
-      const dot=makeInkDot(ink); dot.style.cssText='width:32px;height:32px;';
-      if(dot.querySelector('img')) dot.querySelector('img').style.cssText='width:100%;height:100%;object-fit:contain;display:block;';
+      iconWrap.className='adv-icon-wrap' + (advFilter.inks.has(ink) ? ' active' : '');
+      const dot=makeInkDot(ink); dot.className='adv-icon-dot';
+      const dotImg=dot.querySelector('img'); if(dotImg) dotImg.style.cssText='width:100%;height:100%;object-fit:contain;display:block;';
       iconWrap.appendChild(dot);
-      wrap.appendChild(iconWrap);
-      wrap.addEventListener('click',()=>{ if(advFilter.inks.has(ink)) advFilter.inks.delete(ink); else advFilter.inks.add(ink); buildAdvUI(); });
-      inkGrid.appendChild(wrap);
+      iconWrap.addEventListener('click',()=>{ if(advFilter.inks.has(ink)) advFilter.inks.delete(ink); else advFilter.inks.add(ink); buildAdvUI(); });
+      inkGrid.appendChild(iconWrap);
     });
 
     // レアリティ（アイコンのみ・文字なし・エピックをレジェの後に）
     const rGrid=document.getElementById('advRarityGrid');
     rGrid.innerHTML='';
     ['コモン','アンコモン','レア','スーパーレア','レジェンダリー','エピック','エンチャンテッド','アイコニック'].forEach(r=>{
-      const wrap=document.createElement('div');
-      wrap.style.cssText='cursor:pointer;';
       const iconWrap=document.createElement('div');
-      const active=advFilter.rarities.has(r);
-      iconWrap.style.cssText='width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid '+(active?'var(--accent)':'var(--border)')+';background:'+(active?'rgba(124,109,250,0.2)':'')+';';
-      const span=document.createElement('span'); span.style.cssText='display:inline-flex;width:32px;height:32px;align-items:center;justify-content:center;';
+      iconWrap.className='adv-icon-wrap' + (advFilter.rarities.has(r) ? ' active' : '');
+      const span=document.createElement('span'); span.className='adv-icon-span';
       const src=RARITY_IMG[r]??'';
-      if(src){const img=document.createElement('img');img.src=src;img.style.cssText='width:100%;height:100%;object-fit:contain;display:block;';span.appendChild(img);}
+      if(src){const img=document.createElement('img');img.src=src;img.alt=r;span.appendChild(img);}
       iconWrap.appendChild(span);
-      wrap.appendChild(iconWrap);
-      wrap.addEventListener('click',()=>{ if(advFilter.rarities.has(r)) advFilter.rarities.delete(r); else advFilter.rarities.add(r); buildAdvUI(); });
-      rGrid.appendChild(wrap);
+      iconWrap.addEventListener('click',()=>{ if(advFilter.rarities.has(r)) advFilter.rarities.delete(r); else advFilter.rarities.add(r); buildAdvUI(); });
+      rGrid.appendChild(iconWrap);
     });
 
     // セット
@@ -1567,10 +1606,9 @@ function initSettings() {
       ];
       TYPE_BTNS.forEach(({key,label})=>{
         const btn=document.createElement('button');
+        btn.className='adv-chip' + (advFilter.types.has(key) ? ' active' : '');
         btn.textContent=label;
         btn.dataset.key=key;
-        const active=advFilter.types.has(key);
-        btn.style.cssText='padding:5px 12px;border-radius:14px;border:1px solid '+(active?'var(--accent)':'var(--border)')+';background:'+(active?'rgba(124,109,250,0.2)':'var(--surface2)')+';color:'+(active?'var(--accent)':'var(--text2)')+';font-size:0.78rem;cursor:pointer;';
         btn.addEventListener('click',()=>{ if(advFilter.types.has(key)) advFilter.types.delete(key); else advFilter.types.add(key); buildAdvUI(); });
         tGrid.appendChild(btn);
       });
@@ -1645,14 +1683,8 @@ function initSettings() {
     document.getElementById('advInkwellBtns').querySelectorAll('button').forEach(btn=>{
       const val=btn.dataset.val;
       const active=(val==='yes'&&advFilter.inkwell===true)||(val==='no'&&advFilter.inkwell===false);
-      btn.style.borderColor=active?'var(--accent)':'var(--border)';
-      btn.style.background=active?'rgba(124,109,250,0.2)':'var(--surface2)';
-      btn.style.color=active?'var(--accent)':'var(--text2)';
-      btn.onclick=()=>{
-        const newVal=val==='yes'?true:false;
-        advFilter.inkwell=(advFilter.inkwell===newVal)?null:newVal;
-        buildAdvUI();
-      };
+      btn.classList.toggle('active', active);
+      btn.onclick=()=>{ const nv=val==='yes'; advFilter.inkwell=(advFilter.inkwell===nv)?null:nv; buildAdvUI(); };
     });
 
     // テキスト
@@ -1663,20 +1695,14 @@ function initSettings() {
     // コレクション状況
     document.getElementById('advCollectionBtns').querySelectorAll('button').forEach(btn=>{
       const val=btn.dataset.val;
-      const active=advFilter.collectionStatus===val;
-      btn.style.borderColor=active?'var(--accent)':'var(--border)';
-      btn.style.background=active?'rgba(124,109,250,0.2)':'var(--surface2)';
-      btn.style.color=active?'var(--accent)':'var(--text2)';
+      btn.classList.toggle('active', advFilter.collectionStatus===val);
       btn.onclick=()=>{ advFilter.collectionStatus=(advFilter.collectionStatus===val)?null:val; buildAdvUI(); };
     });
 
     // シングル/デュアルインク
     document.getElementById('advInkTypeBtns').querySelectorAll('button').forEach(btn=>{
       const val=btn.dataset.val;
-      const active=advFilter.inkType===val;
-      btn.style.borderColor=active?'var(--accent)':'var(--border)';
-      btn.style.background=active?'rgba(124,109,250,0.2)':'var(--surface2)';
-      btn.style.color=active?'var(--accent)':'var(--text2)';
+      btn.classList.toggle('active', advFilter.inkType===val);
       btn.onclick=()=>{ advFilter.inkType=(advFilter.inkType===val)?null:val; buildAdvUI(); };
     });
 
