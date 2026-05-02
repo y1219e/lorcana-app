@@ -13,13 +13,15 @@
   --amber: #f5a623; --amethyst: #9b59b6; --emerald: #27ae60;
   --ruby: #e74c3c; --sapphire: #2980b9; --steel: #95a5a6;
 }
-body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; min-height: 100vh; overflow-x: hidden; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; overflow: hidden; }
 #nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; background: var(--surface); border-top: 1px solid var(--border); display: flex; }
 .nav-btn { flex: 1; padding: 10px 4px 14px; background: none; border: none; color: var(--text2); font-size: 0.65rem; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; }
 .nav-btn .icon { font-size: 1.3rem; }
 .nav-btn.active { color: var(--accent); }
-.page { display: none; padding-bottom: 70px; }
+.page { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 70px; }
 .page.active { display: block; }
+.cards-sticky-top { position: sticky; top: 0; z-index: 50; background: var(--surface); }
 .page-header { background: var(--surface); padding: 8px 16px; position: sticky; top: 0; z-index: 50; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; justify-content: space-between; }
 .page-header-logo { height: 44px; width: auto; flex-shrink: 0; }
 .page-header h1 { flex: 1; text-align: center; font-size: 1rem; }
@@ -258,15 +260,17 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
   </div>
 </div>
 <div class="page active" id="pageCards">
-  <div class="page-header"><img class="page-header-logo" src="https://pub-1ffff5ba3a074d538aa9f3027d3c97dc.r2.dev/logos/logo_app.webp" alt="ロゴ"><span class="badge" id="cardCountBadge">0</span></div>
-  <div class="search-bar">
-    <button class="menu-btn" id="menuBtn" aria-label="メニュー">≡</button>
-    <input type="text" id="cardSearch" placeholder="カード名・テキストで検索…" style="flex:1;">
-  </div>
-  <div class="view-tab-bar">
-    <button class="view-tab active" data-view="all">全てのカード</button>
-    <button class="view-tab" data-view="collection">マイコレクション</button>
-    <button class="view-tab" data-view="wishlist">ウィッシュリスト</button>
+  <div class="cards-sticky-top">
+    <div class="page-header"><img class="page-header-logo" src="https://pub-1ffff5ba3a074d538aa9f3027d3c97dc.r2.dev/logos/logo_app.webp" alt="ロゴ"><span class="badge" id="cardCountBadge">0</span></div>
+    <div class="search-bar">
+      <button class="menu-btn" id="menuBtn" aria-label="メニュー">≡</button>
+      <input type="text" id="cardSearch" placeholder="カード名・テキストで検索…" style="flex:1;">
+    </div>
+    <div class="view-tab-bar">
+      <button class="view-tab active" data-view="all">全てのカード</button>
+      <button class="view-tab" data-view="collection">マイコレクション</button>
+      <button class="view-tab" data-view="wishlist">ウィッシュリスト</button>
+    </div>
   </div>
   <div class="card-grid" id="cardGrid"></div>
 </div>
@@ -1149,7 +1153,7 @@ function addProg(parent,label,owned,total,setCode,bannerUrl){
       document.getElementById('pageCards').classList.add('active');
       document.getElementById('advSearchBtn').style.display='flex';
       renderCardGrid();
-      window.scrollTo(0,0);
+      document.getElementById('pageCards').scrollTop = 0;
     });
   }
   parent.appendChild(div);
@@ -1301,7 +1305,7 @@ document.querySelectorAll('.nav-btn').forEach(btn=>{
     // 🔍ボタンはカードタブのみ表示
     const advBtn = document.getElementById('advSearchBtn');
     if(advBtn) advBtn.style.display = btn.dataset.page === 'pageCards' ? 'flex' : 'none';
-    if(alreadyActive){ window.scrollTo(0,0); return; }
+    if(alreadyActive){ document.getElementById(btn.dataset.page).scrollTop = 0; return; }
     if(btn.dataset.page==='pageCollection') renderProgress();
     if(btn.dataset.page==='pageDecks') renderDeckList();
   });
