@@ -572,7 +572,7 @@ const RARITY_IMG = {
   'コモン':           "https://pub-1ffff5ba3a074d538aa9f3027d3c97dc.r2.dev/icons/ico_rarity/ico_rarity_common.svg",
   'アンコモン':       "https://pub-1ffff5ba3a074d538aa9f3027d3c97dc.r2.dev/icons/ico_rarity/ico_rarity_uncommon.svg",
   'レア':             "https://pub-1ffff5ba3a074d538aa9f3027d3c97dc.r2.dev/icons/ico_rarity/ico_rarity_rare.svg",
-  'スーパーレア':     "https://pub-1ffff5ba3a074d538aa9f3027d3c97dc.r2.dev/icons/ico_rarity/ico_rarity_super_rare.svg",
+  'スーパーレア':     "https://pub-1ffff5ba3a074d538aa9f3027d3c97dc.r2.dev/icons/ico_rarity/ico_rarity_super-rare.svg",
   'レジェンダリー':   "https://pub-1ffff5ba3a074d538aa9f3027d3c97dc.r2.dev/icons/ico_rarity/ico_rarity_legendary.svg",
   'エンチャンテッド': "https://pub-1ffff5ba3a074d538aa9f3027d3c97dc.r2.dev/icons/ico_rarity/ico_rarity_enchanted.svg",
   'エピック':         "https://pub-1ffff5ba3a074d538aa9f3027d3c97dc.r2.dev/icons/ico_rarity/ico_rarity_epic.svg",
@@ -704,7 +704,7 @@ function dbGetAll(store){ return new Promise(r=>{ const tx=db.transaction(store,
 // ═══════════════════════════════════════════
 // アプリ状態
 // ═══════════════════════════════════════════
-let allCards=[],sets=[],collection={},wishlist=new Set(),cardView='all',advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),keywords:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,strMin:null,strMax:null,wpMin:null,wpMax:null,loreMin:null,loreMax:null,mcMin:null,mcMax:null,inkwell:null,inkType:null,collectionStatus:null,textQ:'',sortOrder:'id_asc'},decks=[],filterSets=new Set(),filterInks=new Set(),searchQ='',currentCard=null,currentDeck=null;
+let allCards=[],sets=[],setsData=[],collection={},wishlist=new Set(),cardView='all',advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),keywords:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,strMin:null,strMax:null,wpMin:null,wpMax:null,loreMin:null,loreMax:null,mcMin:null,mcMax:null,inkwell:null,inkType:null,collectionStatus:null,textQ:'',sortOrder:'id_asc'},decks=[],filterSets=new Set(),filterInks=new Set(),searchQ='',currentCard=null,currentDeck=null;
 
 function filteredCards(){
   return allCards.filter(c=>{
@@ -1245,6 +1245,14 @@ async function loadData(){
   const cInfo   = document.getElementById('cacheInfo');
   overlay.classList.add('show');
 
+  // sets.json を取得（バナーパス・セット名用）
+  try {
+    const r = await fetch('./sets.json');
+    setsData = await r.json();
+  } catch(e) {
+    console.warn('[loadData] sets.json fetch failed:', e);
+  }
+
   // キャッシュチェック
   const cached = await loadCardCache();
   const now = Date.now();
@@ -1263,6 +1271,7 @@ async function loadData(){
   try {
     prog.textContent = 'カードデータを取得中…';
     const res = await fetch('https://lorcana-api.com/api/cards');
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     const rawCards = Array.isArray(data) ? data : (data.cards ?? []);
 
@@ -1324,10 +1333,29 @@ async function loadData(){
     await saveCardCache(sets, allCards);
 
   } catch(e) {
-    prog.textContent = 'エラー: ' + e.message;
-    // キャッシュが古くても使う
-    if(cached) { sets = cached.sets; allCards = cached.cards; }
-    else { overlay.classList.remove('show'); return; }
+    console.error('[loadData] API fetch failed:', e);
+    if(cached) {
+      // 古いキャッシュで続行
+      sets = cached.sets; allCards = cached.cards;
+      prog.textContent = `オフライン: キャッシュを使用中`;
+      cInfo.textContent = e.message;
+      overlay.classList.remove('show');
+    } else {
+      // キャッシュなし → エラー画面を表示したまま再試行ボタンを出す
+      prog.textContent = 'データの取得に失敗しました';
+      cInfo.textContent = e.message;
+      const retryBtn = document.createElement('button');
+      retryBtn.textContent = '再試行';
+      retryBtn.style.cssText = 'margin-top:16px;padding:10px 28px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:0.9rem;cursor:pointer;';
+      retryBtn.addEventListener('click', async () => {
+        retryBtn.remove();
+        await loadData();
+        renderSetFilter();
+        renderCardGrid();
+      });
+      overlay.appendChild(retryBtn);
+      return;
+    }
   }
 
   overlay.classList.remove('show');
