@@ -1,1 +1,1 @@
-# lorcana-app
+# Loreca
