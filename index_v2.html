@@ -102,38 +102,37 @@
     <div id="loreDiceResult" class="lore-dice-result" style="display:none;"></div>
   </div>
   <div class="lore-bottom" id="loreBottomArea"></div>
+</div>
 
-  <div class="lore-modal-overlay" id="loreCountModal" style="display:none;">
-    <div class="lore-modal-box">
-      <div class="lore-modal-icon">👥</div>
-      <div class="lore-modal-title">プレイヤー数を選択してください</div>
-      <div class="lore-modal-btns">
-        <button class="lore-modal-choice" data-count="2">2人</button>
-        <button class="lore-modal-choice" data-count="3">3人</button>
-        <button class="lore-modal-choice" data-count="4">4人</button>
-      </div>
-      <button class="lore-modal-cancel" id="loreCountCancel">キャンセル</button>
+<!-- ロアカウンター モーダル群 (position:fixed で #pageLore の外に配置) -->
+<div class="lore-modal-overlay" id="loreCountModal" style="display:none;">
+  <div class="lore-modal-box">
+    <div class="lore-modal-icon">👥</div>
+    <div class="lore-modal-title">プレイヤー数を選択してください</div>
+    <div class="lore-modal-btns">
+      <button class="lore-modal-choice" data-count="2">2人</button>
+      <button class="lore-modal-choice" data-count="3">3人</button>
+      <button class="lore-modal-choice" data-count="4">4人</button>
     </div>
+    <button class="lore-modal-cancel" id="loreCountCancel">キャンセル</button>
   </div>
-
-  <div class="lore-modal-overlay" id="loreDonaldModal" style="display:none;">
-    <div class="lore-modal-box">
-      <div class="lore-modal-icon">🦆</div>
-      <div class="lore-modal-title">25ロア効果のプレイヤーを選択</div>
-      <div class="lore-modal-desc">カードを出したプレイヤーは20ロアのまま、相手は25ロア必要になります</div>
-      <div class="lore-modal-btns" id="loreDonaldModalBtns"></div>
-      <button class="lore-modal-cancel" id="loreDonaldCancel">キャンセル</button>
-    </div>
+</div>
+<div class="lore-modal-overlay" id="loreDonaldModal" style="display:none;">
+  <div class="lore-modal-box">
+    <div class="lore-modal-icon">🦆</div>
+    <div class="lore-modal-title">25ロア効果のプレイヤーを選択</div>
+    <div class="lore-modal-desc">カードを出したプレイヤーは20ロアのまま、相手は25ロア必要になります</div>
+    <div class="lore-modal-btns" id="loreDonaldModalBtns"></div>
+    <button class="lore-modal-cancel" id="loreDonaldCancel">キャンセル</button>
   </div>
-
-  <div class="lore-modal-overlay" id="lorePauseModal" style="display:none;">
-    <div class="lore-modal-box">
-      <div class="lore-modal-icon">⏸</div>
-      <div class="lore-modal-title">ゲームを一時停止中</div>
-      <div class="lore-modal-btns lore-modal-btns-col">
-        <button class="lore-modal-choice lore-modal-continue" id="loreContinueBtn">コンテニュー</button>
-        <button class="lore-modal-choice lore-modal-restart" id="loreRestartBtn">リスタート</button>
-      </div>
+</div>
+<div class="lore-modal-overlay" id="lorePauseModal" style="display:none;">
+  <div class="lore-modal-box">
+    <div class="lore-modal-icon">⏸</div>
+    <div class="lore-modal-title">ゲームを一時停止中</div>
+    <div class="lore-modal-btns lore-modal-btns-col">
+      <button class="lore-modal-choice lore-modal-continue" id="loreContinueBtn">コンテニュー</button>
+      <button class="lore-modal-choice lore-modal-restart" id="loreRestartBtn">リスタート</button>
     </div>
   </div>
 </div>
