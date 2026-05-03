@@ -104,6 +104,10 @@ async function prefetchAllImages(cards, onProgress) {
 
 const IMG_HOST = 'https://pub-1ffff5ba3a074d538aa9f3027d3c97dc.r2.dev/';
 
+// デッキコードプロキシURL（Cloudflare Worker）
+// TODO: Cloudflare Workerをデプロイ後、下記URLを実際のWorker URLに変更してください
+const DECK_PROXY_URL = 'https://loreca-deck.YOUR_SUBDOMAIN.workers.dev';
+
 
 
 
@@ -563,10 +567,82 @@ async function importDeckFromUrl(url) {
   return Object.keys(cards).length + '種 ' + total + '枚のカードを読み込みました' + warn;
 }
 
+// デッキコードからデッキをインポート
+async function importDeckFromCode(code) {
+  if (!/^\d{17}$/.test(code)) throw new Error('デッキコードは17桁の数字です');
+  if (allCards.length === 0) throw new Error('カードデータがまだ読み込まれていません。しばらく待ってから再度お試しください。');
+  if (!DECK_PROXY_URL || DECK_PROXY_URL.includes('YOUR_SUBDOMAIN')) {
+    throw new Error('デッキコード機能はまだセットアップ中です。URLインポートをご利用ください。');
+  }
+
+  const res = await fetch(`${DECK_PROXY_URL}/deck-cards`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ deck_code: code }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error ?? `サーバーエラー (${res.status})`);
+  }
+  const data = await res.json();
+  if (data.status !== 200 || !Array.isArray(data.cards)) {
+    throw new Error('デッキが見つかりませんでした');
+  }
+
+  const cards = {};
+  const notFound = [];
+  for (const entry of data.cards) {
+    const cardFile = entry.card_file ?? '';
+    const count = Number(entry.card_num ?? 1);
+    const card = allCards.find(c => c.card_file === cardFile);
+    if (!card) { notFound.push(cardFile); continue; }
+    cards[card.id] = (cards[card.id] ?? 0) + count;
+  }
+
+  if (Object.keys(cards).length === 0) {
+    throw new Error('カードが1枚も見つかりませんでした。見つからなかったコード: ' + notFound.join(', '));
+  }
+
+  const newDeck = { id: Date.now().toString(), name: `デッキコード ${code}`, cards };
+  await dbPut('decks', newDeck);
+  decks.push(newDeck);
+  renderDeckList();
+  const total = Object.values(cards).reduce((a,b)=>a+b,0);
+  const warn = notFound.length > 0 ? ` (スキップ: ${notFound.join(', ')})` : '';
+  return `${Object.keys(cards).length}種 ${total}枚のカードを読み込みました${warn}`;
+}
+
 // インポートモーダルのイベント
+let importActiveTab = 'url'; // 'url' | 'code'
+
+function switchImportTab(tab) {
+  importActiveTab = tab;
+  const tabUrl  = document.getElementById('importTabUrl');
+  const tabCode = document.getElementById('importTabCode');
+  const panelUrl  = document.getElementById('importPanelUrl');
+  const panelCode = document.getElementById('importPanelCode');
+  if (tab === 'url') {
+    tabUrl.style.cssText  = 'flex:1;padding:8px;background:var(--accent);color:#fff;border:none;font-size:0.82rem;cursor:pointer;';
+    tabCode.style.cssText = 'flex:1;padding:8px;background:var(--surface2);color:var(--text2);border:none;font-size:0.82rem;cursor:pointer;';
+    panelUrl.style.display  = '';
+    panelCode.style.display = 'none';
+  } else {
+    tabCode.style.cssText = 'flex:1;padding:8px;background:var(--accent);color:#fff;border:none;font-size:0.82rem;cursor:pointer;';
+    tabUrl.style.cssText  = 'flex:1;padding:8px;background:var(--surface2);color:var(--text2);border:none;font-size:0.82rem;cursor:pointer;';
+    panelCode.style.display = '';
+    panelUrl.style.display  = 'none';
+  }
+  document.getElementById('importError').style.display = 'none';
+}
+
+document.getElementById('importTabUrl').addEventListener('click', () => switchImportTab('url'));
+document.getElementById('importTabCode').addEventListener('click', () => switchImportTab('code'));
+
 document.getElementById('importDeckBtn').addEventListener('click', () => {
   document.getElementById('importUrlInput').value = '';
+  document.getElementById('importCodeInput').value = '';
   document.getElementById('importError').style.display = 'none';
+  switchImportTab('url');
   document.getElementById('importModal').classList.add('open');
 });
 document.getElementById('importClose').addEventListener('click', () => {
@@ -576,16 +652,22 @@ document.getElementById('importModal').addEventListener('click', e => {
   if (e.target === document.getElementById('importModal')) document.getElementById('importModal').classList.remove('open');
 });
 document.getElementById('importExecBtn').addEventListener('click', async () => {
-  const url = document.getElementById('importUrlInput').value.trim();
   const errEl = document.getElementById('importError');
   const btn = document.getElementById('importExecBtn');
-  errEl.style.display='none';
-  if (!url) { errEl.textContent = 'URLを入力してください'; errEl.style.display=''; return; }
+  errEl.style.display = 'none';
   btn.textContent = '読み込み中...'; btn.disabled = true;
   try {
-    const msg = await importDeckFromUrl(url);
+    let msg;
+    if (importActiveTab === 'code') {
+      const code = document.getElementById('importCodeInput').value.trim();
+      if (!code) { errEl.textContent = 'デッキコードを入力してください'; errEl.style.display = ''; return; }
+      msg = await importDeckFromCode(code);
+    } else {
+      const url = document.getElementById('importUrlInput').value.trim();
+      if (!url) { errEl.textContent = 'URLを入力してください'; errEl.style.display = ''; return; }
+      msg = await importDeckFromUrl(url);
+    }
     document.getElementById('importModal').classList.remove('open');
-    // デッキタブに遷移
     document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
     document.querySelector('[data-page="pageDecks"]').classList.add('active');
