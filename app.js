@@ -1180,6 +1180,11 @@ async function importBackup(file) {
   renderCardGrid();
   initSettings();
 
+  // 古い画像キャッシュを削除
+  if('caches' in window){
+    caches.keys().then(keys=>keys.forEach(k=>{ if(k.startsWith('loreca-img-') && k!==IMG_CACHE_NAME) caches.delete(k); }));
+  }
+
   // バックグラウンドで全画像プリフェッチ
   if('caches' in window){
     const bar   = document.getElementById('prefetchBar');
@@ -1424,12 +1429,18 @@ async function importBackup(file) {
       wishlist.delete(id);
       try { await dbDelete('wishlist',id); } catch(e) { console.warn('[wishlist] dbDelete failed:', id, e); }
       document.getElementById('modalWishBtn').textContent='🤍';
+      // ウィッシュリストビューの場合のみ該当カードをグリッドから取り除く
+      if(cardView==='wishlist'){
+        const grid=document.getElementById('cardGrid');
+        grid.querySelectorAll('.card-item').forEach(item=>{ if(item._cardId===id) item.remove(); });
+        const badge=document.getElementById('cardCountBadge');
+        if(badge) badge.textContent=String(grid.querySelectorAll('.card-item').length);
+      }
     } else {
       wishlist.add(id);
       try { await dbPut('wishlist',{id}); } catch(e) { console.warn('[wishlist] dbPut failed:', id, e); }
       document.getElementById('modalWishBtn').textContent='❤️';
     }
-    renderCardGrid();
   });
 })();
 
