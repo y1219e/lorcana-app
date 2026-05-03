@@ -278,6 +278,17 @@
         <button class="settings-pill" data-value="wishlist">ウィッシュリスト</button>
       </div>
     </div>
+    <div class="settings-section">
+      <div class="settings-label">データのバックアップ</div>
+      <div class="settings-pills">
+        <button class="settings-pill" id="exportBackupBtn">エクスポート</button>
+        <button class="settings-pill" id="importBackupBtn">インポート</button>
+      </div>
+      <div style="font-size:0.72rem;color:var(--text2);margin-top:10px;line-height:1.6;">
+        コレクション・デッキ・ウィッシュリスト・設定をJSONファイルとして書き出し / 復元できます。インポートは現在のデータを上書きします。
+      </div>
+      <input type="file" id="importBackupFile" accept="application/json,.json" style="display:none;">
+    </div>
   </div>
 </div>
 

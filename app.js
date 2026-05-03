@@ -276,6 +276,16 @@ function openDB(){
 function dbPut(store,val){ return new Promise(r=>{ const tx=db.transaction(store,'readwrite'); tx.objectStore(store).put(val).onsuccess=()=>r(); }); }
 function dbDelete(store,key){ return new Promise(r=>{ const tx=db.transaction(store,'readwrite'); tx.objectStore(store).delete(key).onsuccess=()=>r(); }); }
 function dbGetAll(store){ return new Promise(r=>{ const tx=db.transaction(store,'readonly'); tx.objectStore(store).getAll().onsuccess=e=>r(e.target.result); }); }
+function dbReplaceAll(store, records){
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readwrite');
+    const os = tx.objectStore(store);
+    os.clear();
+    for (const r of records) os.put(r);
+    tx.oncomplete = () => res();
+    tx.onerror    = () => rej(tx.error);
+  });
+}
 
 // ═══════════════════════════════════════════
 // アプリ状態
@@ -989,6 +999,70 @@ function initSettings() {
       document.querySelectorAll('#settingDefaultView .settings-pill').forEach(x => x.classList.toggle('active', x === b));
     });
   });
+
+  document.getElementById('exportBackupBtn').addEventListener('click', exportBackup);
+  document.getElementById('importBackupBtn').addEventListener('click', () => document.getElementById('importBackupFile').click());
+  document.getElementById('importBackupFile').addEventListener('change', async e => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    try { await importBackup(file); }
+    catch (err) { await showAlert('インポートに失敗しました: ' + err.message); }
+  });
+}
+
+// ═══════════════════════════════════════════
+// バックアップ（エクスポート / インポート）
+// ═══════════════════════════════════════════
+async function exportBackup() {
+  const [collectionRows, deckRows, wishlistRows] = await Promise.all([
+    dbGetAll('collection'), dbGetAll('decks'), dbGetAll('wishlist'),
+  ]);
+  const backup = {
+    appName: 'loreca',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    collection: collectionRows,
+    decks: deckRows,
+    wishlist: wishlistRows,
+    settings: loadSettings(),
+  };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `loreca-backup-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+async function importBackup(file) {
+  const text = await file.text();
+  let data;
+  try { data = JSON.parse(text); }
+  catch { throw new Error('JSONの形式が正しくありません'); }
+  if (data.appName !== 'loreca' || !Array.isArray(data.collection)) {
+    throw new Error('Lorecaのバックアップファイルではありません');
+  }
+  const colN = data.collection.length;
+  const deckN = (data.decks ?? []).length;
+  const wishN = (data.wishlist ?? []).length;
+  const ok = await showConfirm(
+    `バックアップを復元します。\n現在のデータは上書きされます。\n\n` +
+    `コレクション: ${colN}件\n` +
+    `デッキ: ${deckN}件\n` +
+    `ウィッシュリスト: ${wishN}件\n\n` +
+    `続行しますか？`
+  );
+  if (!ok) return;
+  await dbReplaceAll('collection', data.collection);
+  await dbReplaceAll('decks',      data.decks    ?? []);
+  await dbReplaceAll('wishlist',   data.wishlist ?? []);
+  if (data.settings && typeof data.settings === 'object') {
+    saveSettings({ ...SETTINGS_DEFAULT, ...data.settings });
+  }
+  await showAlert('復元が完了しました。アプリをリロードします。');
+  location.reload();
 }
 
 // ═══════════════════════════════════════════
