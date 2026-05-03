@@ -193,10 +193,9 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 #pageLore { padding-bottom: 0; position: relative; }
 #pageLore.active { display: flex; flex-direction: column; height: calc(100vh - 58px); overflow: hidden; }
 .lore-top, .lore-bottom { flex: 1; display: flex; min-height: 0; gap: 1px; background: var(--border); overflow: hidden; }
-.lore-middle { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 10px 12px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.lore-mid-row { display: flex; align-items: center; gap: 12px; justify-content: center; }
-.lore-mid-btn { width: 50px; height: 50px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-size: 1.4rem; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.lore-mid-text-btn { padding: 12px 20px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-size: 0.88rem; font-weight: bold; cursor: pointer; white-space: nowrap; }
+.lore-middle { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 10px 0; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; z-index: 1; }
+.lore-mid-row { display: flex; align-items: center; justify-content: space-evenly; width: 100%; }
+.lore-mid-btn { width: 62px; height: 62px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-size: 1.7rem; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; -webkit-tap-highlight-color: transparent; }
 .lore-dice-result { font-size: 0.82rem; text-align: center; color: var(--text); font-weight: bold; }
 /* ロアカウンター モーダル */
 .lore-modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.72); display: flex; align-items: center; justify-content: center; z-index: 10; }
@@ -208,6 +207,9 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 .lore-modal-choice { padding: 14px 18px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 1.05rem; font-weight: bold; cursor: pointer; min-width: 68px; transition: background 0.15s, border-color 0.15s; }
 .lore-modal-choice.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 .lore-modal-cancel { background: none; border: none; color: var(--text2); font-size: 0.9rem; cursor: pointer; padding: 8px 16px; }
+.lore-modal-btns-col { flex-direction: column; gap: 10px; }
+.lore-modal-continue { background: var(--accent); border-color: var(--accent); color: #fff; width: 100%; }
+.lore-modal-restart { background: transparent; border-color: var(--ruby); color: var(--ruby); width: 100%; }
 .lore-player-face { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px; padding: 12px 8px; background: var(--bg); }
 .lore-rotated { transform: rotate(180deg); }
 .lore-face-header { display: flex; align-items: center; gap: 6px; }

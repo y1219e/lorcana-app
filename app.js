@@ -1506,10 +1506,17 @@ function initLoreCounter() {
     renderLoreCounter();
   });
 
-  // リセットボタン
-  document.getElementById('loreResetBtn').addEventListener('click', () => {
+  // ポーズボタン → モーダル
+  document.getElementById('lorePauseBtn').addEventListener('click', () => {
+    document.getElementById('lorePauseModal').style.display = 'flex';
+  });
+  document.getElementById('loreContinueBtn').addEventListener('click', () => {
+    document.getElementById('lorePauseModal').style.display = 'none';
+  });
+  document.getElementById('loreRestartBtn').addEventListener('click', () => {
     loreState.lores = [0, 0, 0, 0];
     loreState.diceRolls = null; loreState.diceWinner = null; loreState.diceTie = null;
+    document.getElementById('lorePauseModal').style.display = 'none';
     renderLoreCounter();
   });
 
