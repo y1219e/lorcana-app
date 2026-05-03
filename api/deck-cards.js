@@ -18,8 +18,8 @@ async function getTokenAndCookie() {
   });
   if (!res.ok) throw new Error(`token fetch failed: ${res.status}`);
   const data = await res.json();
-  const csrf = data?.data?.csrf;
-  if (!csrf) throw new Error('CSRF token not found in response');
+  const csrf = data?.data?.csrf ?? data?.csrf ?? data?.token ?? data?.data?.token;
+  if (!csrf) throw new Error(`CSRF token not found. Response: ${JSON.stringify(data).slice(0, 300)}`);
   const setCookie = res.headers.get('set-cookie') ?? '';
   const cookieMatch = setCookie.match(/CAKEPHP=([^;]+)/);
   const sessionCookie = cookieMatch ? `CAKEPHP=${cookieMatch[1]}` : '';
