@@ -94,10 +94,10 @@
   <div class="lore-top" id="loreTopArea"></div>
   <div class="lore-middle">
     <div class="lore-mid-row">
-      <button id="loreDiceBtn" class="lore-mid-btn" title="ダイスを振る">🎲</button>
-      <button id="lorePlayerCountBtn" class="lore-mid-text-btn">👥 人数</button>
-      <button id="loreDonaldBtn" class="lore-mid-text-btn">🦆 ロア</button>
-      <button id="loreResetBtn" class="lore-mid-btn" title="リセット">↺</button>
+      <button id="loreDiceBtn" class="lore-mid-btn">🎲</button>
+      <button id="lorePlayerCountBtn" class="lore-mid-btn">👥</button>
+      <button id="loreDonaldBtn" class="lore-mid-btn">🦆</button>
+      <button id="lorePauseBtn" class="lore-mid-btn">⏸</button>
     </div>
     <div id="loreDiceResult" class="lore-dice-result" style="display:none;"></div>
   </div>
@@ -123,6 +123,17 @@
       <div class="lore-modal-desc">カードを出したプレイヤーは20ロアのまま、相手は25ロア必要になります</div>
       <div class="lore-modal-btns" id="loreDonaldModalBtns"></div>
       <button class="lore-modal-cancel" id="loreDonaldCancel">キャンセル</button>
+    </div>
+  </div>
+
+  <div class="lore-modal-overlay" id="lorePauseModal" style="display:none;">
+    <div class="lore-modal-box">
+      <div class="lore-modal-icon">⏸</div>
+      <div class="lore-modal-title">ゲームを一時停止中</div>
+      <div class="lore-modal-btns lore-modal-btns-col">
+        <button class="lore-modal-choice lore-modal-continue" id="loreContinueBtn">コンテニュー</button>
+        <button class="lore-modal-choice lore-modal-restart" id="loreRestartBtn">リスタート</button>
+      </div>
     </div>
   </div>
 </div>
