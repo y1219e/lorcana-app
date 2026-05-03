@@ -565,6 +565,31 @@ async function importDeckFromUrl(url) {
   return Object.keys(cards).length + '種 ' + total + '枚のカードを読み込みました' + warn;
 }
 
+// デッキコードをエクスポート（タカラトミーAPIでコード発行）
+async function exportDeckCode() {
+  if (!currentDeck) throw new Error('デッキが開かれていません');
+  const total = deckTotal();
+  if (total < 60) throw new Error(`デッキは60枚必要です（現在${total}枚）`);
+
+  const inkColors = deckInks();
+  const cardsArr = Object.entries(currentDeck.cards ?? {})
+    .filter(([, n]) => n > 0)
+    .map(([id, n]) => {
+      const c = allCards.find(x => x.id === id);
+      return c ? { card_file: c.card_file, card_num: n } : null;
+    })
+    .filter(Boolean);
+
+  const res = await fetch(`${DECK_PROXY_URL}/create-deck-code`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ink_color: inkColors, cards: cardsArr }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? `エラー (${res.status})`);
+  return data.deck_code;
+}
+
 // デッキコードからデッキをインポート
 async function importDeckFromCode(code) {
   if (!/^\d{17}$/.test(code)) throw new Error('デッキコードは17桁の数字です');
@@ -846,6 +871,18 @@ function renderEditorCardList(){
 document.getElementById('editorSearch').addEventListener('input',renderEditorCardList);
 document.getElementById('sleevePickerBtn').addEventListener('click',()=>document.getElementById('sleevePicker').classList.toggle('open'));
 document.getElementById('editorBack').addEventListener('click',closeDeckEditor);
+document.getElementById('exportDeckCodeBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('exportDeckCodeBtn');
+  btn.textContent = '発行中...'; btn.disabled = true;
+  try {
+    const code = await exportDeckCode();
+    await showAlert(`デッキコード\n${code}\n\n（タカラトミー公式サイトで使用できます）`);
+  } catch(e) {
+    await showAlert(`エラー: ${e.message}`);
+  } finally {
+    btn.textContent = '🔢 コード発行'; btn.disabled = false;
+  }
+});
 document.getElementById('editorSave').addEventListener('click',async()=>{
   currentDeck.name=document.getElementById('deckNameInput').value||'名称未設定';
   // sleeveIdはcurrentDeckに既に格納済み
