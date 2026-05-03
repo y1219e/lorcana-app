@@ -19,6 +19,7 @@ document.addEventListener('keydown', e => {
   if (document.getElementById('disclaimerPage').classList.contains('open')){ closeSubpage('disclaimerPage'); return; }
   if (document.getElementById('menuDrawer').classList.contains('open'))    { closeMenu(); return; }
   if (document.getElementById('advSearchModal').classList.contains('open')){ document.getElementById('advSearchModal').classList.remove('open'); return; }
+  if (document.getElementById('newDeckModal').classList.contains('open'))  { closeNewDeckModal(); return; }
   if (document.getElementById('importModal').classList.contains('open'))   { document.getElementById('importModal').classList.remove('open'); return; }
   if (document.getElementById('cardModal').classList.contains('open'))     { document.getElementById('cardModal').classList.remove('open'); currentCard=null; return; }
 });
@@ -635,39 +636,29 @@ async function importDeckFromCode(code) {
   return `${Object.keys(cards).length}種 ${total}枚のカードを読み込みました${warn}`;
 }
 
-// インポートモーダルのイベント
-let importActiveTab = 'url'; // 'url' | 'code'
-
-function switchImportTab(tab) {
-  importActiveTab = tab;
-  const tabUrl  = document.getElementById('importTabUrl');
-  const tabCode = document.getElementById('importTabCode');
-  const panelUrl  = document.getElementById('importPanelUrl');
-  const panelCode = document.getElementById('importPanelCode');
-  if (tab === 'url') {
-    tabUrl.style.cssText  = 'flex:1;padding:8px;background:var(--accent);color:#fff;border:none;font-size:0.82rem;cursor:pointer;';
-    tabCode.style.cssText = 'flex:1;padding:8px;background:var(--surface2);color:var(--text2);border:none;font-size:0.82rem;cursor:pointer;';
-    panelUrl.style.display  = '';
-    panelCode.style.display = 'none';
-  } else {
-    tabCode.style.cssText = 'flex:1;padding:8px;background:var(--accent);color:#fff;border:none;font-size:0.82rem;cursor:pointer;';
-    tabUrl.style.cssText  = 'flex:1;padding:8px;background:var(--surface2);color:var(--text2);border:none;font-size:0.82rem;cursor:pointer;';
-    panelCode.style.display = '';
-    panelUrl.style.display  = 'none';
-  }
-  document.getElementById('importError').style.display = 'none';
+// 新規デッキ作成方法選択モーダル
+function openNewDeckModal() {
+  document.getElementById('newDeckModal').classList.add('open');
 }
-
-document.getElementById('importTabUrl').addEventListener('click', () => switchImportTab('url'));
-document.getElementById('importTabCode').addEventListener('click', () => switchImportTab('code'));
-
-document.getElementById('importDeckBtn').addEventListener('click', () => {
-  document.getElementById('importUrlInput').value = '';
+function closeNewDeckModal() {
+  document.getElementById('newDeckModal').classList.remove('open');
+}
+document.getElementById('newDeckCancelBtn').addEventListener('click', closeNewDeckModal);
+document.getElementById('newDeckModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('newDeckModal')) closeNewDeckModal();
+});
+document.getElementById('newDeckByCardBtn').addEventListener('click', () => {
+  closeNewDeckModal();
+  openDeckEditor(null);
+});
+document.getElementById('newDeckByCodeBtn').addEventListener('click', () => {
+  closeNewDeckModal();
   document.getElementById('importCodeInput').value = '';
   document.getElementById('importError').style.display = 'none';
-  switchImportTab('url');
   document.getElementById('importModal').classList.add('open');
 });
+
+// デッキコードインポートモーダル
 document.getElementById('importClose').addEventListener('click', () => {
   document.getElementById('importModal').classList.remove('open');
 });
@@ -680,16 +671,9 @@ document.getElementById('importExecBtn').addEventListener('click', async () => {
   errEl.style.display = 'none';
   btn.textContent = '読み込み中...'; btn.disabled = true;
   try {
-    let msg;
-    if (importActiveTab === 'code') {
-      const code = document.getElementById('importCodeInput').value.trim();
-      if (!code) { errEl.textContent = 'デッキコードを入力してください'; errEl.style.display = ''; return; }
-      msg = await importDeckFromCode(code);
-    } else {
-      const url = document.getElementById('importUrlInput').value.trim();
-      if (!url) { errEl.textContent = 'URLを入力してください'; errEl.style.display = ''; return; }
-      msg = await importDeckFromUrl(url);
-    }
+    const code = document.getElementById('importCodeInput').value.trim();
+    if (!code) { errEl.textContent = 'デッキコードを入力してください'; errEl.style.display = ''; return; }
+    const msg = await importDeckFromCode(code);
     document.getElementById('importModal').classList.remove('open');
     document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -895,7 +879,7 @@ document.getElementById('editorDel').addEventListener('click',async()=>{
   await dbDelete('decks',currentDeck.id); decks=decks.filter(d=>d.id!==currentDeck.id);
   renderDeckList(); closeDeckEditor();
 });
-document.getElementById('addDeckBtn').addEventListener('click',()=>openDeckEditor(null));
+document.getElementById('addDeckBtn').addEventListener('click', openNewDeckModal);
 
 document.querySelectorAll('.nav-btn').forEach(btn=>{
   btn.addEventListener('click',()=>{

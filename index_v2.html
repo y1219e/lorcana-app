@@ -85,11 +85,11 @@
   <div class="page-header"><img class="page-header-logo" src="https://pub-1ffff5ba3a074d538aa9f3027d3c97dc.r2.dev/logos/logo_app.webp" alt="ロゴ"></div>  <div class="progress-section" id="progressSection"></div>
 </div>
 <div class="page" id="pageDecks">
-  <div class="page-header"><img class="page-header-logo" src="https://pub-1ffff5ba3a074d538aa9f3027d3c97dc.r2.dev/logos/logo_app.webp" alt="ロゴ"></div>  <div style="padding:10px;display:flex;gap:8px;">
-    <button id="addDeckBtn" style="flex:1;padding:13px;background:var(--accent);border:none;border-radius:10px;color:#fff;font-size:0.9rem;cursor:pointer;">＋ 新しいデッキを作る</button>
-    <button id="importDeckBtn" style="flex:1;padding:13px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:0.9rem;cursor:pointer;">📥 読み込む</button>
-  </div>
+  <div class="page-header"><img class="page-header-logo" src="https://pub-1ffff5ba3a074d538aa9f3027d3c97dc.r2.dev/logos/logo_app.webp" alt="ロゴ"></div>
   <div class="deck-list" id="deckList"></div>
+  <div style="padding:16px 16px 24px;">
+    <button id="addDeckBtn" style="width:100%;padding:15px;background:var(--accent);border:none;border-radius:12px;color:#fff;font-size:0.95rem;cursor:pointer;">＋ 新しいデッキを作る</button>
+  </div>
 </div>
 <div class="page" id="pageLore">
   <div class="lore-top" id="loreTopArea"></div>
@@ -138,29 +138,26 @@
   </div>
 </div>
 
-<!-- URLインポートモーダル -->
+<!-- 新規デッキ作成方法選択モーダル -->
+<div class="modal-overlay" id="newDeckModal" style="align-items:center;justify-content:center;z-index:10000;">
+  <div style="background:var(--surface2);border-radius:18px;padding:28px 24px 20px;width:calc(100% - 48px);max-width:320px;text-align:center;">
+    <div style="font-size:2rem;margin-bottom:10px;">🃏</div>
+    <p style="font-size:0.95rem;font-weight:bold;color:var(--text);margin:0 0 20px;">作成方法を選択してください</p>
+    <button id="newDeckByCardBtn" style="width:100%;padding:14px;background:var(--accent);border:none;border-radius:10px;color:#fff;font-size:0.9rem;cursor:pointer;margin-bottom:10px;">🃏 カード選択</button>
+    <button id="newDeckByCodeBtn" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:0.9rem;cursor:pointer;margin-bottom:16px;">🔢 デッキコードを入力</button>
+    <button id="newDeckCancelBtn" style="background:none;border:none;color:var(--text2);font-size:0.88rem;cursor:pointer;">キャンセル</button>
+  </div>
+</div>
 
-<div class="modal-overlay" id="importModal" style="align-items:center;justify-content:center;z-index:300;">
+<!-- デッキコードインポートモーダル -->
+<div class="modal-overlay" id="importModal" style="align-items:center;justify-content:center;z-index:10000;">
   <div class="import-modal-box">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <h2 style="font-size:1rem;">デッキを読み込む</h2>
+      <h2 style="font-size:1rem;">デッキコードを入力</h2>
       <button id="importClose" style="background:none;border:none;color:var(--text2);font-size:1.2rem;cursor:pointer;">✕</button>
     </div>
-    <!-- タブ切替 -->
-    <div style="display:flex;gap:0;margin-bottom:12px;border-radius:8px;overflow:hidden;border:1px solid var(--border);">
-      <button id="importTabUrl" class="import-tab import-tab-active" style="flex:1;padding:8px;background:var(--accent);color:#fff;border:none;font-size:0.82rem;cursor:pointer;">🔗 共有URL</button>
-      <button id="importTabCode" class="import-tab" style="flex:1;padding:8px;background:var(--surface2);color:var(--text2);border:none;font-size:0.82rem;cursor:pointer;">🔢 デッキコード</button>
-    </div>
-    <!-- URL入力パネル -->
-    <div id="importPanelUrl">
-      <p style="font-size:0.72rem;color:var(--text2);margin-bottom:10px;">タカラトミー デッキビルダーの「共有URL」をそのまま貼り付けてください。</p>
-      <textarea id="importUrlInput" placeholder="https://www.takaratomy.co.jp/products/disneylorcana/deckbuilder/deck/?cs=...&ds=..."></textarea>
-    </div>
-    <!-- デッキコード入力パネル -->
-    <div id="importPanelCode" style="display:none;">
-      <p style="font-size:0.72rem;color:var(--text2);margin-bottom:10px;">タカラトミー デッキビルダーの17桁のデッキコードを入力してください。</p>
-      <input id="importCodeInput" type="text" inputmode="numeric" maxlength="17" placeholder="例: 32151037137252898" style="width:100%;padding:10px;box-sizing:border-box;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text);font-size:1rem;letter-spacing:0.1em;">
-    </div>
+    <p style="font-size:0.72rem;color:var(--text2);margin-bottom:10px;">タカラトミー デッキビルダーの17桁のデッキコードを入力してください。</p>
+    <input id="importCodeInput" type="text" inputmode="numeric" maxlength="17" placeholder="例: 32151037137252898" style="width:100%;padding:10px;box-sizing:border-box;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text);font-size:1rem;letter-spacing:0.1em;">
     <div id="importError" style="color:#f55;font-size:0.72rem;margin-top:6px;display:none;"></div>
     <button id="importExecBtn" style="margin-top:10px;width:100%;padding:10px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:0.9rem;cursor:pointer;">読み込む</button>
   </div>
