@@ -793,6 +793,7 @@ document.querySelectorAll('.nav-btn').forEach(btn=>{
     if(alreadyActive){ window.scrollTo(0,0); return; }
     if(btn.dataset.page==='pageCollection') renderProgress();
     if(btn.dataset.page==='pageDecks') renderDeckList();
+    if(btn.dataset.page==='pageLore') initLoreCounter();
   });
 });
 
@@ -1330,3 +1331,135 @@ async function importBackup(file) {
     renderCardGrid();
   });
 })();
+
+// ───────────────────────────────────────────
+// ロアカウンター
+// ───────────────────────────────────────────
+const LORE_PLAYER_COLORS = ['#7c6dfa','#f5a623','#27ae60','#e74c3c'];
+const loreState = {
+  playerCount: 2,
+  winLore: 20,
+  lores: [0, 0, 0, 0],
+  diceRolls: null,
+  diceWinner: null,
+  diceTie: null,
+};
+let loreInited = false;
+
+function renderLoreCounter() {
+  const n = loreState.playerCount;
+  const container = document.getElementById('lorePlayers');
+  container.className = 'lore-players' + (n > 2 ? ' lore-players-grid' : '');
+  container.innerHTML = '';
+
+  for (let i = 0; i < n; i++) {
+    const lore = loreState.lores[i];
+    const color = LORE_PLAYER_COLORS[i];
+    const pct = Math.min(100, (lore / loreState.winLore) * 100);
+    const won = lore >= loreState.winLore;
+    const roll = loreState.diceRolls ? loreState.diceRolls[i] : null;
+    const isWinner = loreState.diceWinner === i;
+    const isTied = loreState.diceTie && loreState.diceTie.includes(i);
+
+    const panel = document.createElement('div');
+    panel.className = 'lore-player-panel' + (won ? ' lore-won' : '');
+    panel.style.setProperty('--player-color', color);
+
+    let diceBadge = '';
+    if (roll !== null) {
+      const cls = isWinner ? ' lore-first' : (isTied ? ' lore-tied' : '');
+      const label = isWinner ? ' 先攻' : (isTied ? ' 同点' : '');
+      diceBadge = `<span class="lore-dice-val${cls}">🎲${roll}${label}</span>`;
+    }
+
+    panel.innerHTML = `
+      <div class="lore-player-header">
+        <span class="lore-player-name">プレイヤー${i + 1}</span>
+        ${won ? '<span class="lore-win-badge">🏆 勝利！</span>' : ''}
+        ${diceBadge}
+      </div>
+      <div class="lore-counter-row">
+        <button class="lore-counter-btn lore-dec" data-i="${i}">－</button>
+        <div class="lore-counter-val-wrap">
+          <span class="lore-counter-val">${lore}</span>
+          <span class="lore-counter-max">/ ${loreState.winLore}</span>
+        </div>
+        <button class="lore-counter-btn lore-inc" data-i="${i}">＋</button>
+      </div>
+      <div class="lore-progress-wrap">
+        <div class="lore-progress-fill" style="width:${pct}%;background:${color};"></div>
+      </div>`;
+
+    container.appendChild(panel);
+  }
+
+  container.querySelectorAll('.lore-dec').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const i = parseInt(btn.dataset.i);
+      if (loreState.lores[i] > 0) { loreState.lores[i]--; renderLoreCounter(); }
+    });
+  });
+  container.querySelectorAll('.lore-inc').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const i = parseInt(btn.dataset.i);
+      loreState.lores[i]++;
+      renderLoreCounter();
+    });
+  });
+
+  const resultEl = document.getElementById('loreDiceResult');
+  if (loreState.diceRolls) {
+    resultEl.style.display = 'block';
+    if (loreState.diceWinner !== null) {
+      resultEl.textContent = `プレイヤー${loreState.diceWinner + 1} が先攻！`;
+    } else {
+      const names = loreState.diceTie.map(j => `プレイヤー${j + 1}`).join('・');
+      resultEl.textContent = `${names} が同点 — もう一度振ってください`;
+    }
+  } else {
+    resultEl.style.display = 'none';
+  }
+}
+
+function initLoreCounter() {
+  if (loreInited) { renderLoreCounter(); return; }
+  loreInited = true;
+
+  document.querySelectorAll('#lorePlayerCountBtns .lore-ctrl-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#lorePlayerCountBtns .lore-ctrl-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      loreState.playerCount = parseInt(btn.dataset.count);
+      loreState.diceRolls = null; loreState.diceWinner = null; loreState.diceTie = null;
+      renderLoreCounter();
+    });
+  });
+
+  document.querySelectorAll('#loreWinBtns .lore-ctrl-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#loreWinBtns .lore-ctrl-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      loreState.winLore = parseInt(btn.dataset.win);
+      renderLoreCounter();
+    });
+  });
+
+  document.getElementById('loreDiceBtn').addEventListener('click', () => {
+    const n = loreState.playerCount;
+    const rolls = Array.from({ length: n }, () => Math.floor(Math.random() * 6) + 1);
+    loreState.diceRolls = rolls;
+    const max = Math.max(...rolls);
+    const winners = rolls.reduce((acc, r, i) => { if (r === max) acc.push(i); return acc; }, []);
+    loreState.diceWinner = winners.length === 1 ? winners[0] : null;
+    loreState.diceTie = winners.length > 1 ? winners : null;
+    renderLoreCounter();
+  });
+
+  document.getElementById('loreResetBtn').addEventListener('click', () => {
+    loreState.lores = [0, 0, 0, 0];
+    loreState.diceRolls = null; loreState.diceWinner = null; loreState.diceTie = null;
+    renderLoreCounter();
+  });
+
+  renderLoreCounter();
+}
