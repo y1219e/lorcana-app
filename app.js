@@ -104,7 +104,7 @@ async function prefetchAllImages(cards, onProgress) {
 
 const IMG_HOST = 'https://pub-1ffff5ba3a074d538aa9f3027d3c97dc.r2.dev/';
 
-const DECK_PROXY_URL = 'https://loreca.vercel.app';
+const DECK_PROXY_URL = 'https://loreca.vercel.app/api';
 
 
 
