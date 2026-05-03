@@ -90,6 +90,32 @@
   </div>
   <div class="deck-list" id="deckList"></div>
 </div>
+<div class="page" id="pageLore">
+  <div class="page-header"><img class="page-header-logo" src="https://pub-1ffff5ba3a074d538aa9f3027d3c97dc.r2.dev/logos/logo_app.webp" alt="ロゴ"></div>
+  <div class="lore-controls">
+    <div class="lore-control-group">
+      <span class="lore-control-label">プレイヤー数</span>
+      <div id="lorePlayerCountBtns">
+        <button class="lore-ctrl-btn active" data-count="2">2人</button>
+        <button class="lore-ctrl-btn" data-count="3">3人</button>
+        <button class="lore-ctrl-btn" data-count="4">4人</button>
+      </div>
+    </div>
+    <div class="lore-control-group">
+      <span class="lore-control-label">勝利条件</span>
+      <div id="loreWinBtns">
+        <button class="lore-ctrl-btn active" data-win="20">20ロア</button>
+        <button class="lore-ctrl-btn" data-win="25">25ロア</button>
+      </div>
+    </div>
+  </div>
+  <div class="lore-actions">
+    <button id="loreDiceBtn" class="lore-action-btn lore-dice-btn">🎲 ダイスを振る</button>
+    <button id="loreResetBtn" class="lore-action-btn lore-reset-btn">↺ リセット</button>
+  </div>
+  <div id="loreDiceResult" class="lore-dice-result" style="display:none;"></div>
+  <div id="lorePlayers" class="lore-players"></div>
+</div>
 
 <!-- URLインポートモーダル -->
 
@@ -336,6 +362,7 @@
   <button class="nav-btn active" data-page="pageCards"><span class="icon">🃏</span>カード</button>
   <button class="nav-btn" data-page="pageCollection"><span class="icon">📦</span>コレクション</button>
   <button class="nav-btn" data-page="pageDecks"><span class="icon">🗂</span>デッキ</button>
+  <button class="nav-btn" data-page="pageLore"><span class="icon">⭐</span>カウンター</button>
 </nav>
 
 <script src="app.js"></script>
