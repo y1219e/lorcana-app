@@ -1420,25 +1420,6 @@ function renderLoreCounter() {
     });
   });
 
-  // ドナルドダック 25ロア選択ボタン
-  const donaldEl = document.getElementById('loreDonaldBtns');
-  donaldEl.innerHTML = '';
-  const noneBtn = document.createElement('button');
-  noneBtn.className = 'lore-donald-btn' + (loreState.donaldOwner === null ? ' active' : '');
-  noneBtn.textContent = 'なし';
-  noneBtn.addEventListener('click', () => { loreState.donaldOwner = null; renderLoreCounter(); });
-  donaldEl.appendChild(noneBtn);
-  for (let i = 0; i < n; i++) {
-    const btn = document.createElement('button');
-    btn.className = 'lore-donald-btn' + (loreState.donaldOwner === i ? ' active' : '');
-    btn.textContent = `P${i + 1}`;
-    btn.addEventListener('click', () => {
-      loreState.donaldOwner = loreState.donaldOwner === i ? null : i;
-      renderLoreCounter();
-    });
-    donaldEl.appendChild(btn);
-  }
-
   // ダイス結果
   const resultEl = document.getElementById('loreDiceResult');
   if (loreState.diceRolls) {
@@ -1454,21 +1435,66 @@ function renderLoreCounter() {
   }
 }
 
+function renderDonaldModal() {
+  const n = loreState.playerCount;
+  const el = document.getElementById('loreDonaldModalBtns');
+  el.innerHTML = '';
+  const noneBtn = document.createElement('button');
+  noneBtn.className = 'lore-modal-choice' + (loreState.donaldOwner === null ? ' active' : '');
+  noneBtn.textContent = 'なし';
+  noneBtn.addEventListener('click', () => {
+    loreState.donaldOwner = null;
+    document.getElementById('loreDonaldModal').style.display = 'none';
+    renderLoreCounter();
+  });
+  el.appendChild(noneBtn);
+  for (let i = 0; i < n; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'lore-modal-choice' + (loreState.donaldOwner === i ? ' active' : '');
+    btn.textContent = `P${i + 1}`;
+    btn.addEventListener('click', () => {
+      loreState.donaldOwner = loreState.donaldOwner === i ? null : i;
+      document.getElementById('loreDonaldModal').style.display = 'none';
+      renderLoreCounter();
+    });
+    el.appendChild(btn);
+  }
+}
+
 function initLoreCounter() {
   if (loreInited) { renderLoreCounter(); return; }
   loreInited = true;
 
-  document.querySelectorAll('#lorePlayerCountBtns .lore-ctrl-btn').forEach(btn => {
+  // 人数ボタン → モーダル
+  document.getElementById('lorePlayerCountBtn').addEventListener('click', () => {
+    document.querySelectorAll('#loreCountModal .lore-modal-choice').forEach(b => {
+      b.classList.toggle('active', parseInt(b.dataset.count) === loreState.playerCount);
+    });
+    document.getElementById('loreCountModal').style.display = 'flex';
+  });
+  document.querySelectorAll('#loreCountModal .lore-modal-choice').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('#lorePlayerCountBtns .lore-ctrl-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
       loreState.playerCount = parseInt(btn.dataset.count);
       if (loreState.donaldOwner !== null && loreState.donaldOwner >= loreState.playerCount) loreState.donaldOwner = null;
       loreState.diceRolls = null; loreState.diceWinner = null; loreState.diceTie = null;
+      document.getElementById('loreCountModal').style.display = 'none';
       renderLoreCounter();
     });
   });
+  document.getElementById('loreCountCancel').addEventListener('click', () => {
+    document.getElementById('loreCountModal').style.display = 'none';
+  });
 
+  // ロアボタン → モーダル
+  document.getElementById('loreDonaldBtn').addEventListener('click', () => {
+    renderDonaldModal();
+    document.getElementById('loreDonaldModal').style.display = 'flex';
+  });
+  document.getElementById('loreDonaldCancel').addEventListener('click', () => {
+    document.getElementById('loreDonaldModal').style.display = 'none';
+  });
+
+  // ダイスボタン
   document.getElementById('loreDiceBtn').addEventListener('click', () => {
     const n = loreState.playerCount;
     const rolls = Array.from({ length: n }, () => Math.floor(Math.random() * 6) + 1);
@@ -1480,6 +1506,7 @@ function initLoreCounter() {
     renderLoreCounter();
   });
 
+  // リセットボタン
   document.getElementById('loreResetBtn').addEventListener('click', () => {
     loreState.lores = [0, 0, 0, 0];
     loreState.diceRolls = null; loreState.diceWinner = null; loreState.diceTie = null;

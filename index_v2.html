@@ -94,23 +94,37 @@
   <div class="lore-top" id="loreTopArea"></div>
   <div class="lore-middle">
     <div class="lore-mid-row">
-      <div id="lorePlayerCountBtns">
-        <button class="lore-ctrl-btn active" data-count="2">2人</button>
-        <button class="lore-ctrl-btn" data-count="3">3人</button>
-        <button class="lore-ctrl-btn" data-count="4">4人</button>
-      </div>
-      <div class="lore-mid-actions">
-        <button id="loreDiceBtn" class="lore-mid-btn" title="ダイスを振る">🎲</button>
-        <button id="loreResetBtn" class="lore-mid-btn" title="リセット">↺</button>
-      </div>
-    </div>
-    <div class="lore-mid-row">
-      <span class="lore-donald-label">🦆 25ロア効果:</span>
-      <div id="loreDonaldBtns" class="lore-donald-btns"></div>
+      <button id="loreDiceBtn" class="lore-mid-btn" title="ダイスを振る">🎲</button>
+      <button id="lorePlayerCountBtn" class="lore-mid-text-btn">👥 人数</button>
+      <button id="loreDonaldBtn" class="lore-mid-text-btn">🦆 ロア</button>
+      <button id="loreResetBtn" class="lore-mid-btn" title="リセット">↺</button>
     </div>
     <div id="loreDiceResult" class="lore-dice-result" style="display:none;"></div>
   </div>
   <div class="lore-bottom" id="loreBottomArea"></div>
+
+  <div class="lore-modal-overlay" id="loreCountModal" style="display:none;">
+    <div class="lore-modal-box">
+      <div class="lore-modal-icon">👥</div>
+      <div class="lore-modal-title">プレイヤー数を選択してください</div>
+      <div class="lore-modal-btns">
+        <button class="lore-modal-choice" data-count="2">2人</button>
+        <button class="lore-modal-choice" data-count="3">3人</button>
+        <button class="lore-modal-choice" data-count="4">4人</button>
+      </div>
+      <button class="lore-modal-cancel" id="loreCountCancel">キャンセル</button>
+    </div>
+  </div>
+
+  <div class="lore-modal-overlay" id="loreDonaldModal" style="display:none;">
+    <div class="lore-modal-box">
+      <div class="lore-modal-icon">🦆</div>
+      <div class="lore-modal-title">25ロア効果のプレイヤーを選択</div>
+      <div class="lore-modal-desc">カードを出したプレイヤーは20ロアのまま、相手は25ロア必要になります</div>
+      <div class="lore-modal-btns" id="loreDonaldModalBtns"></div>
+      <button class="lore-modal-cancel" id="loreDonaldCancel">キャンセル</button>
+    </div>
+  </div>
 </div>
 
 <!-- URLインポートモーダル -->
