@@ -104,9 +104,7 @@ async function prefetchAllImages(cards, onProgress) {
 
 const IMG_HOST = 'https://pub-1ffff5ba3a074d538aa9f3027d3c97dc.r2.dev/';
 
-// デッキコードプロキシURL（Cloudflare Worker）
-// TODO: Cloudflare Workerをデプロイ後、下記URLを実際のWorker URLに変更してください
-const DECK_PROXY_URL = 'https://loreca-deck.YOUR_SUBDOMAIN.workers.dev';
+const DECK_PROXY_URL = 'https://loreca-proxy.y1219e.workers.dev';
 
 
 
