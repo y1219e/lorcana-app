@@ -238,6 +238,7 @@ async function resolveImgSrc(url) {
 function makeImg(card, deckStyle){
   const img = document.createElement('img');
   img.alt = card.name;
+  img.loading = 'lazy';
   if(deckStyle) img.style.cssText = deckStyle + 'object-fit:cover;display:block;';
   img.onerror = () => { const ph=document.createElement('div'); ph.className='img-placeholder'; ph.textContent=card.name; img.replaceWith(ph); };
   if(card.card_file) {
@@ -605,7 +606,7 @@ function addProg(parent,label,owned,total,setCode,bannerUrl){
   if(setCode) div.style.cursor='pointer';
   if(bannerUrl){
     const img=document.createElement('img');
-    img.src=bannerUrl; img.alt=label;
+    img.src=bannerUrl; img.alt=label; img.loading='lazy';
     img.style.cssText='width:100%;border-radius:6px;margin-bottom:6px;display:block;';
     div.appendChild(img);
   }
@@ -641,7 +642,7 @@ function renderDeckList(){
     const div=document.createElement('div'); div.className='deck-card';
     // スリーブ画像
     const sleeve = DECK_SLEEVES.find(s=>s.id===deck.sleeveId);
-    if(sleeve){ const si=document.createElement('img'); si.className='deck-sleeve'; si.src=sleeve.src; si.alt='スリーブ'; div.appendChild(si); }
+    if(sleeve){ const si=document.createElement('img'); si.className='deck-sleeve'; si.src=sleeve.src; si.alt='スリーブ'; si.loading='lazy'; div.appendChild(si); }
     else { const sp=document.createElement('div'); sp.className='deck-sleeve-placeholder'; sp.textContent='🃏'; div.appendChild(sp); }
     const left=document.createElement('div'); left.style.flex='1'; left.style.minWidth='0';
     const h3=document.createElement('h3'); h3.textContent=deck.name||'名称未設定';
@@ -682,7 +683,7 @@ function renderSleeveGrid(){
   // 各スリーブ
   DECK_SLEEVES.forEach(s=>{
     const img=document.createElement('img'); img.className='sleeve-option'+(currentDeck.sleeveId===s.id?' selected':'');
-    img.src=s.src; img.alt=s.id;
+    img.src=s.src; img.alt=s.id; img.loading='lazy';
     img.addEventListener('click',()=>{ currentDeck.sleeveId=s.id; renderSleeveGrid(); });
     grid.appendChild(img);
   });
