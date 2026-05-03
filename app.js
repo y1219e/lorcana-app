@@ -1333,12 +1333,12 @@ async function importBackup(file) {
 })();
 
 // ───────────────────────────────────────────
-// ロアカウンター
+// ロアカウンター（対面レイアウト）
 // ───────────────────────────────────────────
 const LORE_PLAYER_COLORS = ['#7c6dfa','#f5a623','#27ae60','#e74c3c'];
 const loreState = {
   playerCount: 2,
-  winLore: 20,
+  donaldOwner: null, // 25ロア効果を持つプレイヤーのindex
   lores: [0, 0, 0, 0],
   diceRolls: null,
   diceWinner: null,
@@ -1346,60 +1346,73 @@ const loreState = {
 };
 let loreInited = false;
 
-function renderLoreCounter() {
-  const n = loreState.playerCount;
-  const container = document.getElementById('lorePlayers');
-  container.className = 'lore-players' + (n > 2 ? ' lore-players-grid' : '');
-  container.innerHTML = '';
+function getWinLore(i) {
+  if (loreState.donaldOwner === null) return 20;
+  return loreState.donaldOwner === i ? 20 : 25;
+}
 
-  for (let i = 0; i < n; i++) {
-    const lore = loreState.lores[i];
-    const color = LORE_PLAYER_COLORS[i];
-    const pct = Math.min(100, (lore / loreState.winLore) * 100);
-    const won = lore >= loreState.winLore;
-    const roll = loreState.diceRolls ? loreState.diceRolls[i] : null;
-    const isWinner = loreState.diceWinner === i;
-    const isTied = loreState.diceTie && loreState.diceTie.includes(i);
+function createPlayerPanel(i, rotated) {
+  const color = LORE_PLAYER_COLORS[i];
+  const lore = loreState.lores[i];
+  const winLore = getWinLore(i);
+  const won = lore >= winLore;
+  const roll = loreState.diceRolls ? loreState.diceRolls[i] : null;
+  const isWinner = loreState.diceWinner === i;
+  const isTied = loreState.diceTie && loreState.diceTie.includes(i);
 
-    const panel = document.createElement('div');
-    panel.className = 'lore-player-panel' + (won ? ' lore-won' : '');
-    panel.style.setProperty('--player-color', color);
-
-    let diceBadge = '';
-    if (roll !== null) {
-      const cls = isWinner ? ' lore-first' : (isTied ? ' lore-tied' : '');
-      const label = isWinner ? ' 先攻' : (isTied ? ' 同点' : '');
-      diceBadge = `<span class="lore-dice-val${cls}">🎲${roll}${label}</span>`;
-    }
-
-    panel.innerHTML = `
-      <div class="lore-player-header">
-        <span class="lore-player-name">プレイヤー${i + 1}</span>
-        ${won ? '<span class="lore-win-badge">🏆 勝利！</span>' : ''}
-        ${diceBadge}
-      </div>
-      <div class="lore-counter-row">
-        <button class="lore-counter-btn lore-dec" data-i="${i}">－</button>
-        <div class="lore-counter-val-wrap">
-          <span class="lore-counter-val">${lore}</span>
-          <span class="lore-counter-max">/ ${loreState.winLore}</span>
-        </div>
-        <button class="lore-counter-btn lore-inc" data-i="${i}">＋</button>
-      </div>
-      <div class="lore-progress-wrap">
-        <div class="lore-progress-fill" style="width:${pct}%;background:${color};"></div>
-      </div>`;
-
-    container.appendChild(panel);
+  let diceBadge = '';
+  if (roll !== null) {
+    const cls = isWinner ? ' lore-first' : (isTied ? ' lore-tied' : '');
+    const label = isWinner ? ' 先攻' : (isTied ? ' 同点' : '');
+    diceBadge = `<span class="lore-dice-badge${cls}">🎲${roll}${label}</span>`;
   }
 
-  container.querySelectorAll('.lore-dec').forEach(btn => {
+  const panel = document.createElement('div');
+  panel.className = 'lore-player-face' + (rotated ? ' lore-rotated' : '') + (won ? ' lore-won' : '');
+  panel.style.setProperty('--player-color', color);
+  panel.innerHTML = `
+    <div class="lore-face-header">
+      <span class="lore-face-name">プレイヤー${i + 1}</span>
+      ${won ? '<span class="lore-face-won">🏆 勝利！</span>' : ''}
+      ${diceBadge}
+    </div>
+    <div class="lore-face-counter">
+      <button class="lore-face-btn lore-face-dec" data-i="${i}">－</button>
+      <div class="lore-face-val-wrap">
+        <span class="lore-face-val">${lore}</span>
+        <span class="lore-face-target">/ ${winLore}</span>
+      </div>
+      <button class="lore-face-btn lore-face-inc" data-i="${i}">＋</button>
+    </div>`;
+  return panel;
+}
+
+function renderLoreCounter() {
+  const n = loreState.playerCount;
+
+  // 2人: 上P2 / 下P1、3人: 上P3 / 下P1+P2、4人: 上P3+P4 / 下P1+P2
+  let topIdxs, botIdxs;
+  if (n === 2)      { botIdxs = [0];    topIdxs = [1]; }
+  else if (n === 3) { botIdxs = [0, 1]; topIdxs = [2]; }
+  else              { botIdxs = [0, 1]; topIdxs = [2, 3]; }
+
+  const topArea = document.getElementById('loreTopArea');
+  const botArea = document.getElementById('loreBottomArea');
+  topArea.className = 'lore-top' + (topIdxs.length > 1 ? ' lore-multi' : '');
+  botArea.className = 'lore-bottom' + (botIdxs.length > 1 ? ' lore-multi' : '');
+  topArea.innerHTML = '';
+  botArea.innerHTML = '';
+  topIdxs.forEach(i => topArea.appendChild(createPlayerPanel(i, true)));
+  botIdxs.forEach(i => botArea.appendChild(createPlayerPanel(i, false)));
+
+  // カウンターボタン
+  document.querySelectorAll('.lore-face-dec').forEach(btn => {
     btn.addEventListener('click', () => {
       const i = parseInt(btn.dataset.i);
       if (loreState.lores[i] > 0) { loreState.lores[i]--; renderLoreCounter(); }
     });
   });
-  container.querySelectorAll('.lore-inc').forEach(btn => {
+  document.querySelectorAll('.lore-face-inc').forEach(btn => {
     btn.addEventListener('click', () => {
       const i = parseInt(btn.dataset.i);
       loreState.lores[i]++;
@@ -1407,6 +1420,26 @@ function renderLoreCounter() {
     });
   });
 
+  // ドナルドダック 25ロア選択ボタン
+  const donaldEl = document.getElementById('loreDonaldBtns');
+  donaldEl.innerHTML = '';
+  const noneBtn = document.createElement('button');
+  noneBtn.className = 'lore-donald-btn' + (loreState.donaldOwner === null ? ' active' : '');
+  noneBtn.textContent = 'なし';
+  noneBtn.addEventListener('click', () => { loreState.donaldOwner = null; renderLoreCounter(); });
+  donaldEl.appendChild(noneBtn);
+  for (let i = 0; i < n; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'lore-donald-btn' + (loreState.donaldOwner === i ? ' active' : '');
+    btn.textContent = `P${i + 1}`;
+    btn.addEventListener('click', () => {
+      loreState.donaldOwner = loreState.donaldOwner === i ? null : i;
+      renderLoreCounter();
+    });
+    donaldEl.appendChild(btn);
+  }
+
+  // ダイス結果
   const resultEl = document.getElementById('loreDiceResult');
   if (loreState.diceRolls) {
     resultEl.style.display = 'block';
@@ -1430,16 +1463,8 @@ function initLoreCounter() {
       document.querySelectorAll('#lorePlayerCountBtns .lore-ctrl-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       loreState.playerCount = parseInt(btn.dataset.count);
+      if (loreState.donaldOwner !== null && loreState.donaldOwner >= loreState.playerCount) loreState.donaldOwner = null;
       loreState.diceRolls = null; loreState.diceWinner = null; loreState.diceTie = null;
-      renderLoreCounter();
-    });
-  });
-
-  document.querySelectorAll('#loreWinBtns .lore-ctrl-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('#loreWinBtns .lore-ctrl-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      loreState.winLore = parseInt(btn.dataset.win);
       renderLoreCounter();
     });
   });
