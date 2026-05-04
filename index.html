@@ -410,22 +410,17 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 <script>
 // ダブルタップズーム防止（ピンチズームは許可）
 (function() {
-  let lastTap = { time: 0, x: 0, y: 0 };
-  document.addEventListener('touchstart', function(e) {
-    if (e.touches.length !== 1) return;
-    const t = e.touches[0];
+  let lastTap = 0;
+  document.addEventListener('touchend', function(e) {
+    if (e.touches.length > 0) return; // まだ指が触れている場合はスキップ
     const now = Date.now();
-    const dx = Math.abs(t.clientX - lastTap.x);
-    const dy = Math.abs(t.clientY - lastTap.y);
-    if (now - lastTap.time < 300 && dx < 30 && dy < 30) {
+    if (now - lastTap < 500) {
       const tag = e.target.tagName.toLowerCase();
-      const interactive = ['button','a','input','select','textarea'].includes(tag) ||
+      const isInteractive = ['button','a','input','select','textarea'].includes(tag) ||
         !!e.target.closest('button,a,input,select,textarea');
-      if (!interactive) e.preventDefault();
+      if (!isInteractive) e.preventDefault();
     }
-    lastTap.time = now;
-    lastTap.x = t.clientX;
-    lastTap.y = t.clientY;
+    lastTap = now;
   }, { passive: false });
 })();
 
