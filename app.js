@@ -1,10 +1,37 @@
 // ───────────────────────────────────────────
+// Android 戻るボタン対応（history.pushState）
+// ───────────────────────────────────────────
+let _popstateActive = false;
+function pushModalState() { history.pushState({ hasModal: true }, ''); }
+function popHistory()     { if (!_popstateActive && history.state?.hasModal) history.back(); }
+function closeTopModal() {
+  if (document.getElementById('settingsPage').classList.contains('open'))   { closeSubpage('settingsPage'); return; }
+  if (document.getElementById('disclaimerPage').classList.contains('open')) { closeSubpage('disclaimerPage'); return; }
+  if (document.getElementById('menuDrawer').classList.contains('open'))     { closeMenu(); return; }
+  if (document.getElementById('dialogModal').classList.contains('open'))    { const c=document.getElementById('dialogCancel'); (c.style.display!=='none'?c:document.getElementById('dialogOk')).click(); return; }
+  if (document.getElementById('advSearchModal').classList.contains('open')) { document.getElementById('advSearchModal').classList.remove('open'); renderCardGrid(); return; }
+  if (document.getElementById('newDeckModal').classList.contains('open'))   { closeNewDeckModal(); return; }
+  if (document.getElementById('importModal').classList.contains('open'))    { document.getElementById('importModal').classList.remove('open'); return; }
+  if (document.getElementById('cardModal').classList.contains('open'))      { closeCardModal(); return; }
+  for (const id of ['loreCountModal','loreDonaldModal','lorePauseModal']) {
+    if (document.getElementById(id)?.style.display === 'flex') { document.getElementById(id).style.display = 'none'; return; }
+  }
+}
+window.addEventListener('popstate', () => { _popstateActive = true; closeTopModal(); _popstateActive = false; });
+
+// ───────────────────────────────────────────
 // ハンバーガーメニュー
 // ───────────────────────────────────────────
-function openMenu()  { document.getElementById('menuDrawer').classList.add('open'); document.getElementById('menuOverlay').classList.add('open'); }
-function closeMenu() { document.getElementById('menuDrawer').classList.remove('open'); document.getElementById('menuOverlay').classList.remove('open'); }
-function openSubpage(id)  { closeMenu(); document.getElementById(id).classList.add('open'); }
-function closeSubpage(id) { document.getElementById(id).classList.remove('open'); }
+function openMenu()  { document.getElementById('menuDrawer').classList.add('open'); document.getElementById('menuOverlay').classList.add('open'); pushModalState(); }
+function closeMenu() { document.getElementById('menuDrawer').classList.remove('open'); document.getElementById('menuOverlay').classList.remove('open'); popHistory(); }
+function openSubpage(id) {
+  // メニュー→サブページは replaceState で1エントリのまま遷移
+  document.getElementById('menuDrawer').classList.remove('open');
+  document.getElementById('menuOverlay').classList.remove('open');
+  document.getElementById(id).classList.add('open');
+  if (history.state?.hasModal) history.replaceState({ hasModal: true }, ''); else pushModalState();
+}
+function closeSubpage(id) { document.getElementById(id).classList.remove('open'); popHistory(); }
 document.getElementById('menuBtn').addEventListener('click', openMenu);
 document.getElementById('menuCloseBtn').addEventListener('click', closeMenu);
 document.getElementById('menuOverlay').addEventListener('click', closeMenu);
@@ -35,7 +62,8 @@ function showAlert(msg) {
     const modal = document.getElementById('dialogModal');
     const ok = document.getElementById('dialogOk');
     modal.classList.add('open');
-    const handler = () => { modal.classList.remove('open'); ok.removeEventListener('click', handler); resolve(); };
+    pushModalState();
+    const handler = () => { modal.classList.remove('open'); ok.removeEventListener('click', handler); popHistory(); resolve(); };
     ok.addEventListener('click', handler);
   });
 }
@@ -47,7 +75,8 @@ function showConfirm(msg) {
     const modal = document.getElementById('dialogModal');
     const ok = document.getElementById('dialogOk');
     modal.classList.add('open');
-    function cleanup(val) { modal.classList.remove('open'); ok.removeEventListener('click', handleOk); cancel.removeEventListener('click', handleCancel); resolve(val); }
+    pushModalState();
+    function cleanup(val) { modal.classList.remove('open'); ok.removeEventListener('click', handleOk); cancel.removeEventListener('click', handleCancel); popHistory(); resolve(val); }
     function handleOk() { cleanup(true); }
     function handleCancel() { cleanup(false); }
     ok.addEventListener('click', handleOk);
@@ -533,6 +562,7 @@ function openCardModal(card){
   document.getElementById('countDecF').disabled=o.foil<=0;
   const wb=document.getElementById('modalWishBtn');
   wb.textContent=wishlist.has(card.id)?'❤️':'🤍';
+  if (!document.getElementById('cardModal').classList.contains('open')) pushModalState();
   document.getElementById('cardModal').classList.add('open');
 }
 
@@ -555,7 +585,7 @@ document.getElementById('modalNext').addEventListener('click', e=>{ e.stopPropag
 
 
 
-function closeCardModal(){ document.getElementById('cardModal').classList.remove('open'); currentCard=null; }
+function closeCardModal(){ document.getElementById('cardModal').classList.remove('open'); currentCard=null; popHistory(); }
 document.getElementById('modalClose').addEventListener('click',closeCardModal);
 document.getElementById('cardModal').addEventListener('click',e=>{ if(e.target===document.getElementById('cardModal')) closeCardModal(); });
 
@@ -738,20 +768,26 @@ async function importDeckFromCode(code) {
 // 新規デッキ作成方法選択モーダル
 function openNewDeckModal() {
   document.getElementById('newDeckModal').classList.add('open');
+  pushModalState();
 }
 function closeNewDeckModal() {
   document.getElementById('newDeckModal').classList.remove('open');
+  popHistory();
 }
 document.getElementById('newDeckCancelBtn').addEventListener('click', closeNewDeckModal);
 document.getElementById('newDeckModal').addEventListener('click', e => {
   if (e.target === document.getElementById('newDeckModal')) closeNewDeckModal();
 });
 document.getElementById('newDeckByCardBtn').addEventListener('click', () => {
-  closeNewDeckModal();
+  // デッキエディタへの遷移: history.back() を使わず replaceState でクリア
+  document.getElementById('newDeckModal').classList.remove('open');
+  if (history.state?.hasModal) history.replaceState(null, '');
   openDeckEditor(null);
 });
 document.getElementById('newDeckByCodeBtn').addEventListener('click', () => {
-  closeNewDeckModal();
+  // importModal への遷移: replaceState で同一エントリを引き継ぐ
+  document.getElementById('newDeckModal').classList.remove('open');
+  if (history.state?.hasModal) history.replaceState({ hasModal: true }, ''); else pushModalState();
   document.getElementById('importCodeInput').value = '';
   document.getElementById('importError').style.display = 'none';
   document.getElementById('importModal').classList.add('open');
@@ -760,9 +796,10 @@ document.getElementById('newDeckByCodeBtn').addEventListener('click', () => {
 // デッキコードインポートモーダル
 document.getElementById('importClose').addEventListener('click', () => {
   document.getElementById('importModal').classList.remove('open');
+  popHistory();
 });
 document.getElementById('importModal').addEventListener('click', e => {
-  if (e.target === document.getElementById('importModal')) document.getElementById('importModal').classList.remove('open');
+  if (e.target === document.getElementById('importModal')) { document.getElementById('importModal').classList.remove('open'); popHistory(); }
 });
 document.getElementById('importExecBtn').addEventListener('click', async () => {
   const errEl = document.getElementById('importError');
@@ -1511,9 +1548,11 @@ async function importBackup(file) {
   document.getElementById('advSearchBtn').addEventListener('click',()=>{
     buildAdvUI();
     document.getElementById('advSearchModal').classList.add('open');
+    pushModalState();
   });
   document.getElementById('advClose').addEventListener('click',()=>{
     document.getElementById('advSearchModal').classList.remove('open');
+    popHistory();
     renderCardGrid();
   });
   document.getElementById('advReset2').addEventListener('click',()=>{
@@ -1522,11 +1561,13 @@ async function importBackup(file) {
   });
   document.getElementById('advApply').addEventListener('click',()=>{
     document.getElementById('advSearchModal').classList.remove('open');
+    popHistory();
     renderCardGrid();
   });
   document.getElementById('advSearchModal').addEventListener('click', e => {
     if (e.target === document.getElementById('advSearchModal')) {
       document.getElementById('advSearchModal').classList.remove('open');
+      popHistory();
       renderCardGrid();
     }
   });
@@ -1699,6 +1740,7 @@ function renderDonaldModal() {
   noneBtn.addEventListener('click', () => {
     loreState.donaldOwner = null;
     document.getElementById('loreDonaldModal').style.display = 'none';
+    popHistory();
     renderLoreCounter();
   });
   el.appendChild(noneBtn);
@@ -1709,6 +1751,7 @@ function renderDonaldModal() {
     btn.addEventListener('click', () => {
       loreState.donaldOwner = loreState.donaldOwner === i ? null : i;
       document.getElementById('loreDonaldModal').style.display = 'none';
+      popHistory();
       renderLoreCounter();
     });
     el.appendChild(btn);
@@ -1725,6 +1768,7 @@ function initLoreCounter() {
       b.classList.toggle('active', parseInt(b.dataset.count) === loreState.playerCount);
     });
     document.getElementById('loreCountModal').style.display = 'flex';
+    pushModalState();
   });
   document.querySelectorAll('#loreCountModal .lore-modal-choice').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1732,20 +1776,24 @@ function initLoreCounter() {
       if (loreState.donaldOwner !== null && loreState.donaldOwner >= loreState.playerCount) loreState.donaldOwner = null;
       loreState.diceRolls = null; loreState.diceWinner = null; loreState.diceTie = null;
       document.getElementById('loreCountModal').style.display = 'none';
+      popHistory();
       renderLoreCounter();
     });
   });
   document.getElementById('loreCountCancel').addEventListener('click', () => {
     document.getElementById('loreCountModal').style.display = 'none';
+    popHistory();
   });
 
   // ロアボタン → モーダル
   document.getElementById('loreDonaldBtn').addEventListener('click', () => {
     renderDonaldModal();
     document.getElementById('loreDonaldModal').style.display = 'flex';
+    pushModalState();
   });
   document.getElementById('loreDonaldCancel').addEventListener('click', () => {
     document.getElementById('loreDonaldModal').style.display = 'none';
+    popHistory();
   });
 
   // ダイスボタン
@@ -1763,14 +1811,17 @@ function initLoreCounter() {
   // ポーズボタン → モーダル
   document.getElementById('lorePauseBtn').addEventListener('click', () => {
     document.getElementById('lorePauseModal').style.display = 'flex';
+    pushModalState();
   });
   document.getElementById('loreContinueBtn').addEventListener('click', () => {
     document.getElementById('lorePauseModal').style.display = 'none';
+    popHistory();
   });
   document.getElementById('loreRestartBtn').addEventListener('click', () => {
     loreState.lores = [0, 0, 0, 0];
     loreState.diceRolls = null; loreState.diceWinner = null; loreState.diceTie = null;
     document.getElementById('lorePauseModal').style.display = 'none';
+    popHistory();
     renderLoreCounter();
   });
 
