@@ -18,6 +18,7 @@ document.addEventListener('keydown', e => {
   if (document.getElementById('settingsPage').classList.contains('open'))  { closeSubpage('settingsPage'); return; }
   if (document.getElementById('disclaimerPage').classList.contains('open')){ closeSubpage('disclaimerPage'); return; }
   if (document.getElementById('menuDrawer').classList.contains('open'))    { closeMenu(); return; }
+  if (document.getElementById('dialogModal').classList.contains('open'))   { const c=document.getElementById('dialogCancel'); (c.style.display!=='none'?c:document.getElementById('dialogOk')).click(); return; }
   if (document.getElementById('advSearchModal').classList.contains('open')){ document.getElementById('advSearchModal').classList.remove('open'); return; }
   if (document.getElementById('newDeckModal').classList.contains('open'))  { closeNewDeckModal(); return; }
   if (document.getElementById('importModal').classList.contains('open'))   { document.getElementById('importModal').classList.remove('open'); return; }
@@ -1480,6 +1481,12 @@ async function importBackup(file) {
   document.getElementById('advApply').addEventListener('click',()=>{
     document.getElementById('advSearchModal').classList.remove('open');
     renderCardGrid();
+  });
+  document.getElementById('advSearchModal').addEventListener('click', e => {
+    if (e.target === document.getElementById('advSearchModal')) {
+      document.getElementById('advSearchModal').classList.remove('open');
+      renderCardGrid();
+    }
   });
 
   // ======= /詳細検索 =======
