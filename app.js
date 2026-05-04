@@ -55,6 +55,11 @@ function showConfirm(msg) {
   });
 }
 
+function debounce(fn, ms) {
+  let t;
+  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+}
+
 function showToast(msg, type = 'error') {
   const el = document.createElement('div');
   el.className = 'toast toast-' + type;
@@ -403,6 +408,11 @@ function filteredCards(){
     return true;
   });
 }
+
+const updateAdvCount = debounce(() => {
+  const el = document.getElementById('advApply');
+  if (el) el.textContent = '結果を表示（' + filteredCards().length + '件）';
+}, 200);
 
 // collection[id] は {normal, foil} 形式。旧形式(数値)はnormalとして扱う
 function getOwned(id){ const c=collection[id]; if(!c) return {normal:0,foil:0}; if(typeof c==='number') return {normal:c,foil:0}; return {normal:c.normal??0,foil:c.foil??0}; }
@@ -941,7 +951,7 @@ function renderEditorCardList(){
   });
 }
 
-document.getElementById('editorSearch').addEventListener('input',renderEditorCardList);
+document.getElementById('editorSearch').addEventListener('input', debounce(renderEditorCardList, 300));
 document.getElementById('sleevePickerBtn').addEventListener('click',()=>document.getElementById('sleevePicker').classList.toggle('open'));
 document.getElementById('editorBack').addEventListener('click',closeDeckEditor);
 document.getElementById('exportDeckCodeBtn').addEventListener('click', async () => {
@@ -1401,7 +1411,7 @@ async function importBackup(file) {
         document.getElementById('advCostFill').style.width=(pHi-pLo)+'%';
         const lbl=document.getElementById('advCostLabel');
         lbl.textContent=(lo===0&&hi===10)?'全て':(lo===hi?lo+'コスト':lo+'〜'+hi+'コスト');
-        document.getElementById('advApply').textContent='結果を表示（'+filteredCards().length+'件）';
+        updateAdvCount();
       }
       minSlider.addEventListener('input',()=>{ if(parseInt(minSlider.value)>parseInt(maxSlider.value)) maxSlider.value=minSlider.value; updateSlider(); });
       maxSlider.addEventListener('input',()=>{ if(parseInt(maxSlider.value)<parseInt(minSlider.value)) minSlider.value=maxSlider.value; updateSlider(); });
@@ -1428,7 +1438,7 @@ async function importBackup(file) {
         document.getElementById(idFill).style.left=(lo2/max*100)+'%';
         document.getElementById(idFill).style.width=((hi2-lo2)/max*100)+'%';
         document.getElementById(idLabel).textContent=(lo2===0&&hi2===max)?'全て':(lo2===hi2?lo2+suffix:lo2+'〜'+hi2+suffix);
-        document.getElementById('advApply').textContent='結果を表示（'+filteredCards().length+'件）';
+        updateAdvCount();
       }
       if(!sMin._init){ sMin._init=true; sMin.addEventListener('input',()=>{ if(parseInt(sMin.value)>parseInt(sMax.value)) sMax.value=sMin.value; upd(); }); sMax.addEventListener('input',()=>{ if(parseInt(sMax.value)<parseInt(sMin.value)) sMin.value=sMax.value; upd(); }); }
       upd();
