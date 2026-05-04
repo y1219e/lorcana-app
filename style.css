@@ -254,3 +254,4 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
   /* 詳細検索モーダルをPC向けに中央配置 */
   .adv-modal-box { border-radius: 16px; max-width: 620px; width: 90%; }
 }
+#gridSentinel { height: 1px; }

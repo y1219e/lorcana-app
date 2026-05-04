@@ -374,54 +374,99 @@ function filteredCards(){
 function getOwned(id){ const c=collection[id]; if(!c) return {normal:0,foil:0}; if(typeof c==='number') return {normal:c,foil:0}; return {normal:c.normal??0,foil:c.foil??0}; }
 function ownedTotal(id){ const o=getOwned(id); return o.normal+o.foil; }
 
-function renderCardGrid(){
-  const grid=document.getElementById('cardGrid');
-  const badge=document.getElementById('cardCountBadge');
-  let cards=filteredCards();
-  // ソート
-  const INK_ORDER=['アンバー','アメジスト','エメラルド','ルビー','サファイア','スティール'];
-  cards = [...cards].sort((a,b)=>{
-    if(advFilter.sortOrder==='id_asc'||advFilter.sortOrder==='id_desc'){
-      const sc=(a.set?.code??'').localeCompare(b.set?.code??'',undefined,{numeric:true});
-      const nc=String(a.collector_number??'').localeCompare(String(b.collector_number??''),undefined,{numeric:true});
-      const r=sc!==0?sc:nc;
-      return advFilter.sortOrder==='id_desc'?-r:r;
+// ═══════════════════════════════════════════
+// カードグリッド仮想スクロール（IntersectionObserver）
+// ═══════════════════════════════════════════
+const PAGE_SIZE = 60;
+let _gridCards = [];    // ソート済みフィルタ結果（全件）
+let _gridRendered = 0;  // DOMに追加済みのカード数
+let _gridObserver = null;
+
+function _makeCardItem(card) {
+  const total = ownedTotal(card.id);
+  const item = document.createElement('div');
+  item.className = 'card-item';
+  item.appendChild(makeImg(card));
+  const info = document.createElement('div'); info.className = 'card-info';
+  const nameDiv = document.createElement('div'); nameDiv.className = 'card-name';
+  const cardInksDot = card.inks && card.inks.length > 1
+    ? makeDualInkDot(card.inks) : makeInkDot(card.ink ?? (card.inks?.[0] ?? ''));
+  nameDiv.appendChild(cardInksDot); nameDiv.appendChild(document.createTextNode(card.name));
+  const subDiv = document.createElement('div'); subDiv.className = 'card-sub';
+  subDiv.appendChild(document.createTextNode(`${card.set?.code ?? ''}-${card.collector_number}`));
+  subDiv.appendChild(document.createTextNode('  '));
+  subDiv.appendChild(makeRarityIcon(card.rarity));
+  subDiv.appendChild(document.createTextNode(' ' + card.rarity));
+  info.appendChild(nameDiv); info.appendChild(subDiv);
+  item.appendChild(info);
+  if (total > 0) {
+    const o = getOwned(card.id);
+    const b = document.createElement('div'); b.className = 'own-badge';
+    b.textContent = o.normal + o.foil;
+    if (o.foil > 0) b.classList.add('foil');
+    item.appendChild(b);
+  }
+  item._cardId = card.id;
+  item.addEventListener('click', () => openCardModal(card));
+  return item;
+}
+
+function _renderNextBatch(grid) {
+  const end = Math.min(_gridRendered + PAGE_SIZE, _gridCards.length);
+  if (_gridRendered >= end) return;
+  const frag = document.createDocumentFragment();
+  for (let i = _gridRendered; i < end; i++) frag.appendChild(_makeCardItem(_gridCards[i]));
+  _gridRendered = end;
+  const sentinel = document.getElementById('gridSentinel');
+  if (sentinel) grid.insertBefore(frag, sentinel); else grid.appendChild(frag);
+}
+
+function _setupSentinel(grid) {
+  if (_gridObserver) { _gridObserver.disconnect(); _gridObserver = null; }
+  const old = document.getElementById('gridSentinel');
+  if (old) old.remove();
+  if (_gridRendered >= _gridCards.length) return;
+  const sentinel = document.createElement('div');
+  sentinel.id = 'gridSentinel';
+  grid.appendChild(sentinel);
+  _gridObserver = new IntersectionObserver(entries => {
+    if (!entries[0].isIntersecting) return;
+    _renderNextBatch(grid);
+    if (_gridRendered >= _gridCards.length) {
+      _gridObserver.disconnect(); _gridObserver = null; sentinel.remove();
     }
-    if(advFilter.sortOrder==='cost_asc'||advFilter.sortOrder==='cost_desc'){
-      const ca=a.cost??0, cb=b.cost??0;
-      if(ca!==cb) return advFilter.sortOrder==='cost_asc'?ca-cb:cb-ca;
-      // 同コストは弾番号→インク色→コレクター番号順
-      const sc=(a.set?.code??'').localeCompare(b.set?.code??'',undefined,{numeric:true});
-      if(sc!==0) return sc;
-      const ia=INK_ORDER.indexOf(a.ink??a.inks?.[0]??''), ib=INK_ORDER.indexOf(b.ink??b.inks?.[0]??'');
-      if(ia!==ib) return ia-ib;
-      return String(a.collector_number??'').localeCompare(String(b.collector_number??''),undefined,{numeric:true});
+  }, { rootMargin: '200px' });
+  _gridObserver.observe(sentinel);
+}
+
+function renderCardGrid() {
+  const grid = document.getElementById('cardGrid');
+  const badge = document.getElementById('cardCountBadge');
+  const INK_ORDER = ['アンバー','アメジスト','エメラルド','ルビー','サファイア','スティール'];
+  _gridCards = [...filteredCards()].sort((a, b) => {
+    if (advFilter.sortOrder === 'id_asc' || advFilter.sortOrder === 'id_desc') {
+      const sc = (a.set?.code ?? '').localeCompare(b.set?.code ?? '', undefined, {numeric: true});
+      const nc = String(a.collector_number ?? '').localeCompare(String(b.collector_number ?? ''), undefined, {numeric: true});
+      const r = sc !== 0 ? sc : nc;
+      return advFilter.sortOrder === 'id_desc' ? -r : r;
+    }
+    if (advFilter.sortOrder === 'cost_asc' || advFilter.sortOrder === 'cost_desc') {
+      const ca = a.cost ?? 0, cb = b.cost ?? 0;
+      if (ca !== cb) return advFilter.sortOrder === 'cost_asc' ? ca - cb : cb - ca;
+      const sc = (a.set?.code ?? '').localeCompare(b.set?.code ?? '', undefined, {numeric: true});
+      if (sc !== 0) return sc;
+      const ia = INK_ORDER.indexOf(a.ink ?? a.inks?.[0] ?? ''), ib = INK_ORDER.indexOf(b.ink ?? b.inks?.[0] ?? '');
+      if (ia !== ib) return ia - ib;
+      return String(a.collector_number ?? '').localeCompare(String(b.collector_number ?? ''), undefined, {numeric: true});
     }
     return 0;
   });
-  badge.textContent=cards.length;
-  grid.innerHTML='';
-  cards.forEach(card=>{
-    const total=ownedTotal(card.id);
-    const item=document.createElement('div');
-    item.className='card-item';
-    item.appendChild(makeImg(card));
-    const info=document.createElement('div'); info.className='card-info';
-    const nameDiv=document.createElement('div'); nameDiv.className='card-name';
-    const cardInksDot = card.inks && card.inks.length > 1 ? makeDualInkDot(card.inks) : makeInkDot(card.ink ?? (card.inks?.[0] ?? ''));
-    nameDiv.appendChild(cardInksDot); nameDiv.appendChild(document.createTextNode(card.name));
-    const subDiv=document.createElement('div'); subDiv.className='card-sub';
-    subDiv.appendChild(document.createTextNode(`${card.set?.code??''}-${card.collector_number}`));
-    subDiv.appendChild(document.createTextNode('  '));
-    subDiv.appendChild(makeRarityIcon(card.rarity));
-    subDiv.appendChild(document.createTextNode(' ' + card.rarity));
-    info.appendChild(nameDiv); info.appendChild(subDiv);
-    item.appendChild(info);
-    if(total>0){ const o=getOwned(card.id); const b=document.createElement('div'); b.className='own-badge'; b.textContent=o.normal+o.foil; if(o.foil>0) b.classList.add('foil'); item.appendChild(b); }
-    item._cardId = card.id;
-    item.addEventListener('click',()=>openCardModal(card));
-    grid.appendChild(item);
-  });
+  badge.textContent = _gridCards.length;
+  if (_gridObserver) { _gridObserver.disconnect(); _gridObserver = null; }
+  grid.innerHTML = '';
+  _gridRendered = 0;
+  _renderNextBatch(grid);
+  _setupSentinel(grid);
 }
 
 
@@ -1438,8 +1483,10 @@ async function importBackup(file) {
       if(cardView==='wishlist'){
         const grid=document.getElementById('cardGrid');
         grid.querySelectorAll('.card-item').forEach(item=>{ if(item._cardId===id) item.remove(); });
+        _gridCards=_gridCards.filter(c=>c.id!==id);
+        _gridRendered=Math.max(0,_gridRendered-1);
         const badge=document.getElementById('cardCountBadge');
-        if(badge) badge.textContent=String(grid.querySelectorAll('.card-item').length);
+        if(badge) badge.textContent=String(_gridCards.length);
       }
     } else {
       wishlist.add(id);
