@@ -317,10 +317,11 @@ let searchQ = '';
 let currentCard = null;
 let currentDeck = null;
 
+function normalizeQ(s) { return s.normalize('NFKC').toLowerCase(); }
 function cardMatchesQuery(c, q) {
-  return (c.name?.toLowerCase().includes(q)) ||
-         (c.version?.toLowerCase().includes(q)) ||
-         (c.text?.toLowerCase().includes(q));
+  return (c.name    && normalizeQ(c.name).includes(q))    ||
+         (c.version && normalizeQ(c.version).includes(q)) ||
+         (c.text    && normalizeQ(c.text).includes(q));
 }
 
 function filteredCards(){
@@ -329,7 +330,7 @@ function filteredCards(){
     if(cardView==='wishlist' && !wishlist.has(c.id)) return false;
     if(advFilter.collectionStatus==='owned' && ownedTotal(c.id)===0) return false;
     if(advFilter.collectionStatus==='notowned' && ownedTotal(c.id)>0) return false;
-    if(searchQ && !cardMatchesQuery(c, searchQ.toLowerCase())) return false;
+    if(searchQ && !cardMatchesQuery(c, normalizeQ(searchQ))) return false;
     if(advFilter.rarities.size>0 && !advFilter.rarities.has(c.rarity)) return false;
     // タイプフィルター
     // action_song = card_type が アクション かつ classifications に「歌」を含む
@@ -365,7 +366,7 @@ function filteredCards(){
     }
     if(advFilter.inkwell===true && !c.inkwell) return false;
     if(advFilter.inkwell===false && c.inkwell) return false;
-    if(advFilter.textQ && !cardMatchesQuery(c, advFilter.textQ.toLowerCase())) return false;
+    if(advFilter.textQ && !cardMatchesQuery(c, normalizeQ(advFilter.textQ))) return false;
     return true;
   });
 }
@@ -562,7 +563,7 @@ async function importDeckFromUrl(url) {
   }
   const csMatch = trimmed.match(/[?&]cs=([^&]+)/);
   const deckName = csMatch ? decodeURIComponent(csMatch[1]).replace(/%2C|,/g, '/') + ' デッキ' : 'インポートデッキ';
-  const newDeck = { id: Date.now().toString(), name: deckName, cards };
+  const newDeck = { id: crypto.randomUUID(), name: deckName, cards };
   await dbPut('decks', newDeck);
   decks.push(newDeck);
   renderDeckList();
@@ -632,7 +633,7 @@ async function importDeckFromCode(code) {
     throw new Error('カードが1枚も見つかりませんでした。見つからなかったコード: ' + notFound.join(', '));
   }
 
-  const newDeck = { id: Date.now().toString(), name: `デッキコード ${code}`, cards };
+  const newDeck = { id: crypto.randomUUID(), name: `デッキコード ${code}`, cards };
   await dbPut('decks', newDeck);
   decks.push(newDeck);
   renderDeckList();
@@ -767,7 +768,7 @@ function deckInks(){
 }
 
 function openDeckEditor(deck){
-  currentDeck=deck?{...deck,cards:{...(deck.cards??{})}}:{id:Date.now().toString(),name:'',cards:{}};
+  currentDeck=deck?{...deck,cards:{...(deck.cards??{})}}:{id:crypto.randomUUID(),name:'',cards:{}};
   document.getElementById('deckNameInput').value=currentDeck.name??'';
   document.getElementById('editorDel').style.display=deck?'':'none';
   document.getElementById('deckEditor').classList.add('open');
