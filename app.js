@@ -281,9 +281,31 @@ function openDB(){
     req.onerror   = () => rej(req.error);
   });
 }
-function dbPut(store,val){ return new Promise(r=>{ const tx=db.transaction(store,'readwrite'); tx.objectStore(store).put(val).onsuccess=()=>r(); }); }
-function dbDelete(store,key){ return new Promise(r=>{ const tx=db.transaction(store,'readwrite'); tx.objectStore(store).delete(key).onsuccess=()=>r(); }); }
-function dbGetAll(store){ return new Promise(r=>{ const tx=db.transaction(store,'readonly'); tx.objectStore(store).getAll().onsuccess=e=>r(e.target.result); }); }
+function dbPut(store, val) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readwrite');
+    tx.onerror = () => reject(tx.error);
+    tx.objectStore(store).put(val);
+    tx.oncomplete = () => resolve();
+  });
+}
+function dbDelete(store, key) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readwrite');
+    tx.onerror = () => reject(tx.error);
+    tx.objectStore(store).delete(key);
+    tx.oncomplete = () => resolve();
+  });
+}
+function dbGetAll(store) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readonly');
+    tx.onerror = () => reject(tx.error);
+    const req = tx.objectStore(store).getAll();
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror = () => reject(req.error);
+  });
+}
 function dbReplaceAll(store, records){
   return new Promise((res, rej) => {
     const tx = db.transaction(store, 'readwrite');
