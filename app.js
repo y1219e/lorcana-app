@@ -1565,6 +1565,7 @@ async function importBackup(file) {
 // ロアカウンター（対面レイアウト）
 // ───────────────────────────────────────────
 const LORE_PLAYER_COLORS = ['#7c6dfa','#f5a623','#27ae60','#e74c3c'];
+const LORE_STATE_KEY = 'loreca_lore';
 const loreState = {
   playerCount: 2,
   donaldOwner: null, // 25ロア効果を持つプレイヤーのindex
@@ -1573,7 +1574,23 @@ const loreState = {
   diceWinner: null,
   diceTie: null,
 };
+try {
+  const saved = JSON.parse(localStorage.getItem(LORE_STATE_KEY));
+  if (saved) {
+    if (typeof saved.playerCount === 'number') loreState.playerCount = saved.playerCount;
+    if (saved.donaldOwner === null || typeof saved.donaldOwner === 'number') loreState.donaldOwner = saved.donaldOwner;
+    if (Array.isArray(saved.lores)) loreState.lores = saved.lores;
+  }
+} catch(e) {}
 let loreInited = false;
+
+function saveLoreState() {
+  localStorage.setItem(LORE_STATE_KEY, JSON.stringify({
+    playerCount: loreState.playerCount,
+    donaldOwner: loreState.donaldOwner,
+    lores: loreState.lores,
+  }));
+}
 
 function getWinLore(i) {
   if (loreState.donaldOwner === null) return 20;
@@ -1662,6 +1679,7 @@ function renderLoreCounter() {
   } else {
     resultEl.style.display = 'none';
   }
+  saveLoreState();
 }
 
 function renderDonaldModal() {
