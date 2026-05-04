@@ -407,6 +407,33 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 </nav>
 
 <script>
+// ズーム完全無効化（iOS Safari は viewport 指定を無視するため JS でも制御）
+(function() {
+  // ① iOS Safari 専用 gestureイベントでピンチズームを阻止
+  document.addEventListener('gesturestart',  function(e) { e.preventDefault(); }, false);
+  document.addEventListener('gesturechange', function(e) { e.preventDefault(); }, false);
+  document.addEventListener('gestureend',    function(e) { e.preventDefault(); }, false);
+
+  // ② 2本指 touchstart でピンチズームを阻止
+  document.addEventListener('touchstart', function(e) {
+    if (e.touches.length > 1) e.preventDefault();
+  }, { passive: false });
+
+  // ③ ダブルタップズームを阻止 / ボタン連打は手動 click で維持
+  let lastTap = 0;
+  const INTERACTIVE = 'button,a,input,select,textarea,label';
+  document.addEventListener('touchend', function(e) {
+    if (e.touches.length > 0) return;
+    const now = Date.now();
+    if (now - lastTap < 500) {
+      e.preventDefault();
+      const target = e.target.closest(INTERACTIVE);
+      if (target) target.click();
+    }
+    lastTap = now;
+  }, { passive: false });
+})();
+
 // ═══════════════════════════════════════════
 // Service Worker をBlobで登録（画像キャッシュ）
 // ═══════════════════════════════════════════
