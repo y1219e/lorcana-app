@@ -55,6 +55,15 @@ function showConfirm(msg) {
   });
 }
 
+function showToast(msg, type = 'error') {
+  const el = document.createElement('div');
+  el.className = 'toast toast-' + type;
+  el.textContent = msg;
+  document.getElementById('toastContainer').appendChild(el);
+  setTimeout(() => el.classList.add('toast-hide'), 2700);
+  setTimeout(() => el.remove(), 3200);
+}
+
 // ═══════════════════════════════════════════
 // Service Worker 登録（PWA オフライン対応）
 // ═══════════════════════════════════════════
@@ -540,8 +549,13 @@ document.getElementById('modalClose').addEventListener('click',closeCardModal);
 document.getElementById('cardModal').addEventListener('click',e=>{ if(e.target===document.getElementById('cardModal')) closeCardModal(); });
 
 async function setOwned(cardId, normal, foil){
-  if(normal<=0 && foil<=0){ await dbDelete('collection',cardId); delete collection[cardId]; }
-  else { const val={id:cardId,normal,foil}; await dbPut('collection',val); collection[cardId]=val; }
+  try {
+    if(normal<=0 && foil<=0){ await dbDelete('collection',cardId); delete collection[cardId]; }
+    else { const val={id:cardId,normal,foil}; await dbPut('collection',val); collection[cardId]=val; }
+  } catch(e) {
+    console.error('[collection] save failed:', e);
+    showToast('コレクションの保存に失敗しました');
+  }
 }
 
 async function updateCount(type, delta){
@@ -944,14 +958,24 @@ document.getElementById('exportDeckCodeBtn').addEventListener('click', async () 
 document.getElementById('editorSave').addEventListener('click',async()=>{
   currentDeck.name=document.getElementById('deckNameInput').value||'名称未設定';
   // sleeveIdはcurrentDeckに既に格納済み
-  await dbPut('decks',currentDeck);
-  const idx=decks.findIndex(d=>d.id===currentDeck.id); if(idx>=0) decks[idx]=currentDeck; else decks.push(currentDeck);
-  renderDeckList(); closeDeckEditor();
+  try {
+    await dbPut('decks',currentDeck);
+    const idx=decks.findIndex(d=>d.id===currentDeck.id); if(idx>=0) decks[idx]=currentDeck; else decks.push(currentDeck);
+    renderDeckList(); closeDeckEditor();
+  } catch(e) {
+    console.error('[deck] save failed:', e);
+    showToast('デッキの保存に失敗しました');
+  }
 });
 document.getElementById('editorDel').addEventListener('click',async()=>{
   if(!await showConfirm(`「${currentDeck.name}」を削除しますか？`)) return;
-  await dbDelete('decks',currentDeck.id); decks=decks.filter(d=>d.id!==currentDeck.id);
-  renderDeckList(); closeDeckEditor();
+  try {
+    await dbDelete('decks',currentDeck.id); decks=decks.filter(d=>d.id!==currentDeck.id);
+    renderDeckList(); closeDeckEditor();
+  } catch(e) {
+    console.error('[deck] delete failed:', e);
+    showToast('デッキの削除に失敗しました');
+  }
 });
 document.getElementById('addDeckBtn').addEventListener('click', openNewDeckModal);
 
@@ -1507,7 +1531,7 @@ async function importBackup(file) {
     const id=currentCard.id;
     if(wishlist.has(id)){
       wishlist.delete(id);
-      try { await dbDelete('wishlist',id); } catch(e) { console.warn('[wishlist] dbDelete failed:', id, e); }
+      try { await dbDelete('wishlist',id); } catch(e) { console.error('[wishlist] dbDelete failed:', id, e); showToast('ウィッシュリストから削除できませんでした'); }
       document.getElementById('modalWishBtn').textContent='🤍';
       // ウィッシュリストビューの場合のみ該当カードをグリッドから取り除く
       if(cardView==='wishlist'){
@@ -1520,7 +1544,7 @@ async function importBackup(file) {
       }
     } else {
       wishlist.add(id);
-      try { await dbPut('wishlist',{id}); } catch(e) { console.warn('[wishlist] dbPut failed:', id, e); }
+      try { await dbPut('wishlist',{id}); } catch(e) { console.error('[wishlist] dbPut failed:', id, e); showToast('ウィッシュリストに追加できませんでした'); }
       document.getElementById('modalWishBtn').textContent='❤️';
     }
   });
