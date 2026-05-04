@@ -258,14 +258,15 @@ function makeImg(card, deckStyle){
   img.alt = card.name;
   img.loading = 'lazy';
   if(deckStyle) img.style.cssText = deckStyle + 'object-fit:cover;display:block;';
-  img.onerror = () => { const ph=document.createElement('div'); ph.className='img-placeholder'; ph.textContent=card.name; img.replaceWith(ph); };
+  const showPlaceholder = () => { const ph=document.createElement('div'); ph.className='img-placeholder'; ph.textContent=card.name; img.replaceWith(ph); };
+  img.onerror = showPlaceholder;
   if(card.card_file) {
     const url = IMG_HOST + card.card_file + '.png';
     resolveImgSrc(url).then(src => {
       img.src = src;
       if(src.startsWith('blob:')) {
         img.onload  = () => URL.revokeObjectURL(src);
-        img.onerror = () => URL.revokeObjectURL(src);
+        img.onerror = () => { URL.revokeObjectURL(src); showPlaceholder(); };
       }
     });
   }
