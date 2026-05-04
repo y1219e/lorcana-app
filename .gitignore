@@ -1,1 +1,9 @@
 icons/icon.png
+icons/icon_fixed.png
+node_modules/
+icons/logo_app.webp
+icons/icon_cropped.png
+package-lock.json
+package.json
+icons/package-lock.json
+icons/package.json
