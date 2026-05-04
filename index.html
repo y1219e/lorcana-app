@@ -419,7 +419,12 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
     if (e.touches.length > 1) e.preventDefault();
   }, { passive: false });
 
-  // ③ ダブルタップズームを阻止 / ボタン連打は手動 click で維持
+  // ③ 2本指 touchmove でピンチズームを阻止（ここが本命：iOS Safariはmove中に拡大する）
+  document.addEventListener('touchmove', function(e) {
+    if (e.touches.length > 1) e.preventDefault();
+  }, { passive: false });
+
+  // ④ ダブルタップズームを阻止 / ボタン連打は手動 click で維持
   let lastTap = 0;
   const INTERACTIVE = 'button,a,input,select,textarea,label';
   document.addEventListener('touchend', function(e) {
