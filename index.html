@@ -408,6 +408,27 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 </nav>
 
 <script>
+// ダブルタップズーム防止（ピンチズームは許可）
+(function() {
+  let lastTap = { time: 0, x: 0, y: 0 };
+  document.addEventListener('touchstart', function(e) {
+    if (e.touches.length !== 1) return;
+    const t = e.touches[0];
+    const now = Date.now();
+    const dx = Math.abs(t.clientX - lastTap.x);
+    const dy = Math.abs(t.clientY - lastTap.y);
+    if (now - lastTap.time < 300 && dx < 30 && dy < 30) {
+      const tag = e.target.tagName.toLowerCase();
+      const interactive = ['button','a','input','select','textarea'].includes(tag) ||
+        !!e.target.closest('button,a,input,select,textarea');
+      if (!interactive) e.preventDefault();
+    }
+    lastTap.time = now;
+    lastTap.x = t.clientX;
+    lastTap.y = t.clientY;
+  }, { passive: false });
+})();
+
 // ═══════════════════════════════════════════
 // Service Worker をBlobで登録（画像キャッシュ）
 // ═══════════════════════════════════════════
