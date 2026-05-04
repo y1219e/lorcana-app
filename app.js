@@ -826,7 +826,7 @@ function addProg(parent,label,owned,total,setCode,bannerUrl){
       document.getElementById('pageCards').classList.add('active');
       document.getElementById('advSearchBtn').style.display='flex';
       renderCardGrid();
-      window.scrollTo(0,0);
+      window.scrollTo(0,0); scrollPositions['pageCards']=0;
     });
   }
   parent.appendChild(div);
@@ -990,9 +990,14 @@ document.getElementById('editorDel').addEventListener('click',async()=>{
 });
 document.getElementById('addDeckBtn').addEventListener('click', openNewDeckModal);
 
+const scrollPositions = {};
+
 document.querySelectorAll('.nav-btn').forEach(btn=>{
   btn.addEventListener('click',()=>{
     const alreadyActive = btn.classList.contains('active');
+    // 現在ページのスクロール位置を保存
+    const currentPage = document.querySelector('.page.active');
+    if(currentPage) scrollPositions[currentPage.id] = window.scrollY;
     document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
     btn.classList.add('active');
@@ -1000,10 +1005,12 @@ document.querySelectorAll('.nav-btn').forEach(btn=>{
     // 🔍ボタンはカードタブのみ表示
     const advBtn = document.getElementById('advSearchBtn');
     if(advBtn) advBtn.style.display = btn.dataset.page === 'pageCards' ? 'flex' : 'none';
-    if(alreadyActive){ window.scrollTo(0,0); return; }
+    if(alreadyActive){ window.scrollTo(0,0); scrollPositions[btn.dataset.page]=0; return; }
     if(btn.dataset.page==='pageCollection') renderProgress();
     if(btn.dataset.page==='pageDecks') renderDeckList();
     if(btn.dataset.page==='pageLore') initLoreCounter();
+    // スクロール位置を復元
+    window.scrollTo(0, scrollPositions[btn.dataset.page] ?? 0);
   });
 });
 
