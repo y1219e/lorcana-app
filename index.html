@@ -407,26 +407,29 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 </nav>
 
 <script>
-// ズーム完全無効化（iOS Safari は viewport 指定を無視するため JS でも制御）
+// ズーム完全無効化
 (function() {
-  // ① iOS Safari 専用 gestureイベントでピンチズームを阻止
-  document.addEventListener('gesturestart',  function(e) { e.preventDefault(); }, false);
-  document.addEventListener('gesturechange', function(e) { e.preventDefault(); }, false);
-  document.addEventListener('gestureend',    function(e) { e.preventDefault(); }, false);
+  const INTERACTIVE = 'button,a,input,select,textarea,label';
+  let lastTap = 0;
 
-  // ② 2本指 touchstart でピンチズームを阻止
+  // ① iOS Safari 専用 gesture イベント
+  ['gesturestart','gesturechange','gestureend'].forEach(function(t) {
+    document.addEventListener(t, function(e) { e.preventDefault(); }, true);
+  });
+
+  // ② touchstart: ピンチ(2本指) + ダブルタップを capture フェーズで阻止
   document.addEventListener('touchstart', function(e) {
-    if (e.touches.length > 1) e.preventDefault();
-  }, { passive: false });
+    if (e.touches.length > 1) { e.preventDefault(); return; }
+    const now = Date.now();
+    if (now - lastTap < 300) e.preventDefault();
+  }, { passive: false, capture: true });
 
-  // ③ 2本指 touchmove でピンチズームを阻止（ここが本命：iOS Safariはmove中に拡大する）
+  // ③ touchmove: ピンチ動作中を capture フェーズで阻止（iOS Safari の主要阻止点）
   document.addEventListener('touchmove', function(e) {
     if (e.touches.length > 1) e.preventDefault();
-  }, { passive: false });
+  }, { passive: false, capture: true });
 
-  // ④ ダブルタップズームを阻止 / ボタン連打は手動 click で維持
-  let lastTap = 0;
-  const INTERACTIVE = 'button,a,input,select,textarea,label';
+  // ④ touchend: ダブルタップ阻止 + ボタン連打を手動 click で維持
   document.addEventListener('touchend', function(e) {
     if (e.touches.length > 0) return;
     const now = Date.now();
@@ -436,7 +439,19 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
       if (target) target.click();
     }
     lastTap = now;
-  }, { passive: false });
+  }, { passive: false, capture: true });
+
+  // ⑤ visualViewport API: それでも発生したズームを即時リセット（最終防衛線）
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', function() {
+      if (window.visualViewport.scale !== 1) {
+        document.querySelector('meta[name="viewport"]').setAttribute(
+          'content',
+          'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'
+        );
+      }
+    });
+  }
 })();
 
 // ═══════════════════════════════════════════
