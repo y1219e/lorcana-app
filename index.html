@@ -415,10 +415,16 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
     if (e.touches.length > 0) return; // まだ指が触れている場合はスキップ
     const now = Date.now();
     if (now - lastTap < 500) {
+      // 全要素でズームをキャンセル
+      e.preventDefault();
+      // ボタン等のインタラクティブ要素は手動でclickを発火（連打を維持）
       const tag = e.target.tagName.toLowerCase();
       const isInteractive = ['button','a','input','select','textarea'].includes(tag) ||
         !!e.target.closest('button,a,input,select,textarea');
-      if (!isInteractive) e.preventDefault();
+      if (isInteractive) {
+        const el = e.target.closest('button,a,input,select,textarea') || e.target;
+        el.click();
+      }
     }
     lastTap = now;
   }, { passive: false });
