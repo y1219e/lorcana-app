@@ -55,8 +55,13 @@ function showConfirm(msg) {
 }
 
 // ═══════════════════════════════════════════
-// Service Worker をBlobで登録（画像キャッシュ）
+// Service Worker 登録（PWA オフライン対応）
 // ═══════════════════════════════════════════
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js')
+    .catch(e => console.warn('[SW] registration failed:', e));
+}
+
 // ═══════════════════════════════════════════
 // 画像プリフェッチ＆キャッシュ（Cache API）
 // ═══════════════════════════════════════════
