@@ -32,8 +32,18 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // アプリシェル(HTML/CSS/JS/config): キャッシュファースト
+  // アプリシェル(HTML/CSS/JS/config): stale-while-revalidate
   if (SHELL.includes(e.request.url)) {
-    e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+    e.respondWith(
+      caches.open(SHELL_CACHE).then(cache =>
+        cache.match(e.request).then(cached => {
+          const fetchPromise = fetch(e.request).then(res => {
+            cache.put(e.request, res.clone());
+            return res;
+          }).catch(() => cached);
+          return cached || fetchPromise;
+        })
+      )
+    );
   }
 });
