@@ -6,8 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ロルカナ コレクション v04270633</title>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html { touch-action: manipulation; }
+* { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; }
 :root {
   --bg: #0f0f1a; --surface: #1a1a2e; --surface2: #16213e; --border: #2a2a4a;
   --text: #eee; --text2: #aaa; --accent: #7c6dfa;
@@ -411,23 +410,33 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 // ダブルタップズーム防止（ピンチズームは許可）
 (function() {
   let lastTap = 0;
-  document.addEventListener('touchend', function(e) {
-    if (e.touches.length > 0) return; // まだ指が触れている場合はスキップ
+  const INTERACTIVE = 'button,a,input,select,textarea,label';
+
+  // touchstart 段階でジェスチャー開始を阻止
+  document.addEventListener('touchstart', function(e) {
+    if (e.touches.length > 1) return; // ピンチズームは許可
     const now = Date.now();
     if (now - lastTap < 500) {
-      // 全要素でズームをキャンセル
       e.preventDefault();
-      // ボタン等のインタラクティブ要素は手動でclickを発火（連打を維持）
-      const tag = e.target.tagName.toLowerCase();
-      const isInteractive = ['button','a','input','select','textarea'].includes(tag) ||
-        !!e.target.closest('button,a,input,select,textarea');
-      if (isInteractive) {
-        const el = e.target.closest('button,a,input,select,textarea') || e.target;
-        el.click();
-      }
+    }
+  }, { passive: false });
+
+  // touchend 段階でも阻止し、ボタン類は手動clickで連打維持
+  document.addEventListener('touchend', function(e) {
+    if (e.touches.length > 0) return;
+    const now = Date.now();
+    if (now - lastTap < 500) {
+      e.preventDefault();
+      const target = e.target.closest(INTERACTIVE);
+      if (target) target.click();
     }
     lastTap = now;
   }, { passive: false });
+
+  // dblclick 経由のズームも阻止
+  document.addEventListener('dblclick', function(e) {
+    e.preventDefault();
+  });
 })();
 
 // ═══════════════════════════════════════════
