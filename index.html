@@ -3,7 +3,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>ロルカナ コレクション v04270633</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; }
@@ -407,38 +407,6 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 </nav>
 
 <script>
-// ダブルタップズーム防止（ピンチズームは許可）
-(function() {
-  let lastTap = 0;
-  const INTERACTIVE = 'button,a,input,select,textarea,label';
-
-  // touchstart 段階でジェスチャー開始を阻止
-  document.addEventListener('touchstart', function(e) {
-    if (e.touches.length > 1) return; // ピンチズームは許可
-    const now = Date.now();
-    if (now - lastTap < 500) {
-      e.preventDefault();
-    }
-  }, { passive: false });
-
-  // touchend 段階でも阻止し、ボタン類は手動clickで連打維持
-  document.addEventListener('touchend', function(e) {
-    if (e.touches.length > 0) return;
-    const now = Date.now();
-    if (now - lastTap < 500) {
-      e.preventDefault();
-      const target = e.target.closest(INTERACTIVE);
-      if (target) target.click();
-    }
-    lastTap = now;
-  }, { passive: false });
-
-  // dblclick 経由のズームも阻止
-  document.addEventListener('dblclick', function(e) {
-    e.preventDefault();
-  });
-})();
-
 // ═══════════════════════════════════════════
 // Service Worker をBlobで登録（画像キャッシュ）
 // ═══════════════════════════════════════════
