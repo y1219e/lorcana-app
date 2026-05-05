@@ -1752,19 +1752,26 @@ function createPlayerPanel(i, rotated) {
   const panel = document.createElement('div');
   panel.className = 'lore-player-face' + (rotated ? ' lore-rotated' : '') + (won ? ' lore-won' : '');
   panel.style.setProperty('--player-color', color);
+  // rotated panel: DOM left = player's visual right (inc), DOM right = player's visual left (dec)
+  const leftAction = rotated ? 'inc' : 'dec';
+  const rightAction = rotated ? 'dec' : 'inc';
   panel.innerHTML = `
-    <div class="lore-face-header">
-      <span class="lore-face-name">プレイヤー${i + 1}</span>
-      ${won ? '<span class="lore-face-won">🏆 勝利！</span>' : ''}
-      ${diceBadge}
-    </div>
-    <div class="lore-face-counter">
-      <button class="lore-face-btn lore-face-dec" data-i="${i}">－</button>
-      <div class="lore-face-val-wrap">
-        <span class="lore-face-val">${lore}</span>
-        <span class="lore-face-target">/ ${winLore}</span>
+    <div class="lore-hit-area lore-hit-left" data-i="${i}" data-action="${leftAction}"></div>
+    <div class="lore-hit-area lore-hit-right" data-i="${i}" data-action="${rightAction}"></div>
+    <div class="lore-face-content">
+      <div class="lore-face-counter">
+        <span class="lore-face-btn lore-face-dec">－</span>
+        <div class="lore-face-val-wrap">
+          <span class="lore-face-val">${lore}</span>
+          <span class="lore-face-target">/ ${winLore}</span>
+        </div>
+        <span class="lore-face-btn lore-face-inc">＋</span>
       </div>
-      <button class="lore-face-btn lore-face-inc" data-i="${i}">＋</button>
+      <div class="lore-face-header">
+        <span class="lore-face-name">プレイヤー${i + 1}</span>
+        ${won ? '<span class="lore-face-won">🏆 勝利！</span>' : ''}
+        ${diceBadge}
+      </div>
     </div>`;
   return panel;
 }
@@ -1787,18 +1794,16 @@ function renderLoreCounter() {
   topIdxs.forEach(i => topArea.appendChild(createPlayerPanel(i, true)));
   botIdxs.forEach(i => botArea.appendChild(createPlayerPanel(i, false)));
 
-  // カウンターボタン
-  document.querySelectorAll('.lore-face-dec').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const i = parseInt(btn.dataset.i);
-      if (loreState.lores[i] > 0) { loreState.lores[i]--; renderLoreCounter(); }
-    });
-  });
-  document.querySelectorAll('.lore-face-inc').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const i = parseInt(btn.dataset.i);
-      loreState.lores[i]++;
-      renderLoreCounter();
+  // ヒットエリア（半面全体をタップ可能）
+  document.querySelectorAll('.lore-hit-area').forEach(area => {
+    area.addEventListener('click', () => {
+      const i = parseInt(area.dataset.i);
+      if (area.dataset.action === 'dec') {
+        if (loreState.lores[i] > 0) { loreState.lores[i]--; renderLoreCounter(); }
+      } else {
+        loreState.lores[i]++;
+        renderLoreCounter();
+      }
     });
   });
 
