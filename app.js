@@ -659,6 +659,21 @@ document.getElementById('modalNext').addEventListener('click', e=>{ e.stopPropag
 function closeCardModal(){ document.getElementById('cardModal').classList.remove('open'); currentCard=null; popHistory(); }
 document.getElementById('modalClose').addEventListener('click',closeCardModal);
 document.getElementById('cardModal').addEventListener('click',e=>{ if(e.target===document.getElementById('cardModal')) closeCardModal(); });
+document.getElementById('modalFavBtn').addEventListener('click', e => {
+  e.stopPropagation();
+  if (!currentCard) return;
+  const id = currentCard.id;
+  if (favCardId === id) {
+    favCardId = null;
+    localStorage.removeItem(FAV_CARD_KEY);
+    document.getElementById('modalFavBtn').textContent = '☆';
+  } else {
+    favCardId = id;
+    localStorage.setItem(FAV_CARD_KEY, id);
+    document.getElementById('modalFavBtn').textContent = '⭐';
+  }
+  updateNavCardIcon();
+});
 
 async function setOwned(cardId, normal, foil){
   try {
@@ -1680,21 +1695,6 @@ async function importBackup(file) {
     }
   });
 
-  // お気に入りトグル
-  document.getElementById('modalFavBtn').addEventListener('click', () => {
-    if (!currentCard) return;
-    const id = currentCard.id;
-    if (favCardId === id) {
-      favCardId = null;
-      localStorage.removeItem(FAV_CARD_KEY);
-      document.getElementById('modalFavBtn').textContent = '☆';
-    } else {
-      favCardId = id;
-      localStorage.setItem(FAV_CARD_KEY, id);
-      document.getElementById('modalFavBtn').textContent = '⭐';
-    }
-    updateNavCardIcon();
-  });
 })();
 
 // ───────────────────────────────────────────
