@@ -1644,6 +1644,8 @@ async function importBackup(file) {
   });
   document.getElementById('advReset2').addEventListener('click',()=>{
     advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),keywords:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,strMin:null,strMax:null,wpMin:null,wpMax:null,loreMin:null,loreMax:null,mcMin:null,mcMax:null,inkwell:null,inkType:null,collectionStatus:null,textQ:'',sortOrder:'id_asc'};
+    searchQ = '';
+    _cardSearchEl.value = '';
     buildAdvUI();
   });
   document.getElementById('advApply').addEventListener('click',()=>{
