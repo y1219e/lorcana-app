@@ -210,7 +210,11 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 .lore-modal-btns-col { flex-direction: column; gap: 10px; }
 .lore-modal-continue { background: var(--accent); border-color: var(--accent); color: #fff; width: 100%; }
 .lore-modal-restart { background: transparent; border-color: var(--ruby); color: var(--ruby); width: 100%; }
-.lore-player-face { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px; padding: 12px 8px; background: var(--bg); }
+.lore-player-face { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; background: var(--bg); position: relative; overflow: hidden; }
+.lore-hit-area { position: absolute; top: 0; bottom: 0; width: 50%; z-index: 1; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.lore-hit-left { left: 0; }
+.lore-hit-right { left: 50%; }
+.lore-face-content { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 12px 8px; pointer-events: none; position: relative; z-index: 2; }
 .lore-rotated { transform: rotate(180deg); }
 .lore-face-header { display: flex; align-items: center; gap: 6px; }
 .lore-face-name { font-size: 0.85rem; font-weight: bold; color: var(--player-color); }
@@ -219,8 +223,7 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 .lore-dice-badge.lore-first { color: #4ade80; font-weight: bold; }
 .lore-dice-badge.lore-tied { color: var(--amber); font-weight: bold; }
 .lore-face-counter { display: flex; align-items: center; gap: 12px; }
-.lore-face-btn { width: 54px; height: 54px; border-radius: 50%; font-size: 1.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center; border: 2px solid; flex-shrink: 0; }
-.lore-face-btn:active { opacity: 0.7; }
+.lore-face-btn { width: 54px; height: 54px; border-radius: 50%; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; border: 2px solid; flex-shrink: 0; }
 .lore-face-dec { background: transparent; color: var(--ruby); border-color: var(--ruby); }
 .lore-face-inc { background: var(--player-color); color: #fff; border-color: var(--player-color); }
 .lore-face-val-wrap { text-align: center; min-width: 60px; }
