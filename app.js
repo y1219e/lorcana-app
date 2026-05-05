@@ -1748,6 +1748,25 @@ async function importBackup(file) {
     });
   });
 
+  // カードタブのスワイプ切り替え
+  (function(){
+    const TAB_ORDER = ['all','collection','wishlist'];
+    const page = document.getElementById('pageCards');
+    let sx=0, sy=0;
+    page.addEventListener('touchstart', e=>{
+      sx=e.touches[0].clientX; sy=e.touches[0].clientY;
+    },{passive:true});
+    page.addEventListener('touchend', e=>{
+      if(document.getElementById('cardModal').classList.contains('open')) return;
+      const dx=e.changedTouches[0].clientX-sx;
+      const dy=e.changedTouches[0].clientY-sy;
+      if(Math.abs(dx)<60 || Math.abs(dx)<Math.abs(dy)*1.5) return;
+      const next=TAB_ORDER.indexOf(cardView)+(dx<0?1:-1);
+      if(next<0||next>=TAB_ORDER.length) return;
+      document.querySelector(`.view-tab[data-view="${TAB_ORDER[next]}"]`)?.click();
+    },{passive:true});
+  })();
+
   // ウィッシュリストトグル
   document.getElementById('modalWishBtn').addEventListener('click', async()=>{
     if(!currentCard) return;
