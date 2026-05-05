@@ -599,6 +599,13 @@ function renderCardGrid() {
 function openCardModal(card){
   currentCard=card;
   const o=getOwned(card.id);
+
+  // カルーセルを中央に即時リセット
+  const carousel=document.getElementById('modalCarousel');
+  carousel.style.transition='none';
+  carousel.style.transform='translateX(-33.3333%)';
+
+  // 現在カード画像
   const mi=document.getElementById('modalImg');
   mi.alt = card.name || '';
   mi.style.visibility='hidden';
@@ -609,6 +616,19 @@ function openCardModal(card){
   } else {
     mi.src = '';
   }
+
+  // 前後カード画像をプリロード
+  const _allCards = _gridCards.length ? _gridCards : filteredCards();
+  const _ci = _allCards.findIndex(c => c.id === card.id);
+  const prevCard = _allCards[(_ci - 1 + _allCards.length) % _allCards.length];
+  const nextCard = _allCards[(_ci + 1) % _allCards.length];
+  const miP=document.getElementById('modalImgPrev');
+  const miN=document.getElementById('modalImgNext');
+  if(prevCard?.card_file) resolveImgSrc(IMG_HOST+prevCard.card_file+'.png').then(s=>{miP.src=s;});
+  else miP.src='';
+  if(nextCard?.card_file) resolveImgSrc(IMG_HOST+nextCard.card_file+'.png').then(s=>{miN.src=s;});
+  else miN.src='';
+
   document.getElementById('countValN').textContent=o.normal;
   document.getElementById('countValF').textContent=o.foil;
   document.getElementById('countDecN').disabled=o.normal<=0;
@@ -646,13 +666,46 @@ function updateNavCardIcon() {
   span.textContent = '🃏';
 }
 
-document.getElementById('modalPrev').addEventListener('click', e=>{ e.stopPropagation(); navigateModal(-1); });
-document.getElementById('modalNext').addEventListener('click', e=>{ e.stopPropagation(); navigateModal(1); });
+// カルーセルスワイプ
 (function(){
-  let sx=0;
-  const m=document.getElementById('cardModal');
-  m.addEventListener('touchstart', e=>{ sx=e.touches[0].clientX; }, {passive:true});
-  m.addEventListener('touchend', e=>{ const dx=e.changedTouches[0].clientX-sx; if(Math.abs(dx)>50) navigateModal(dx<0?1:-1); }, {passive:true});
+  const wrap=document.getElementById('modalCarouselWrap');
+  const carousel=document.getElementById('modalCarousel');
+  let sx=0, sy=0, dragging=false, busy=false;
+
+  wrap.addEventListener('touchstart', e=>{
+    if(busy) return;
+    sx=e.touches[0].clientX; sy=e.touches[0].clientY;
+    dragging=false;
+    carousel.style.transition='none';
+  },{passive:true});
+
+  wrap.addEventListener('touchmove', e=>{
+    if(busy) return;
+    const dx=e.touches[0].clientX-sx;
+    const dy=e.touches[0].clientY-sy;
+    if(!dragging){
+      if(Math.abs(dy)>Math.abs(dx)) return; // 縦スクロール優先
+      dragging=true;
+    }
+    const w=wrap.offsetWidth;
+    carousel.style.transform=`translateX(${-w+dx}px)`;
+  },{passive:true});
+
+  wrap.addEventListener('touchend', e=>{
+    if(busy||!dragging) return;
+    const dx=e.changedTouches[0].clientX-sx;
+    const w=wrap.offsetWidth;
+    if(Math.abs(dx)>50){
+      busy=true;
+      const delta=dx<0?1:-1;
+      carousel.style.transition='transform 0.25s ease';
+      carousel.style.transform=`translateX(${delta===1?-2*w:0}px)`;
+      setTimeout(()=>{ navigateModal(delta); busy=false; },250);
+    } else {
+      carousel.style.transition='transform 0.25s ease';
+      carousel.style.transform=`translateX(${-w}px)`;
+    }
+  },{passive:true});
 })();
 
 
