@@ -1646,7 +1646,9 @@ async function importBackup(file) {
     advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),keywords:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,strMin:null,strMax:null,wpMin:null,wpMax:null,loreMin:null,loreMax:null,mcMin:null,mcMax:null,inkwell:null,inkType:null,collectionStatus:null,textQ:'',sortOrder:'id_asc'};
     searchQ = '';
     _cardSearchEl.value = '';
-    buildAdvUI();
+    document.getElementById('advSearchModal').classList.remove('open');
+    popHistory();
+    renderCardGrid();
   });
   document.getElementById('advApply').addEventListener('click',()=>{
     document.getElementById('advSearchModal').classList.remove('open');
