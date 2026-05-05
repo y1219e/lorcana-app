@@ -81,7 +81,7 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, sa
 .modal-carousel-wrap { width: 100%; overflow: hidden; margin-bottom: 12px; touch-action: pan-y; }
 .modal-carousel { display: flex; width: 300%; transform: translateX(-33.3333%); will-change: transform; }
 .modal-slide { width: 33.3333%; padding: 0 6px; box-sizing: border-box; display: flex; justify-content: center; }
-.modal-slide-img { display: block; width: auto; max-width: 100%; height: auto; max-height: 56vh; border-radius: 12px; }
+.modal-slide-img { display: block; width: auto; max-width: 100%; height: auto; max-height: 56vh; max-height: 56dvh; border-radius: 12px; }
 .modal-card-name { font-size: 1rem; font-weight: bold; display: none; }
 .modal-card-sub { font-size: 0.8rem; color: var(--text2); margin-top: 2px; display: none; }
 .modal-card-meta { font-size: 0.75rem; color: var(--text2); margin-top: 6px; }
