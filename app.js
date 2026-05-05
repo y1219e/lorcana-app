@@ -1150,7 +1150,7 @@ document.querySelectorAll('.nav-btn').forEach(btn=>{
     // 🔍ボタンはカードタブのみ表示
     const advBtn = document.getElementById('advSearchBtn');
     if(advBtn) advBtn.style.display = btn.dataset.page === 'pageCards' ? 'flex' : 'none';
-    if(alreadyActive){ window.scrollTo(0,0); scrollPositions[btn.dataset.page]=0; return; }
+    if(alreadyActive){ window.scrollTo({ top: 0, behavior: 'smooth' }); scrollPositions[btn.dataset.page]=0; return; }
     if(btn.dataset.page==='pageCollection') renderProgress();
     if(btn.dataset.page==='pageDecks') renderDeckList();
     if(btn.dataset.page==='pageLore') initLoreCounter();
