@@ -1748,22 +1748,73 @@ async function importBackup(file) {
     });
   });
 
-  // カードタブのスワイプ切り替え
+  // カードタブのスワイプ切り替え（スライドアニメーション付き）
   (function(){
     const TAB_ORDER = ['all','collection','wishlist'];
     const page = document.getElementById('pageCards');
-    let sx=0, sy=0;
+    const grid = document.getElementById('cardGrid');
+    let sx=0, sy=0, isDragging=false, busy=false;
+
+    function switchTab(delta){
+      const nextIdx = TAB_ORDER.indexOf(cardView) + delta;
+      if(nextIdx < 0 || nextIdx >= TAB_ORDER.length){
+        grid.style.transition = 'transform 0.2s ease';
+        grid.style.transform = 'translateX(0)';
+        setTimeout(()=>{ busy=false; }, 200);
+        return;
+      }
+      // トップにスクロールしてからアニメーション
+      window.scrollTo(0, 0);
+      scrollPositions['pageCards'] = 0;
+      const slideOut = delta > 0 ? '-100%' : '100%';
+      const slideIn  = delta > 0 ? '100%'  : '-100%';
+      grid.style.transition = 'transform 0.25s ease';
+      grid.style.transform = `translateX(${slideOut})`;
+      setTimeout(()=>{
+        const nextView = TAB_ORDER[nextIdx];
+        document.querySelectorAll('.view-tab').forEach(b=>b.classList.remove('active'));
+        document.querySelector(`.view-tab[data-view="${nextView}"]`).classList.add('active');
+        cardView = nextView;
+        grid.style.transition = 'none';
+        grid.style.transform = `translateX(${slideIn})`;
+        renderCardGrid();
+        requestAnimationFrame(()=>requestAnimationFrame(()=>{
+          grid.style.transition = 'transform 0.25s ease';
+          grid.style.transform = 'translateX(0)';
+          setTimeout(()=>{ busy=false; }, 250);
+        }));
+      }, 250);
+    }
+
     page.addEventListener('touchstart', e=>{
+      isDragging = false;
+      if(busy || document.getElementById('cardModal').classList.contains('open')) return;
       sx=e.touches[0].clientX; sy=e.touches[0].clientY;
+      grid.style.transition = 'none';
     },{passive:true});
+
+    page.addEventListener('touchmove', e=>{
+      if(busy) return;
+      const dx=e.touches[0].clientX-sx;
+      const dy=e.touches[0].clientY-sy;
+      if(!isDragging){
+        if(Math.abs(dy)>Math.abs(dx)) return;
+        isDragging=true;
+      }
+      grid.style.transform=`translateX(${dx}px)`;
+    },{passive:true});
+
     page.addEventListener('touchend', e=>{
-      if(document.getElementById('cardModal').classList.contains('open')) return;
+      if(busy||!isDragging) return;
       const dx=e.changedTouches[0].clientX-sx;
       const dy=e.changedTouches[0].clientY-sy;
-      if(Math.abs(dx)<60 || Math.abs(dx)<Math.abs(dy)*1.5) return;
-      const next=TAB_ORDER.indexOf(cardView)+(dx<0?1:-1);
-      if(next<0||next>=TAB_ORDER.length) return;
-      document.querySelector(`.view-tab[data-view="${TAB_ORDER[next]}"]`)?.click();
+      if(Math.abs(dx)>=60 && Math.abs(dx)>=Math.abs(dy)*1.5){
+        busy=true;
+        switchTab(dx<0?1:-1);
+      } else {
+        grid.style.transition='transform 0.2s ease';
+        grid.style.transform='translateX(0)';
+      }
     },{passive:true});
   })();
 
