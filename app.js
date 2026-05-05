@@ -619,7 +619,7 @@ function openCardModal(card){
 }
 
 function navigateModal(delta){
-  const cards = filteredCards();
+  const cards = _gridCards.length ? _gridCards : filteredCards();
   const idx = cards.findIndex(c=>c.id===currentCard.id);
   if(idx === -1) return;
   openCardModal(cards[(idx + delta + cards.length) % cards.length]);
