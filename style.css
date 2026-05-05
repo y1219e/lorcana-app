@@ -78,6 +78,10 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, sa
 .modal { background: transparent; width: 100%; max-width: 420px; padding: 0; display: flex; flex-direction: column; align-items: center; }
 .modal-img-row { display: flex; align-items: center; justify-content: center; }
 .modal-img-row img { width: 100%; max-width: 320px; border-radius: 12px; display: block; }
+.modal-carousel-wrap { width: 100%; overflow: hidden; margin-bottom: 12px; touch-action: pan-y; }
+.modal-carousel { display: flex; width: 300%; transform: translateX(-33.3333%); will-change: transform; }
+.modal-slide { width: 33.3333%; padding: 0 6px; box-sizing: border-box; }
+.modal-slide-img { width: 100%; border-radius: 12px; display: block; }
 .modal-card-name { font-size: 1rem; font-weight: bold; display: none; }
 .modal-card-sub { font-size: 0.8rem; color: var(--text2); margin-top: 2px; display: none; }
 .modal-card-meta { font-size: 0.75rem; color: var(--text2); margin-top: 6px; }

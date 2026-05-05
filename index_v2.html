@@ -19,11 +19,13 @@
 <div id="prefetchBar"><span id="prefetchLabel"></span><div id="prefetchBarInner"></div></div>
 <div class="modal-overlay" id="cardModal">
   <div class="modal">
-    <!-- スライドナビ -->
-    <div style="display:flex;align-items:center;justify-content:center;width:100%;gap:8px;margin-bottom:12px;">
-      <button id="modalPrev" style="flex-shrink:0;background:rgba(255,255,255,0.18);border:none;color:#fff;font-size:2rem;width:44px;height:44px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;">‹</button>
-      <div class="modal-img-row" style="flex:1;"><img id="modalImg" src="" alt=""></div>
-      <button id="modalNext" style="flex-shrink:0;background:rgba(255,255,255,0.18);border:none;color:#fff;font-size:2rem;width:44px;height:44px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;">›</button>
+    <!-- スワイプカルーセル -->
+    <div class="modal-carousel-wrap" id="modalCarouselWrap">
+      <div class="modal-carousel" id="modalCarousel">
+        <div class="modal-slide"><img id="modalImgPrev" class="modal-slide-img" src="" alt=""></div>
+        <div class="modal-slide"><img id="modalImg"     class="modal-slide-img" src="" alt=""></div>
+        <div class="modal-slide"><img id="modalImgNext" class="modal-slide-img" src="" alt=""></div>
+      </div>
     </div>
     <!-- 所持数 -->
     <div style="width:100%;background:var(--surface);border-radius:12px;overflow:hidden;margin-bottom:8px;">
