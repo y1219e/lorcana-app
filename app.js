@@ -419,6 +419,8 @@ let sets = [];
 let setsData = [];
 let collection = {};
 let wishlist = new Set();
+const FAV_CARD_KEY = 'loreca_fav_card';
+let favCardId = localStorage.getItem(FAV_CARD_KEY) || null;
 let cardView = 'all';
 let advFilter = {
   rarities: new Set(), types: new Set(), classifications: new Set(),
@@ -611,6 +613,7 @@ function openCardModal(card){
   document.getElementById('countDecF').disabled=o.foil<=0;
   const wb=document.getElementById('modalWishBtn');
   wb.textContent=wishlist.has(card.id)?'❤️':'🤍';
+  document.getElementById('modalFavBtn').textContent = favCardId === card.id ? '⭐' : '☆';
   if (!document.getElementById('cardModal').classList.contains('open')) pushModalState();
   document.getElementById('cardModal').classList.add('open');
 }
@@ -620,6 +623,25 @@ function navigateModal(delta){
   const idx = cards.findIndex(c=>c.id===currentCard.id);
   if(idx === -1) return;
   openCardModal(cards[(idx + delta + cards.length) % cards.length]);
+}
+
+function updateNavCardIcon() {
+  const span = document.getElementById('navCardIcon');
+  if (!span) return;
+  if (favCardId) {
+    const card = allCards.find(c => c.id === favCardId);
+    if (card && card.card_file) {
+      resolveImgSrc(IMG_HOST + card.card_file + '.png').then(src => {
+        span.innerHTML = '';
+        const img = document.createElement('img');
+        img.src = src;
+        img.style.cssText = 'height:1.3em;width:auto;border-radius:2px;vertical-align:middle;';
+        span.appendChild(img);
+      });
+      return;
+    }
+  }
+  span.textContent = '🃏';
 }
 
 document.getElementById('modalPrev').addEventListener('click', e=>{ e.stopPropagation(); navigateModal(-1); });
@@ -1380,6 +1402,7 @@ async function importBackup(file) {
   decks = await dbGetAll('decks');
   await loadData();
   renderCardGrid();
+  updateNavCardIcon();
   initSettings();
 
   // 古い画像キャッシュを削除
@@ -1655,6 +1678,22 @@ async function importBackup(file) {
       try { await dbPut('wishlist',{id}); } catch(e) { console.error('[wishlist] dbPut failed:', id, e); showToast('ウィッシュリストに追加できませんでした'); }
       document.getElementById('modalWishBtn').textContent='❤️';
     }
+  });
+
+  // お気に入りトグル
+  document.getElementById('modalFavBtn').addEventListener('click', () => {
+    if (!currentCard) return;
+    const id = currentCard.id;
+    if (favCardId === id) {
+      favCardId = null;
+      localStorage.removeItem(FAV_CARD_KEY);
+      document.getElementById('modalFavBtn').textContent = '☆';
+    } else {
+      favCardId = id;
+      localStorage.setItem(FAV_CARD_KEY, id);
+      document.getElementById('modalFavBtn').textContent = '⭐';
+    }
+    updateNavCardIcon();
   });
 })();
 
