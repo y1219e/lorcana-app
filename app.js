@@ -50,6 +50,8 @@
 // ───────────────────────────────────────────
 // Android 戻るボタン対応（history.pushState）
 // ───────────────────────────────────────────
+// ブラウザが history.back() 時にスクロール位置を自動復元するのを防ぐ
+history.scrollRestoration = 'manual';
 let _popstateActive = false;
 function pushModalState() { history.pushState({ hasModal: true }, ''); }
 function popHistory()     { if (!_popstateActive && history.state?.hasModal) history.back(); }
@@ -675,7 +677,7 @@ function closeCardModal(){
     if (sentinel) grid.insertBefore(frag, sentinel); else grid.appendChild(frag);
   }
   const el = Array.from(grid.children).find(c => c._cardId === scrollTarget.id);
-  if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  if (el) requestAnimationFrame(() => el.scrollIntoView({ block: 'center', behavior: 'smooth' }));
 }
 document.getElementById('modalClose').addEventListener('click',closeCardModal);
 document.getElementById('cardModal').addEventListener('click',e=>{ if(e.target===document.getElementById('cardModal')) closeCardModal(); });
