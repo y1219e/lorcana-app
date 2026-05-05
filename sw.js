@@ -1,4 +1,4 @@
-const SHELL_CACHE = 'loreca-shell-v4';
+const SHELL_CACHE = 'loreca-shell-v5';
 // self.registration.scope = 'https://lorecajp.github.io/loreca/' を基準に解決
 const BASE = self.registration.scope;
 const SHELL = ['index_v2.html', 'style.css', 'app.js', 'loreca_config.json']

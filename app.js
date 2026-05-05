@@ -2,7 +2,7 @@
 // ズーム完全無効化（iOS Safari 対策含む）
 // ───────────────────────────────────────────
 (function() {
-  const INTERACTIVE = 'button,a,input,select,textarea,label';
+  const INTERACTIVE = 'button,a,input,select,textarea,label,.lore-hit-area';
   let lastTap = 0;
 
   // iOS Safari 専用 gesture イベント
@@ -1752,9 +1752,9 @@ function createPlayerPanel(i, rotated) {
   const panel = document.createElement('div');
   panel.className = 'lore-player-face' + (rotated ? ' lore-rotated' : '') + (won ? ' lore-won' : '');
   panel.style.setProperty('--player-color', color);
-  // rotated panel: DOM left = player's visual right (inc), DOM right = player's visual left (dec)
-  const leftAction = rotated ? 'inc' : 'dec';
-  const rightAction = rotated ? 'dec' : 'inc';
+  // CSS rotation already flips the hit areas visually, so actions are the same for all panels
+  const leftAction = 'dec';
+  const rightAction = 'inc';
   panel.innerHTML = `
     <div class="lore-hit-area lore-hit-left" data-i="${i}" data-action="${leftAction}"></div>
     <div class="lore-hit-area lore-hit-right" data-i="${i}" data-action="${rightAction}"></div>
@@ -1868,6 +1868,7 @@ function initLoreCounter() {
       loreState.playerCount = parseInt(btn.dataset.count);
       if (loreState.donaldOwner !== null && loreState.donaldOwner >= loreState.playerCount) loreState.donaldOwner = null;
       loreState.diceRolls = null; loreState.diceWinner = null; loreState.diceTie = null;
+      loreState.lores = [0, 0, 0, 0];
       document.getElementById('loreCountModal').style.display = 'none';
       popHistory();
       renderLoreCounter();
