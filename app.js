@@ -1,4 +1,53 @@
 // ───────────────────────────────────────────
+// ズーム完全無効化（iOS Safari 対策含む）
+// ───────────────────────────────────────────
+(function() {
+  const INTERACTIVE = 'button,a,input,select,textarea,label';
+  let lastTap = 0;
+
+  // iOS Safari 専用 gesture イベント
+  ['gesturestart','gesturechange','gestureend'].forEach(function(t) {
+    document.addEventListener(t, function(e) { e.preventDefault(); }, true);
+  });
+
+  // touchstart: ピンチ(2本指) + ダブルタップを capture フェーズで阻止
+  document.addEventListener('touchstart', function(e) {
+    if (e.touches.length > 1) { e.preventDefault(); return; }
+    const now = Date.now();
+    if (now - lastTap < 300) e.preventDefault();
+  }, { passive: false, capture: true });
+
+  // touchmove: ピンチ動作中を capture フェーズで阻止
+  document.addEventListener('touchmove', function(e) {
+    if (e.touches.length > 1) e.preventDefault();
+  }, { passive: false, capture: true });
+
+  // touchend: ダブルタップ阻止 + ボタン連打を手動 click で維持
+  document.addEventListener('touchend', function(e) {
+    if (e.touches.length > 0) return;
+    const now = Date.now();
+    if (now - lastTap < 500) {
+      e.preventDefault();
+      const target = e.target.closest(INTERACTIVE);
+      if (target) target.click();
+    }
+    lastTap = now;
+  }, { passive: false, capture: true });
+
+  // visualViewport API: ズームを検知して即時リセット
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', function() {
+      if (window.visualViewport.scale !== 1) {
+        document.querySelector('meta[name="viewport"]').setAttribute(
+          'content',
+          'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'
+        );
+      }
+    });
+  }
+})();
+
+// ───────────────────────────────────────────
 // Android 戻るボタン対応（history.pushState）
 // ───────────────────────────────────────────
 let _popstateActive = false;
