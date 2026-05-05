@@ -656,7 +656,27 @@ document.getElementById('modalNext').addEventListener('click', e=>{ e.stopPropag
 
 
 
-function closeCardModal(){ document.getElementById('cardModal').classList.remove('open'); currentCard=null; popHistory(); }
+function closeCardModal(){
+  const scrollTarget = currentCard;
+  document.getElementById('cardModal').classList.remove('open');
+  currentCard = null;
+  popHistory();
+  if (!scrollTarget) return;
+  const grid = document.getElementById('cardGrid');
+  if (!grid || !grid.closest('.page.active')) return;
+  const idx = _gridCards.findIndex(c => c.id === scrollTarget.id);
+  if (idx === -1) return;
+  // 未レンダリングなら対象カードまで描画する
+  if (idx >= _gridRendered) {
+    const frag = document.createDocumentFragment();
+    for (let i = _gridRendered; i <= idx; i++) frag.appendChild(_makeCardItem(_gridCards[i]));
+    _gridRendered = idx + 1;
+    const sentinel = document.getElementById('gridSentinel');
+    if (sentinel) grid.insertBefore(frag, sentinel); else grid.appendChild(frag);
+  }
+  const el = Array.from(grid.children).find(c => c._cardId === scrollTarget.id);
+  if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+}
 document.getElementById('modalClose').addEventListener('click',closeCardModal);
 document.getElementById('cardModal').addEventListener('click',e=>{ if(e.target===document.getElementById('cardModal')) closeCardModal(); });
 document.getElementById('modalFavBtn').addEventListener('click', e => {
