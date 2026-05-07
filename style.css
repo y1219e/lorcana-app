@@ -242,6 +242,72 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 .lore-multi .lore-face-val { font-size: 2.6rem; }
 .lore-multi .lore-face-name { font-size: 0.78rem; }
 
+/* ─── Deck Ink Picker (#dip) ─── */
+#dip { display:none; flex-direction:column; align-items:center; padding:16px; overflow-y:auto; flex:1; }
+#dip.active { display:flex; }
+.dip-header { display:flex; align-items:center; gap:10px; width:100%; margin-bottom:16px; }
+.dip-title { font-size:0.85rem; color:var(--text2); }
+.dip-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; width:100%; max-width:360px; margin-bottom:16px; }
+.dip-btn { background:var(--surface2); border:2px solid var(--border); border-radius:12px; padding:12px 6px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:6px; transition:border-color 0.15s,background 0.15s; }
+.dip-btn.selected { border-color:var(--accent); background:rgba(124,109,250,0.15); }
+.dip-icon { width:44px; height:44px; object-fit:contain; display:block; }
+.dip-name { font-size:0.72rem; color:var(--text); }
+.dip-selection { font-size:0.9rem; font-weight:bold; color:var(--accent); min-height:24px; margin-bottom:16px; letter-spacing:0.05em; }
+.dip-choose-btn { padding:12px 40px; background:var(--accent); color:#fff; border:none; border-radius:10px; font-size:1rem; font-weight:bold; cursor:pointer; letter-spacing:0.08em; }
+.dip-choose-btn:disabled { opacity:0.35; cursor:default; }
+
+/* ─── Deck Builder (#dbView) ─── */
+#dbView { display:none; flex-direction:column; flex:1; overflow:hidden; }
+#dbView.active { display:flex; }
+.db-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; padding:8px 8px 80px; overflow-y:auto; flex:1; }
+.db-card { position:relative; border-radius:8px; overflow:hidden; background:var(--surface2); }
+.db-card img { width:100%; aspect-ratio:2/3; object-fit:cover; display:block; }
+.db-badge { position:absolute; top:4px; right:4px; background:rgba(0,0,0,0.75); color:#fff; font-size:0.7rem; font-weight:bold; padding:2px 5px; border-radius:6px; pointer-events:none; }
+.db-minus { position:absolute; bottom:4px; left:4px; width:28px; height:28px; border-radius:50%; background:var(--ruby); color:#fff; border:none; font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; font-weight:bold; }
+.db-plus { position:absolute; bottom:4px; right:4px; width:28px; height:28px; border-radius:50%; background:var(--accent); color:#fff; border:none; font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; font-weight:bold; }
+.db-plus:disabled { opacity:0.35; cursor:default; }
+.db-footer { position:fixed; bottom:0; left:0; right:0; background:var(--surface); border-top:1px solid var(--border); display:flex; align-items:center; gap:8px; padding:8px 12px; z-index:200; }
+.db-footer-ink { display:flex; align-items:center; gap:2px; flex-shrink:0; }
+.db-footer-ink img { width:24px; height:24px; object-fit:contain; }
+.db-footer-name { flex:1; font-size:0.78rem; color:var(--text2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+.db-show-btn { flex-shrink:0; padding:8px 14px; background:var(--accent); color:#fff; border:none; border-radius:8px; font-size:0.82rem; font-weight:bold; cursor:pointer; white-space:nowrap; }
+
+/* ─── Deck Stats (#dpStats) ─── */
+#dpStats { display:none; flex-direction:column; flex:1; overflow:hidden; }
+#dpStats.active { display:flex; }
+.dstats-header { display:flex; align-items:center; gap:6px; padding:8px 10px; background:var(--surface); border-bottom:1px solid var(--border); flex-shrink:0; flex-wrap:wrap; }
+.dstats-name-input { flex:1; min-width:0; background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:5px 10px; color:var(--text); font-size:0.85rem; }
+.dstats-actions { display:flex; gap:6px; padding:8px 10px; background:var(--surface); border-bottom:1px solid var(--border); flex-shrink:0; }
+.dstats-actions .btn-sm { flex:1; font-size:0.75rem; background:var(--surface2); }
+.dstats-sleeve-picker { display:none; padding:8px 12px; background:var(--surface2); border-bottom:1px solid var(--border); flex-shrink:0; }
+.dstats-sleeve-picker.open { display:block; }
+.dstats-body { flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:12px; }
+.dstats-total-box { background:var(--surface); border-radius:10px; padding:14px; display:flex; align-items:center; gap:12px; }
+.dstats-total-num { font-size:2.4rem; font-weight:bold; color:var(--accent); line-height:1; }
+.dstats-total-label { font-size:0.75rem; color:var(--text2); }
+.dstats-total-ink { display:flex; gap:4px; }
+.dstats-total-ink img { width:28px; height:28px; object-fit:contain; }
+.dstats-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.dstats-cell { background:var(--surface); border-radius:8px; padding:10px; }
+.dstats-cell-label { font-size:0.68rem; color:var(--text2); margin-bottom:4px; display:flex; align-items:center; gap:4px; }
+.dstats-cell-label img { width:16px; height:16px; object-fit:contain; }
+.dstats-cell-val { font-size:1.3rem; font-weight:bold; color:var(--text); }
+.dstats-cost-chart { background:var(--surface); border-radius:10px; padding:12px; }
+.dstats-cost-title { font-size:0.72rem; color:var(--text2); margin-bottom:8px; }
+.dstats-cost-bars { display:flex; align-items:flex-end; gap:3px; height:60px; }
+.dstats-cost-bar-wrap { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; height:100%; justify-content:flex-end; }
+.dstats-cost-bar { width:100%; background:var(--accent); border-radius:3px 3px 0 0; min-height:2px; transition:height 0.2s; }
+.dstats-cost-bar-label { font-size:0.55rem; color:var(--text2); }
+.dstats-cost-bar-count { font-size:0.55rem; color:var(--text2); }
+.dstats-card-list { background:var(--surface); border-radius:10px; overflow:hidden; }
+.dstats-card-row { display:flex; align-items:center; padding:6px 10px; border-bottom:1px solid var(--border); gap:8px; }
+.dstats-card-row:last-child { border-bottom:none; }
+.dstats-card-row img { width:32px; height:44px; border-radius:4px; object-fit:cover; flex-shrink:0; }
+.dstats-card-info { flex:1; min-width:0; }
+.dstats-card-name { font-size:0.7rem; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.dstats-card-sub { font-size:0.6rem; color:var(--text2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.dstats-card-count { font-size:0.85rem; font-weight:bold; color:var(--accent); flex-shrink:0; }
+
 /* ─── レスポンシブ: タブレット(600px+) ─── */
 @media (min-width: 600px) {
   .card-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important; gap: 10px; }
