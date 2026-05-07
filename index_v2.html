@@ -81,7 +81,7 @@
       <button class="btn-sm btn-save" id="statsSaveBtn">保存</button>
     </div>
     <div class="dstats-actions">
-      <button class="btn-sm btn-back" id="statsBackBtn">＋ カードを追加</button>
+      <button class="btn-sm btn-back" id="statsBackBtn">✏️ デッキを編集</button>
       <button class="btn-sm" id="statsSleeveBtn">🖼️ スリーブを選ぶ</button>
       <button class="btn-sm" id="statsExportBtn">🔢 デッキコード発行</button>
     </div>
@@ -89,18 +89,18 @@
       <div style="font-size:0.7rem;color:var(--text2);margin-bottom:6px;">スリーブ画像を選択</div>
       <div id="statsSleeveGrid" style="display:flex;flex-wrap:wrap;gap:6px;max-height:160px;overflow-y:auto;"></div>
     </div>
+    <div class="dstats-summary">
+      <div class="dstats-top-row">
+        <div class="dstats-cost-chart" id="dstatsCostChart"></div>
+        <div class="dstats-grid" id="dstatsGrid"></div>
+      </div>
+      <div class="dstats-bottom-row">
+        <div class="dstats-ink-row" id="dstatsInkRow"></div>
+        <div class="dstats-grid-extra" id="dstatsGridExtra"></div>
+      </div>
+    </div>
     <div class="dstats-body" id="dstatsBody">
       <div id="dpScrollWrap">
-        <div class="dstats-summary">
-          <div class="dstats-top-row">
-            <div class="dstats-cost-chart" id="dstatsCostChart"></div>
-            <div class="dstats-grid" id="dstatsGrid"></div>
-          </div>
-          <div class="dstats-bottom-row">
-            <div class="dstats-ink-row" id="dstatsInkRow"></div>
-            <div class="dstats-grid-extra" id="dstatsGridExtra"></div>
-          </div>
-        </div>
         <div class="dstats-card-grid" id="dstatsCardList"></div>
       </div>
     </div>
@@ -202,6 +202,24 @@
     <button id="importExecBtn" style="margin-top:10px;width:100%;padding:10px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:0.9rem;cursor:pointer;">読み込む</button>
   </div>
 </div>
+<!-- デッキ内カードモーダル -->
+<div class="modal-overlay" id="deckCardModal">
+  <div class="modal">
+    <img id="deckModalImg" class="modal-slide-img" src="" alt="" style="width:100%;max-width:320px;border-radius:12px;margin-bottom:12px;">
+    <div style="width:100%;background:var(--surface);border-radius:12px;overflow:hidden;margin-bottom:8px;">
+      <div class="count-row">
+        <label>デッキに追加</label>
+        <div class="count-btns">
+          <button class="count-btn" id="deckCountDec" style="background:#e74c3c;color:#fff;">－</button>
+          <span class="count-val" id="deckCountVal">0</span>
+          <button class="count-btn" id="deckCountInc" style="background:#7c6dfa;color:#fff;">＋</button>
+        </div>
+      </div>
+    </div>
+    <button class="modal-close" id="deckModalClose" style="width:100%;padding:12px 8px;background:var(--surface);border:none;color:var(--text2);border-radius:12px;font-size:0.85rem;cursor:pointer;margin:0;">閉じる</button>
+  </div>
+</div>
+
 <!-- 詳細検索モーダル -->
 <div class="modal-overlay" id="advSearchModal" style="align-items:flex-end;z-index:10000;">
   <div class="adv-modal-box">

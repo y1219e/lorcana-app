@@ -63,6 +63,7 @@ function closeTopModal() {
   if (document.getElementById('advSearchModal').classList.contains('open')) { document.getElementById('advSearchModal').classList.remove('open'); renderCardGrid(); return; }
   if (document.getElementById('newDeckModal').classList.contains('open'))   { closeNewDeckModal(); return; }
   if (document.getElementById('importModal').classList.contains('open'))    { document.getElementById('importModal').classList.remove('open'); return; }
+  if (document.getElementById('deckCardModal').classList.contains('open')) { closeDeckCardModal(); return; }
   if (document.getElementById('cardModal').classList.contains('open'))      { closeCardModal(); return; }
   for (const id of ['loreCountModal','loreDonaldModal','lorePauseModal']) {
     if (document.getElementById(id)?.style.display === 'flex') { document.getElementById(id).style.display = 'none'; return; }
@@ -787,6 +788,77 @@ function closeCardModal(){
   if (el) requestAnimationFrame(() => el.scrollIntoView({ block: 'center', behavior: 'smooth' }));
 }
 document.getElementById('modalClose').addEventListener('click',closeCardModal);
+
+// ─── デッキ専用カードモーダル ───────────────────────
+let _deckModalCard = null;
+
+function openDeckCardModal(card) {
+  _deckModalCard = card;
+  const img = document.getElementById('deckModalImg');
+  img.src = '';
+  resolveImgSrc(card).then(src => { img.src = src; });
+  _updateDeckModalCount();
+  if (!document.getElementById('deckCardModal').classList.contains('open')) pushModalState();
+  document.getElementById('deckCardModal').classList.add('open');
+}
+
+function closeDeckCardModal() {
+  document.getElementById('deckCardModal').classList.remove('open');
+  _deckModalCard = null;
+  popHistory();
+}
+
+function _updateDeckModalCount() {
+  const card = _deckModalCard; if (!card) return;
+  const cur = currentDeck.cards[card.id] ?? 0;
+  document.getElementById('deckCountVal').textContent = cur;
+  document.getElementById('deckCountDec').disabled = cur <= 0;
+  document.getElementById('deckCountInc').disabled = cur >= 4;
+}
+
+function _applyDeckModalChange() {
+  const card = _deckModalCard; if (!card) return;
+  const count = currentDeck.cards[card.id] ?? 0;
+  // 統計画面のカードリストを更新
+  const statDiv = document.querySelector(`#dstatsCardList [data-card-id="${CSS.escape(card.id)}"]`);
+  if (statDiv) {
+    if (count === 0) {
+      statDiv.remove();
+    } else {
+      const countEl = statDiv.querySelector('.db-count');
+      if (countEl) countEl.textContent = count;
+      const plus = statDiv.querySelector('.db-plus');
+      if (plus) plus.disabled = count >= 4;
+    }
+  }
+  // デッキビルダーの表示を更新
+  if (document.getElementById('dbView').classList.contains('active')) renderDeckBuilderGridUpdate();
+  // 統計数値を更新
+  refreshDeckStatsNumbers();
+}
+
+document.getElementById('deckCountDec').addEventListener('click', () => {
+  const card = _deckModalCard; if (!card) return;
+  const cur = currentDeck.cards[card.id] ?? 0;
+  if (cur <= 0) return;
+  if (cur === 1) delete currentDeck.cards[card.id]; else currentDeck.cards[card.id] = cur - 1;
+  _updateDeckModalCount();
+  _applyDeckModalChange();
+});
+
+document.getElementById('deckCountInc').addEventListener('click', () => {
+  const card = _deckModalCard; if (!card) return;
+  const cur = currentDeck.cards[card.id] ?? 0;
+  if (cur >= 4) return;
+  currentDeck.cards[card.id] = cur + 1;
+  _updateDeckModalCount();
+  _applyDeckModalChange();
+});
+
+document.getElementById('deckModalClose').addEventListener('click', closeDeckCardModal);
+document.getElementById('deckCardModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('deckCardModal')) closeDeckCardModal();
+});
 document.getElementById('cardModal').addEventListener('click',e=>{ if(e.target===document.getElementById('cardModal')) closeCardModal(); });
 document.getElementById('modalFavBtn').addEventListener('click', e => {
   e.stopPropagation();
@@ -1283,6 +1355,8 @@ function _makeDbCard(card, total) {
   });
   div.appendChild(plusBtn);
 
+  div.addEventListener('click', () => openDeckCardModal(card));
+
   return div;
 }
 
@@ -1574,7 +1648,7 @@ function renderDeckStats() {
   });
   entries.forEach(([cardId, count]) => {
     const card = allCards.find(c => c.id === cardId); if (!card) return;
-    const div = document.createElement('div'); div.className = 'card-item';
+    const div = document.createElement('div'); div.className = 'card-item'; div.dataset.cardId = cardId;
     div.appendChild(makeImg(card));
     const info = document.createElement('div'); info.className = 'card-info';
     const nameDiv = document.createElement('div'); nameDiv.className = 'card-name';
@@ -1613,7 +1687,7 @@ function renderDeckStats() {
       refreshDeckStatsNumbers();
     });
     div.appendChild(plusBtn);
-    div.addEventListener('click', () => openCardModal(card));
+    div.addEventListener('click', () => openDeckCardModal(card));
     cardList.appendChild(div);
   });
 
@@ -1623,11 +1697,13 @@ function renderDeckStats() {
 function syncDpScrollTop() {
   const wrap = document.getElementById('dpScrollWrap');
   if (!wrap) return;
-  const header = document.querySelector('#dpStats .dstats-header');
+  const header  = document.querySelector('#dpStats .dstats-header');
   const actions = document.querySelector('#dpStats .dstats-actions');
-  const sleeve = document.getElementById('statsSleevePicker');
+  const sleeve  = document.getElementById('statsSleevePicker');
+  const summary = document.querySelector('#dpStats .dstats-summary');
   let top = (header?.offsetHeight ?? 0) + (actions?.offsetHeight ?? 0);
   if (sleeve?.classList.contains('open')) top += sleeve.offsetHeight;
+  top += (summary?.offsetHeight ?? 0);
   wrap.style.top = top + 'px';
 }
 

@@ -292,7 +292,7 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 /* position:fixed scroll — same iOS Safari fix as #dbScrollWrap */
 #dpScrollWrap { position:fixed; top:88px; left:0; right:0; bottom:0; overflow-y:scroll; -webkit-overflow-scrolling:touch; }
 /* ── Summary: top-row (chart|4-type) + bottom-row (ink|🎵◇) ── */
-.dstats-summary { display:flex; flex-direction:column; gap:3px; padding:6px 10px; }
+.dstats-summary { display:flex; flex-direction:column; gap:3px; padding:6px 10px; background:var(--bg); }
 .dstats-top-row { display:flex; gap:6px; align-items:stretch; }
 .dstats-bottom-row { display:flex; gap:6px; align-items:stretch; }
 /* Cost chart: fills left side of top-row */
