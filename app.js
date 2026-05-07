@@ -491,9 +491,63 @@ function filteredCards(){
   });
 }
 
+let _advFromDeck = false;
+
+function dbFilteredCards() {
+  const inkFilter = currentDeck?.inkFilter ?? [];
+  const q = (document.getElementById('dbSearchInput')?.value ?? '').toLowerCase();
+  return allCards.filter(c => {
+    if (inkFilter.length > 0) {
+      const ci = c.inks ?? (c.ink ? [c.ink] : []);
+      if (!ci.some(i => inkFilter.includes(i))) return false;
+    }
+    if (q && !c.name?.toLowerCase().includes(q) && !c.version?.toLowerCase().includes(q)) return false;
+    if (advFilter.rarities.size > 0 && !advFilter.rarities.has(c.rarity)) return false;
+    if (advFilter.types.size > 0) {
+      const isAction = (c.type ?? []).includes('アクション');
+      const isSong = isAction && (c.classifications ?? []).includes('歌');
+      let matched = false;
+      for (const t of advFilter.types) {
+        if (t === 'action_song' && isSong) { matched = true; break; }
+        if (t === 'アクション' && isAction && !isSong) { matched = true; break; }
+        if (t !== 'action_song' && t !== 'アクション' && (c.type ?? []).includes(t)) { matched = true; break; }
+      }
+      if (!matched) return false;
+    }
+    if (advFilter.classifications.size > 0 && !(c.classifications ?? []).some(t => advFilter.classifications.has(t))) return false;
+    if (advFilter.keywords.size > 0 && !(c.keywords ?? []).some(k => advFilter.keywords.has(k))) return false;
+    if (advFilter.inkType === 'single' && (c.inks ?? [c.ink]).filter(Boolean).length !== 1) return false;
+    if (advFilter.inkType === 'dual' && (c.inks ?? [c.ink]).filter(Boolean).length < 2) return false;
+    if (advFilter.inks.size > 0) { const ci = c.inks ?? (c.ink ? [c.ink] : []); if (!ci.some(i => advFilter.inks.has(i))) return false; }
+    if (advFilter.sets.size > 0 && !advFilter.sets.has(c.set?.code)) return false;
+    if (advFilter.costMin !== null && (c.cost ?? 0) < advFilter.costMin) return false;
+    if (advFilter.costMax !== null && (c.cost ?? 0) > advFilter.costMax) return false;
+    if (advFilter.strMin !== null && (c.strength == null || c.strength < advFilter.strMin)) return false;
+    if (advFilter.strMax !== null && (c.strength == null || c.strength > advFilter.strMax)) return false;
+    if (advFilter.wpMin !== null && (c.willpower == null || c.willpower < advFilter.wpMin)) return false;
+    if (advFilter.wpMax !== null && (c.willpower == null || c.willpower > advFilter.wpMax)) return false;
+    if (advFilter.loreMin !== null && (c.lore == null || c.lore < advFilter.loreMin)) return false;
+    if (advFilter.loreMax !== null && (c.lore == null || c.lore > advFilter.loreMax)) return false;
+    if (advFilter.mcMin !== null || advFilter.mcMax !== null) {
+      if (c.move_cost == null) return false;
+      if (advFilter.mcMin !== null && c.move_cost < advFilter.mcMin) return false;
+      if (advFilter.mcMax !== null && c.move_cost > advFilter.mcMax) return false;
+    }
+    if (advFilter.inkwell === true && !c.inkwell) return false;
+    if (advFilter.inkwell === false && c.inkwell) return false;
+    if (advFilter.textQ && !cardMatchesQuery(c, normalizeQ(advFilter.textQ))) return false;
+    if (advFilter.collectionStatus === 'owned' && ownedTotal(c.id) === 0) return false;
+    if (advFilter.collectionStatus === 'notowned' && ownedTotal(c.id) > 0) return false;
+    return true;
+  });
+}
+
 const updateAdvCount = debounce(() => {
   const el = document.getElementById('advApply');
-  if (el) el.textContent = '結果を表示（' + filteredCards().length + '件）';
+  if (el) {
+    const count = _advFromDeck ? dbFilteredCards().length : filteredCards().length;
+    el.textContent = '結果を表示（' + count + '件）';
+  }
 }, 200);
 
 // collection[id] は {normal, foil} 形式。旧形式(数値)はnormalとして扱う
@@ -1175,16 +1229,39 @@ let _dbObserver = null;
 function _makeDbCard(card, total) {
   const count = currentDeck.cards[card.id] ?? 0;
   const div = document.createElement('div');
-  div.className = 'db-card';
+  div.className = 'card-item' + (count > 0 ? ' in-deck' : '');
   div.dataset.cardId = card.id;
 
-  // Use direct src (no resolveImgSrc) to prevent simultaneous Cache API opens crashing iOS
+  // Image (direct src to avoid simultaneous Cache API opens crashing iOS)
   const img = document.createElement('img');
   img.alt = card.name;
   img.loading = 'lazy';
   if (card.card_file) img.src = IMG_HOST + card.card_file + '.png';
   div.appendChild(img);
 
+  // Card info (same as main grid)
+  const info = document.createElement('div'); info.className = 'card-info';
+  const nameDiv = document.createElement('div'); nameDiv.className = 'card-name';
+  const inkDot = card.inks && card.inks.length > 1 ? makeDualInkDot(card.inks) : makeInkDot(card.ink ?? (card.inks?.[0] ?? ''));
+  nameDiv.appendChild(inkDot);
+  nameDiv.appendChild(document.createTextNode(card.name));
+  const subDiv = document.createElement('div'); subDiv.className = 'card-sub';
+  subDiv.appendChild(document.createTextNode(`${card.set?.code ?? ''}-${card.collector_number}  `));
+  subDiv.appendChild(makeRarityIcon(card.rarity));
+  subDiv.appendChild(document.createTextNode(' ' + card.rarity));
+  info.appendChild(nameDiv); info.appendChild(subDiv);
+  div.appendChild(info);
+
+  // Owned count badge (top-right, same as main grid)
+  const ownedCount = ownedTotal(card.id);
+  if (ownedCount > 0) {
+    const o = getOwned(card.id);
+    const ob = document.createElement('div'); ob.className = 'own-badge' + (o.foil > 0 ? ' foil' : '');
+    ob.textContent = o.normal + o.foil;
+    div.appendChild(ob);
+  }
+
+  // Deck count badge (top-left) + minus button
   if (count > 0) {
     const badge = document.createElement('div');
     badge.className = 'db-badge';
@@ -1247,16 +1324,7 @@ function renderDeckBuilderGrid() {
   const grid = document.getElementById('dbGrid');
   const scrollTop = grid.scrollTop;
 
-  const inkFilter = currentDeck.inkFilter ?? [];
-  const q = (document.getElementById('dbSearchInput')?.value ?? '').toLowerCase();
-  _dbCards = allCards.filter(c => {
-    if (inkFilter.length > 0) {
-      const ci = c.inks ?? (c.ink ? [c.ink] : []);
-      if (!ci.some(i => inkFilter.includes(i))) return false;
-    }
-    if (q && !c.name?.toLowerCase().includes(q) && !c.version?.toLowerCase().includes(q)) return false;
-    return true;
-  });
+  _dbCards = dbFilteredCards();
 
   grid.innerHTML = '';
   _dbRendered = 0;
@@ -1273,7 +1341,7 @@ function renderDeckBuilderGridUpdate() {
   const scrollTop = grid.scrollTop;
   const total = deckTotal();
 
-  grid.querySelectorAll('.db-card').forEach(div => {
+  grid.querySelectorAll('[data-card-id]').forEach(div => {
     const cardId = div.dataset.cardId;
     const count = currentDeck.cards[cardId] ?? 0;
 
@@ -1282,6 +1350,7 @@ function renderDeckBuilderGridUpdate() {
     const plusBtn = div.querySelector('.db-plus');
 
     if (count > 0) {
+      div.classList.add('in-deck');
       if (!badge) {
         badge = document.createElement('div');
         badge.className = 'db-badge';
@@ -1302,6 +1371,7 @@ function renderDeckBuilderGridUpdate() {
         div.appendChild(minusBtn);
       }
     } else {
+      div.classList.remove('in-deck');
       if (badge) badge.remove();
       if (minusBtn) minusBtn.remove();
     }
@@ -2029,7 +2099,7 @@ async function importBackup(file) {
   document.getElementById('advClose').addEventListener('click',()=>{
     document.getElementById('advSearchModal').classList.remove('open');
     popHistory();
-    renderCardGrid();
+    if (_advFromDeck) { _advFromDeck = false; renderDeckBuilderGrid(); } else renderCardGrid();
   });
   document.getElementById('advReset2').addEventListener('click',()=>{
     advFilter={rarities:new Set(),types:new Set(),classifications:new Set(),keywords:new Set(),inks:new Set(),sets:new Set(),costMin:null,costMax:null,strMin:null,strMax:null,wpMin:null,wpMax:null,loreMin:null,loreMax:null,mcMin:null,mcMax:null,inkwell:null,inkType:null,collectionStatus:null,textQ:'',sortOrder:'id_asc'};
@@ -2040,14 +2110,20 @@ async function importBackup(file) {
   document.getElementById('advApply').addEventListener('click',()=>{
     document.getElementById('advSearchModal').classList.remove('open');
     popHistory();
-    renderCardGrid();
+    if (_advFromDeck) { _advFromDeck = false; renderDeckBuilderGrid(); } else renderCardGrid();
   });
   document.getElementById('advSearchModal').addEventListener('click', e => {
     if (e.target === document.getElementById('advSearchModal')) {
       document.getElementById('advSearchModal').classList.remove('open');
       popHistory();
-      renderCardGrid();
+      if (_advFromDeck) { _advFromDeck = false; renderDeckBuilderGrid(); } else renderCardGrid();
     }
+  });
+  document.getElementById('dbAdvBtn').addEventListener('click', () => {
+    _advFromDeck = true;
+    buildAdvUI();
+    document.getElementById('advSearchModal').classList.add('open');
+    pushModalState();
   });
 
   // ======= /詳細検索 =======
