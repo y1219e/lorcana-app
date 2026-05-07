@@ -1166,16 +1166,90 @@ function renderDeckBuilderFooter() {
   }
 }
 
+// ── Deck Builder Grid pagination ──
+const DB_PAGE_SIZE = 60;
+let _dbCards = [];
+let _dbRendered = 0;
+let _dbObserver = null;
+
+function _makeDbCard(card, total) {
+  const count = currentDeck.cards[card.id] ?? 0;
+  const div = document.createElement('div');
+  div.className = 'db-card';
+  div.dataset.cardId = card.id;
+
+  // Use direct src (no resolveImgSrc) to prevent simultaneous Cache API opens crashing iOS
+  const img = document.createElement('img');
+  img.alt = card.name;
+  img.loading = 'lazy';
+  if (card.card_file) img.src = IMG_HOST + card.card_file + '.png';
+  div.appendChild(img);
+
+  if (count > 0) {
+    const badge = document.createElement('div');
+    badge.className = 'db-badge';
+    badge.textContent = '×' + count;
+    div.appendChild(badge);
+    const minusBtn = document.createElement('button');
+    minusBtn.className = 'db-minus';
+    minusBtn.textContent = '−';
+    minusBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      currentDeck.cards[card.id] = Math.max(0, (currentDeck.cards[card.id] ?? 0) - 1);
+      if (currentDeck.cards[card.id] === 0) delete currentDeck.cards[card.id];
+      renderDeckBuilderGridUpdate();
+    });
+    div.appendChild(minusBtn);
+  }
+
+  const plusBtn = document.createElement('button');
+  plusBtn.className = 'db-plus';
+  plusBtn.textContent = '+';
+  plusBtn.disabled = total >= 60 || count >= 4;
+  plusBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    if ((currentDeck.cards[card.id] ?? 0) >= 4 || deckTotal() >= 60) return;
+    currentDeck.cards[card.id] = (currentDeck.cards[card.id] ?? 0) + 1;
+    renderDeckBuilderGridUpdate();
+  });
+  div.appendChild(plusBtn);
+  return div;
+}
+
+function _renderNextDbBatch(grid) {
+  const end = Math.min(_dbRendered + DB_PAGE_SIZE, _dbCards.length);
+  if (_dbRendered >= end) return;
+  const total = deckTotal();
+  const frag = document.createDocumentFragment();
+  for (let i = _dbRendered; i < end; i++) frag.appendChild(_makeDbCard(_dbCards[i], total));
+  _dbRendered = end;
+  const sentinel = grid.querySelector('#dbSentinel');
+  if (sentinel) grid.insertBefore(frag, sentinel); else grid.appendChild(frag);
+}
+
+function _setupDbSentinel(grid) {
+  if (_dbObserver) { _dbObserver.disconnect(); _dbObserver = null; }
+  if (_dbRendered >= _dbCards.length) return;
+  const sentinel = document.createElement('div');
+  sentinel.id = 'dbSentinel';
+  grid.appendChild(sentinel);
+  _dbObserver = new IntersectionObserver(entries => {
+    if (!entries[0].isIntersecting) return;
+    _renderNextDbBatch(grid);
+    if (_dbRendered >= _dbCards.length) {
+      _dbObserver.disconnect(); _dbObserver = null; sentinel.remove();
+    }
+  }, { rootMargin: '300px' });
+  _dbObserver.observe(sentinel);
+}
+
 function renderDeckBuilderGrid() {
   const grid = document.getElementById('dbGrid');
-  const scrollEl = grid; // grid itself scrolls via overflow-y:auto in CSS, but dbGrid is inside dbView
-  // dbView has overflow:hidden, the actual scroll is on db-grid which has overflow-y:auto via flex:1
-  // Save scroll position
   const scrollTop = grid.scrollTop;
 
   const inkFilter = currentDeck.inkFilter ?? [];
   const q = (document.getElementById('dbSearchInput')?.value ?? '').toLowerCase();
-  const cards = allCards.filter(c => {
+  _dbCards = allCards.filter(c => {
     if (inkFilter.length > 0) {
       const ci = c.inks ?? (c.ink ? [c.ink] : []);
       if (!ci.some(i => inkFilter.includes(i))) return false;
@@ -1185,52 +1259,12 @@ function renderDeckBuilderGrid() {
   });
 
   grid.innerHTML = '';
-  const total = deckTotal();
+  _dbRendered = 0;
+  if (_dbObserver) { _dbObserver.disconnect(); _dbObserver = null; }
 
-  cards.forEach(card => {
-    const count = currentDeck.cards[card.id] ?? 0;
-    const div = document.createElement('div');
-    div.className = 'db-card';
-    div.dataset.cardId = card.id;
+  _renderNextDbBatch(grid);
+  _setupDbSentinel(grid);
 
-    const img = makeImg(card);
-    div.appendChild(img);
-
-    if (count > 0) {
-      const badge = document.createElement('div');
-      badge.className = 'db-badge';
-      badge.textContent = '×' + count;
-      div.appendChild(badge);
-
-      const minusBtn = document.createElement('button');
-      minusBtn.className = 'db-minus';
-      minusBtn.textContent = '−';
-      minusBtn.addEventListener('click', e => {
-        e.stopPropagation();
-        currentDeck.cards[card.id] = Math.max(0, (currentDeck.cards[card.id] ?? 0) - 1);
-        if (currentDeck.cards[card.id] === 0) delete currentDeck.cards[card.id];
-        renderDeckBuilderGridUpdate();
-      });
-      div.appendChild(minusBtn);
-    }
-
-    const canAdd = total < 60 && count < 4;
-    const plusBtn = document.createElement('button');
-    plusBtn.className = 'db-plus';
-    plusBtn.textContent = '+';
-    plusBtn.disabled = !canAdd;
-    plusBtn.addEventListener('click', e => {
-      e.stopPropagation();
-      if ((currentDeck.cards[card.id] ?? 0) >= 4 || deckTotal() >= 60) return;
-      currentDeck.cards[card.id] = (currentDeck.cards[card.id] ?? 0) + 1;
-      renderDeckBuilderGridUpdate();
-    });
-    div.appendChild(plusBtn);
-
-    grid.appendChild(div);
-  });
-
-  // Restore scroll
   grid.scrollTop = scrollTop;
 }
 
