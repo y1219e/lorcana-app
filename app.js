@@ -1759,56 +1759,53 @@ async function importBackup(file) {
       const nextIdx = TAB_ORDER.indexOf(cardView) + delta;
       if(nextIdx < 0 || nextIdx >= TAB_ORDER.length){
         // 端タブ：スナップバック
+        grid.style.animation = '';
         grid.style.transition = 'transform 0.25s ease';
         grid.style.transform = 'translateX(0)';
-        setTimeout(()=>{ busy=false; }, 250);
+        setTimeout(()=>{ grid.style.transition = ''; busy=false; }, 250);
         return;
       }
       window.scrollTo(0, 0);
       scrollPositions['pageCards'] = 0;
       const wrap = document.getElementById('cardGridWrap');
       const outDir = delta > 0 ? '-100%' : '100%';
-      const inDir  = delta > 0 ?  '100%' : '-100%';
+      const inAnim = delta > 0 ? 'tabSlideInFromRight' : 'tabSlideInFromLeft';
       const DUR = 280;
 
-      // 現在の表示をゴーストとして絶対配置（アウトゴーイングパネル）
+      // ゴースト（旧コンテンツ）: from値が確定しているので transition でアウト
       const ghost = grid.cloneNode(true);
       ghost.removeAttribute('id');
-      ghost.style.position = 'absolute';
-      ghost.style.top = '0';
-      ghost.style.left = '0';
-      ghost.style.width = '100%';
-      ghost.style.margin = '0';
-      ghost.style.pointerEvents = 'none';
-      ghost.style.transition = 'none';
-      ghost.style.transform = `translateX(${startDx}px)`;
+      ghost.style.cssText = `position:absolute;top:0;left:0;width:100%;margin:0;pointer-events:none;transform:translateX(${startDx}px);`;
       wrap.appendChild(ghost);
+      void ghost.offsetWidth; // reflow でfrom値を確定
+      ghost.style.transition = `transform ${DUR}ms ease`;
+      ghost.style.transform = `translateX(${outDir})`;
 
-      // 新タブのコンテンツをオフスクリーンに描画
+      // 新コンテンツ: @keyframes で from/to を明示（iOS Safariのfrom値未確定バグを回避）
       const nextView = TAB_ORDER[nextIdx];
       document.querySelectorAll('.view-tab').forEach(b=>b.classList.remove('active'));
       document.querySelector(`.view-tab[data-view="${nextView}"]`).classList.add('active');
       cardView = nextView;
-      grid.style.transition = 'none';
-      grid.style.transform = `translateX(${inDir})`;
+      grid.style.transition = '';
+      grid.style.transform = '';
       renderCardGrid();
+      grid.style.animation = `${inAnim} ${DUR}ms ease forwards`;
 
-      // レイアウト確定を強制してからアニメーション開始（単一rAF）
-      void grid.offsetWidth;
-      requestAnimationFrame(()=>{
-        ghost.style.transition = `transform ${DUR}ms ease`;
-        ghost.style.transform  = `translateX(${outDir})`;
-        grid.style.transition  = `transform ${DUR}ms ease`;
-        grid.style.transform   = 'translateX(0)';
-        setTimeout(()=>{ try { ghost.remove(); } catch(e){} busy=false; }, DUR + 50);
-      });
+      setTimeout(()=>{
+        try { ghost.remove(); } catch(e){}
+        grid.style.animation = '';
+        grid.style.transform = '';
+        busy = false;
+      }, DUR + 50);
     }
 
     page.addEventListener('touchstart', e=>{
       isDragging = false;
       if(busy || document.getElementById('cardModal').classList.contains('open')) return;
       sx=e.touches[0].clientX; sy=e.touches[0].clientY;
+      grid.style.animation = '';
       grid.style.transition = 'none';
+      grid.style.transform = '';
     },{passive:true});
 
     page.addEventListener('touchmove', e=>{

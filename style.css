@@ -146,6 +146,10 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 #loadingOverlay.show { display: flex; }
 .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+@keyframes tabSlideInFromRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes tabSlideInFromLeft  { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+@keyframes tabSlideOutToLeft   { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+@keyframes tabSlideOutToRight  { from { transform: translateX(0); } to { transform: translateX(100%); } }
 #loadProgress { font-size: 0.85rem; color: var(--text2); }
 #cacheInfo { font-size: 0.72rem; color: #555; margin-top: 4px; }
 #prefetchBar { display:none; position:fixed; bottom:58px; left:0; right:0; z-index:99; background:var(--surface); border-top:1px solid var(--border); padding:4px 12px; font-size:0.68rem; color:var(--text2); }
