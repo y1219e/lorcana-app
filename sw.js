@@ -1,14 +1,14 @@
-const SHELL_CACHE = 'loreca-shell-v9';
+const SHELL_CACHE = 'loreca-shell-v10';
 const BASE = self.registration.scope;
 const SHELL = ['index_v2.html', 'style.css', 'app.js', 'loreca_config.json']
   .map(f => new URL(f, BASE).href);
 
 self.addEventListener('install', e => {
-  // cache:'no-store' で HTTP キャッシュをバイパスして常に最新を取得
+  // cache:'no-cache' でCDNにも再検証を強制して常に最新を取得
   e.waitUntil(
     caches.open(SHELL_CACHE).then(c =>
       Promise.all(SHELL.map(url =>
-        fetch(new Request(url, { cache: 'no-store' })).then(r => c.put(url, r))
+        fetch(new Request(url, { cache: 'no-cache' })).then(r => c.put(url, r))
       ))
     )
   );
@@ -34,14 +34,17 @@ self.addEventListener('fetch', e => {
 
   // ナビゲーション: ネットワークファースト、オフライン時はシェルにフォールバック
   if (e.request.mode === 'navigate') {
-    e.respondWith(fetch(e.request).catch(() => caches.match(SHELL[0])));
+    e.respondWith(
+      fetch(new Request(e.request, { cache: 'no-cache' }))
+        .catch(() => caches.match(SHELL[0]))
+    );
     return;
   }
 
-  // アプリシェル: cache:'no-store' でHTTPキャッシュをバイパスしてネットワークファースト
+  // アプリシェル: cache:'no-cache' でCDN再検証＋ネットワークファースト
   if (SHELL.includes(e.request.url)) {
     e.respondWith(
-      fetch(new Request(e.request, { cache: 'no-store' }))
+      fetch(new Request(e.request, { cache: 'no-cache' }))
         .then(response => {
           const clone = response.clone();
           caches.open(SHELL_CACHE).then(c => c.put(e.request, clone));
