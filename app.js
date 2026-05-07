@@ -1506,7 +1506,7 @@ function renderDeckStats() {
   }
   costChart.appendChild(bars);
 
-  // Card list
+  // Card grid (3-column portrait images, sorted by cost)
   const cardList = document.getElementById('dstatsCardList');
   cardList.innerHTML = '';
   const entries = Object.entries(currentDeck.cards ?? {}).filter(([,n]) => n > 0);
@@ -1517,16 +1517,36 @@ function renderDeckStats() {
   });
   entries.forEach(([cardId, count]) => {
     const card = allCards.find(c => c.id === cardId); if (!card) return;
-    const row = document.createElement('div'); row.className = 'dstats-card-row';
-    const img = makeImg(card); img.style.cssText = 'width:32px;height:44px;border-radius:4px;object-fit:cover;flex-shrink:0;';
-    const info = document.createElement('div'); info.className = 'dstats-card-info';
-    const name = document.createElement('div'); name.className = 'dstats-card-name'; name.textContent = card.name;
-    const sub = document.createElement('div'); sub.className = 'dstats-card-sub'; sub.textContent = card.version || '';
-    info.appendChild(name); info.appendChild(sub);
-    const cnt = document.createElement('div'); cnt.className = 'dstats-card-count'; cnt.textContent = '×' + count;
-    row.appendChild(img); row.appendChild(info); row.appendChild(cnt);
-    cardList.appendChild(row);
+    const div = document.createElement('div'); div.className = 'card-item';
+    div.appendChild(makeImg(card));
+    const info = document.createElement('div'); info.className = 'card-info';
+    const nameDiv = document.createElement('div'); nameDiv.className = 'card-name';
+    if (card.inks && card.inks.length > 1) nameDiv.appendChild(makeDualInkDot(card.inks));
+    else nameDiv.appendChild(makeInkDot(card.ink ?? (card.inks?.[0] ?? '')));
+    nameDiv.appendChild(document.createTextNode(card.name));
+    const subDiv = document.createElement('div'); subDiv.className = 'card-sub';
+    subDiv.textContent = card.version || '';
+    info.appendChild(nameDiv); info.appendChild(subDiv);
+    div.appendChild(info);
+    const badge = document.createElement('div'); badge.className = 'db-badge';
+    badge.textContent = '×' + count;
+    div.appendChild(badge);
+    div.addEventListener('click', () => openCardModal(card));
+    cardList.appendChild(div);
   });
+
+  syncDpScrollTop();
+}
+
+function syncDpScrollTop() {
+  const wrap = document.getElementById('dpScrollWrap');
+  if (!wrap) return;
+  const header = document.querySelector('#dpStats .dstats-header');
+  const actions = document.querySelector('#dpStats .dstats-actions');
+  const sleeve = document.getElementById('statsSleevePicker');
+  let top = (header?.offsetHeight ?? 0) + (actions?.offsetHeight ?? 0);
+  if (sleeve?.classList.contains('open')) top += sleeve.offsetHeight;
+  wrap.style.top = top + 'px';
 }
 
 document.getElementById('statsBackBtn').addEventListener('click', () => {
@@ -1536,6 +1556,7 @@ document.getElementById('statsBackBtn').addEventListener('click', () => {
 
 document.getElementById('statsSleeveBtn').addEventListener('click', () => {
   document.getElementById('statsSleevePicker').classList.toggle('open');
+  syncDpScrollTop();
 });
 
 document.getElementById('statsExportBtn').addEventListener('click', async () => {
