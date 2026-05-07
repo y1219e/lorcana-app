@@ -261,7 +261,8 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 #dbView.active { display:flex; }
 .db-header { display:flex; align-items:center; gap:6px; padding:8px 10px; background:var(--surface); border-bottom:1px solid var(--border); flex-shrink:0; }
 .db-search-input { flex:1; background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:5px 10px; color:var(--text); font-size:0.82rem; }
-#dbScrollWrap { flex:1; min-height:0; overflow-y:scroll; -webkit-overflow-scrolling:touch; }
+/* position:fixed is the only reliable way to scroll inside a fixed overlay on iOS Safari */
+#dbScrollWrap { position:fixed; top:46px; left:0; right:0; bottom:0; overflow-y:scroll; -webkit-overflow-scrolling:touch; }
 .db-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; padding:10px 10px 80px; }
 .in-deck { border-color: var(--accent) !important; }
 .db-badge { position:absolute; top:4px; left:4px; background:rgba(124,109,250,0.9); color:#fff; font-size:0.65rem; font-weight:bold; padding:2px 5px; border-radius:6px; pointer-events:none; z-index:1; }
