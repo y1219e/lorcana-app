@@ -1194,6 +1194,7 @@ document.getElementById('dbSearchInput').addEventListener('input', debounce(() =
 
 function openDeckBuilder(inkFilter) {
   currentDeck.inkFilter = inkFilter;
+  advFilter.sortOrder = 'cost_asc';
   document.getElementById('dbSearchInput').value = '';
   showPanel('dbView');
   renderDeckBuilderFooter();
@@ -1319,7 +1320,25 @@ function renderDeckBuilderGrid() {
   const scroller = grid.parentElement; // #dbScrollWrap handles scrolling
   const scrollTop = scroller.scrollTop;
 
-  _dbCards = dbFilteredCards();
+  _dbCards = [...dbFilteredCards()].sort((a, b) => {
+    if (advFilter.sortOrder === 'id_asc' || advFilter.sortOrder === 'id_desc') {
+      const sc = (a.set?.code ?? '').localeCompare(b.set?.code ?? '', undefined, {numeric: true});
+      const nc = String(a.collector_number ?? '').localeCompare(String(b.collector_number ?? ''), undefined, {numeric: true});
+      const r = sc !== 0 ? sc : nc;
+      return advFilter.sortOrder === 'id_desc' ? -r : r;
+    }
+    if (advFilter.sortOrder === 'cost_asc' || advFilter.sortOrder === 'cost_desc') {
+      const ca = a.cost ?? 0, cb = b.cost ?? 0;
+      if (ca !== cb) return advFilter.sortOrder === 'cost_asc' ? ca - cb : cb - ca;
+      const sc = (a.set?.code ?? '').localeCompare(b.set?.code ?? '', undefined, {numeric: true});
+      if (sc !== 0) return sc;
+      const ia = INK_ORDER_LIST.indexOf(a.ink ?? a.inks?.[0] ?? '');
+      const ib = INK_ORDER_LIST.indexOf(b.ink ?? b.inks?.[0] ?? '');
+      if (ia !== ib) return ia - ib;
+      return String(a.collector_number ?? '').localeCompare(String(b.collector_number ?? ''), undefined, {numeric: true});
+    }
+    return 0;
+  });
 
   grid.innerHTML = '';
   _dbRendered = 0;
@@ -1907,7 +1926,7 @@ async function importBackup(file) {
     const sortSel=document.getElementById('advSortSelect');
     if(sortSel){ sortSel.value=advFilter.sortOrder??'id_asc';
       if(!sortSel._init){ sortSel._init=true;
-        sortSel.addEventListener('change',()=>{ advFilter.sortOrder=sortSel.value; document.getElementById('advApply').textContent='結果を表示（'+filteredCards().length+'件）'; });
+        sortSel.addEventListener('change',()=>{ advFilter.sortOrder=sortSel.value; updateAdvCount(); });
       }
     }
 
@@ -2112,6 +2131,7 @@ async function importBackup(file) {
   });
   document.getElementById('dbAdvBtn').addEventListener('click', () => {
     _advFromDeck = true;
+    advFilter.inks = new Set(currentDeck?.inkFilter ?? []);
     buildAdvUI();
     document.getElementById('advSearchModal').classList.add('open');
     pushModalState();
