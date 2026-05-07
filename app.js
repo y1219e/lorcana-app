@@ -543,7 +543,7 @@ function _renderNextBatch(grid) {
   const frag = document.createDocumentFragment();
   for (let i = _gridRendered; i < end; i++) frag.appendChild(_makeCardItem(_gridCards[i]));
   _gridRendered = end;
-  const sentinel = document.getElementById('gridSentinel');
+  const sentinel = grid.querySelector('#gridSentinel');
   if (sentinel) grid.insertBefore(frag, sentinel); else grid.appendChild(frag);
 }
 
@@ -1776,6 +1776,7 @@ async function importBackup(file) {
       const ghost = grid.cloneNode(true);
       ghost.removeAttribute('id');
       ghost.style.cssText = `position:absolute;top:0;left:0;width:100%;margin:0;pointer-events:none;transform:translateX(${startDx}px);`;
+      ghost.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
       wrap.appendChild(ghost);
       void ghost.offsetWidth; // reflow でfrom値を確定
       ghost.style.transition = `transform ${DUR}ms ease`;
