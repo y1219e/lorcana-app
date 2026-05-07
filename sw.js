@@ -1,4 +1,4 @@
-const SHELL_CACHE = 'loreca-shell-v7';
+const SHELL_CACHE = 'loreca-shell-v8';
 const BASE = self.registration.scope;
 const SHELL = ['index_v2.html', 'style.css', 'app.js', 'loreca_config.json']
   .map(f => new URL(f, BASE).href);
@@ -38,10 +38,10 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // アプリシェル: ネットワークファースト → キャッシュを更新、オフライン時はキャッシュから返す
+  // アプリシェル: cache:'no-store' でHTTPキャッシュをバイパスしてネットワークファースト
   if (SHELL.includes(e.request.url)) {
     e.respondWith(
-      fetch(e.request)
+      fetch(new Request(e.request, { cache: 'no-store' }))
         .then(response => {
           const clone = response.clone();
           caches.open(SHELL_CACHE).then(c => c.put(e.request, clone));
