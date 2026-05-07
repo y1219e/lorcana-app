@@ -56,7 +56,7 @@
     </div>
     <div class="dip-grid" id="dipGrid"></div>
     <div class="dip-selection" id="dipSelection">選択してください</div>
-    <button class="dip-choose-btn" id="deckInkChooseBtn" disabled>CHOOSE</button>
+    <button class="dip-choose-btn" id="deckInkChooseBtn" disabled>決定</button>
   </div>
 
   <!-- Panel 2: Deck Builder (card grid) -->
@@ -69,7 +69,7 @@
     <div class="db-footer">
       <span class="db-footer-ink" id="dbFooterInk"></span>
       <span class="db-footer-name" id="dbFooterName">デッキ名未設定</span>
-      <button class="db-show-btn" id="showDeckStatsBtn">SHOW DECK (<span id="dbTotalCount">0</span>/60)</button>
+      <button class="db-show-btn" id="showDeckStatsBtn">デッキを見る (<span id="dbTotalCount">0</span>/60)</button>
     </div>
   </div>
 
@@ -90,9 +90,11 @@
       <div id="statsSleeveGrid" style="display:flex;flex-wrap:wrap;gap:6px;max-height:160px;overflow-y:auto;"></div>
     </div>
     <div class="dstats-body" id="dstatsBody">
-      <div class="dstats-total-box" id="dstatsTotalBox"></div>
-      <div class="dstats-grid" id="dstatsGrid"></div>
-      <div class="dstats-cost-chart" id="dstatsCostChart"></div>
+      <div class="dstats-summary">
+        <div class="dstats-total-box" id="dstatsTotalBox"></div>
+        <div class="dstats-grid" id="dstatsGrid"></div>
+        <div class="dstats-cost-chart" id="dstatsCostChart"></div>
+      </div>
       <div class="dstats-card-list" id="dstatsCardList"></div>
     </div>
   </div>
