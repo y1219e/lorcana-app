@@ -1131,9 +1131,8 @@ function openDeckEditor(deck) {
   document.getElementById('deckEditor').classList.add('open');
   document.body.classList.add('deck-editing');
   if (deck) {
-    // 既存デッキ: builder を直接開く
-    const inkFilter = (currentDeck.inkFilter && currentDeck.inkFilter.length > 0) ? currentDeck.inkFilter : deckInks();
-    openDeckBuilder(inkFilter);
+    // 既存デッキ: 統計画面を直接開く
+    openDeckStats();
   } else {
     openInkPicker();
   }
@@ -1257,11 +1256,11 @@ function _makeDbCard(card, total) {
     div.appendChild(ob);
   }
 
-  // Deck count badge (top-left) + minus button
+  // +/−ボタン・中央枚数表示
   if (count > 0) {
-    const badge = document.createElement('div'); badge.className = 'db-badge';
-    badge.textContent = '×' + count;
-    div.appendChild(badge);
+    const countDiv = document.createElement('div'); countDiv.className = 'db-count';
+    countDiv.textContent = count;
+    div.appendChild(countDiv);
     const minusBtn = document.createElement('button'); minusBtn.className = 'db-minus';
     minusBtn.textContent = '−';
     minusBtn.addEventListener('click', e => {
@@ -1360,17 +1359,17 @@ function renderDeckBuilderGridUpdate() {
     const cardId = div.dataset.cardId;
     const count = currentDeck.cards[cardId] ?? 0;
 
-    let badge = div.querySelector('.db-badge');
+    let countDiv = div.querySelector('.db-count');
     let minusBtn = div.querySelector('.db-minus');
     const plusBtn = div.querySelector('.db-plus');
 
     if (count > 0) {
       div.classList.add('in-deck');
-      if (!badge) {
-        badge = document.createElement('div'); badge.className = 'db-badge';
-        div.appendChild(badge);
+      if (!countDiv) {
+        countDiv = document.createElement('div'); countDiv.className = 'db-count';
+        div.appendChild(countDiv);
       }
-      badge.textContent = '×' + count;
+      countDiv.textContent = count;
       if (!minusBtn) {
         minusBtn = document.createElement('button'); minusBtn.className = 'db-minus';
         minusBtn.textContent = '−';
@@ -1384,7 +1383,7 @@ function renderDeckBuilderGridUpdate() {
       }
     } else {
       div.classList.remove('in-deck');
-      if (badge) badge.remove();
+      if (countDiv) countDiv.remove();
       if (minusBtn) minusBtn.remove();
     }
 
@@ -1584,15 +1583,23 @@ function renderDeckStats() {
     nameDiv.appendChild(document.createTextNode(card.name));
     const subDiv = document.createElement('div'); subDiv.className = 'card-sub'; subDiv.textContent = card.version || '';
     info.appendChild(nameDiv); info.appendChild(subDiv); div.appendChild(info);
-    const badge = document.createElement('div'); badge.className = 'db-badge'; badge.textContent = '×' + count;
-    div.appendChild(badge);
+    // 所持枚数バッジ（右上）
+    const ownedCount = ownedTotal(card.id);
+    if (ownedCount > 0) {
+      const o = getOwned(card.id);
+      const ob = document.createElement('div'); ob.className = 'own-badge' + (o.foil > 0 ? ' foil' : '');
+      ob.textContent = o.normal + o.foil; div.appendChild(ob);
+    }
+    // 枚数（+/−ボタン間）
+    const countDiv = document.createElement('div'); countDiv.className = 'db-count'; countDiv.textContent = count;
+    div.appendChild(countDiv);
     const minusBtn = document.createElement('button'); minusBtn.className = 'db-minus';
     minusBtn.textContent = '−';
     minusBtn.addEventListener('click', e => {
       e.stopPropagation();
       const cur = currentDeck.cards[cardId] ?? 0;
       if (cur <= 1) { delete currentDeck.cards[cardId]; div.remove(); }
-      else { currentDeck.cards[cardId] = cur - 1; badge.textContent = '×' + (cur - 1); plusBtn.disabled = false; }
+      else { currentDeck.cards[cardId] = cur - 1; countDiv.textContent = cur - 1; plusBtn.disabled = false; }
       refreshDeckStatsNumbers();
     });
     div.appendChild(minusBtn);
@@ -1602,7 +1609,7 @@ function renderDeckStats() {
       e.stopPropagation();
       const cur = currentDeck.cards[cardId] ?? 0;
       if (cur >= 4) return;
-      currentDeck.cards[cardId] = cur + 1; badge.textContent = '×' + (cur + 1); plusBtn.disabled = (cur + 1) >= 4;
+      currentDeck.cards[cardId] = cur + 1; countDiv.textContent = cur + 1; plusBtn.disabled = (cur + 1) >= 4;
       refreshDeckStatsNumbers();
     });
     div.appendChild(plusBtn);
@@ -1625,8 +1632,8 @@ function syncDpScrollTop() {
 }
 
 document.getElementById('statsBackBtn').addEventListener('click', () => {
-  showPanel('dbView');
-  renderDeckBuilderFooter();
+  const inkFilter = currentDeck.inkFilter?.length > 0 ? currentDeck.inkFilter : deckInks();
+  openDeckBuilder(inkFilter);
 });
 
 document.getElementById('statsSleeveBtn').addEventListener('click', () => {
