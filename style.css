@@ -288,30 +288,30 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 .dstats-body { flex:1; min-height:0; }
 /* position:fixed scroll — same iOS Safari fix as #dbScrollWrap */
 #dpScrollWrap { position:fixed; top:88px; left:0; right:0; bottom:0; overflow-y:scroll; -webkit-overflow-scrolling:touch; }
-/* ── Summary: (cost-section | 4+2-type grid) ── */
+/* ── Summary: top-row (chart|4-type) + bottom-row (ink|🎵◇) ── */
 .dstats-summary { display:flex; flex-direction:column; gap:3px; padding:6px 10px; }
-.dstats-summary-body { display:flex; gap:6px; align-items:flex-start; }
-/* Cost section: chart + ink row stacked, fills left side */
-.dstats-cost-section { flex:1; display:flex; flex-direction:column; gap:3px; min-width:0; }
-.dstats-cost-chart { background:var(--surface); border-radius:6px; padding:5px 6px; }
+.dstats-top-row { display:flex; gap:6px; align-items:stretch; }
+.dstats-bottom-row { display:flex; gap:6px; align-items:stretch; }
+/* Cost chart: fills left side of top-row */
+.dstats-cost-chart { flex:1; min-width:0; background:var(--surface); border-radius:6px; padding:5px 6px; display:flex; flex-direction:column; justify-content:flex-end; }
 .dstats-cost-counts { display:flex; gap:2px; margin-bottom:1px; }
 .dstats-cost-count { flex:1; font-size:0.48rem; color:var(--text2); text-align:center; }
 .dstats-cost-bars { display:flex; align-items:flex-end; gap:2px; height:52px; }
 .dstats-cost-bar { flex:1; background:var(--accent); border-radius:2px 2px 0 0; min-height:2px; }
 .dstats-cost-labels { display:flex; gap:2px; margin-top:1px; }
 .dstats-cost-label { flex:1; font-size:0.48rem; color:var(--text2); text-align:center; }
-/* Type grid: 2 columns × 3 rows */
+/* Type grids: right side, both rows same width for column alignment */
 .dstats-grid { display:grid; grid-template-columns:1fr 1fr; gap:3px; flex-shrink:0; width:44%; }
-.dstats-cell { background:var(--surface); border-radius:6px; padding:3px 6px; }
+.dstats-grid-extra { display:grid; grid-template-columns:1fr 1fr; gap:3px; flex-shrink:0; width:44%; }
+.dstats-cell { background:var(--surface); border-radius:6px; padding:3px 6px; display:flex; flex-direction:column; justify-content:space-between; }
 .dstats-cell-label { font-size:0.58rem; color:var(--text2); margin-bottom:1px; display:flex; align-items:center; gap:2px; }
 .dstats-cell-label img { width:11px; height:11px; object-fit:contain; }
 .dstats-cell-val { font-size:0.88rem; font-weight:bold; color:var(--text); }
-/* Ink row with total box on the left */
-.dstats-ink-row { display:flex; gap:3px; }
+/* Ink row: left side of bottom-row — total box + ink cells */
+.dstats-ink-row { flex:1; min-width:0; display:flex; gap:3px; align-items:stretch; }
 .dstats-ink-row .dstats-cell { flex:1; }
 .dstats-total-box { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:3px 5px; background:var(--surface); border-radius:6px; flex-shrink:0; }
-.dstats-total-num { font-size:0.88rem; font-weight:bold; color:var(--accent); line-height:1; }
-.dstats-total-label { font-size:0.55rem; color:var(--text2); }
+.dstats-total-num { font-size:0.88rem; font-weight:bold; color:var(--accent); white-space:nowrap; }
 .dstats-card-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; padding:6px 10px 80px; }
 
 /* ─── レスポンシブ: タブレット(600px+) ─── */
