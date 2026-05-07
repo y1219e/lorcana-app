@@ -1275,10 +1275,10 @@ function _makeDbCard(card, total) {
 
   const plusBtn = document.createElement('button'); plusBtn.className = 'db-plus';
   plusBtn.textContent = '+';
-  plusBtn.disabled = total >= 60 || count >= 4;
+  plusBtn.disabled = count >= 4;
   plusBtn.addEventListener('click', e => {
     e.stopPropagation();
-    if ((currentDeck.cards[card.id] ?? 0) >= 4 || deckTotal() >= 60) return;
+    if ((currentDeck.cards[card.id] ?? 0) >= 4) return;
     currentDeck.cards[card.id] = (currentDeck.cards[card.id] ?? 0) + 1;
     renderDeckBuilderGridUpdate();
   });
@@ -1388,7 +1388,7 @@ function renderDeckBuilderGridUpdate() {
       if (minusBtn) minusBtn.remove();
     }
 
-    if (plusBtn) plusBtn.disabled = total >= 60 || count >= 4;
+    if (plusBtn) plusBtn.disabled = count >= 4;
   });
 
   scroller.scrollTop = scrollTop;
@@ -1425,71 +1425,8 @@ function renderStatsSleeveGrid() {
   });
 }
 
-function renderDeckStats() {
-  const total = deckTotal();
-  const inks = currentDeck.inkFilter && currentDeck.inkFilter.length > 0 ? currentDeck.inkFilter : deckInks();
-
-  // Stats grid — type counts (2×3: キャラ/アクション/アイテム/ロケ/🎵ソング/◇非インクウェル)
-  const statsGrid = document.getElementById('dstatsGrid');
-  statsGrid.innerHTML = '';
-  const TYPES = ['キャラクター','アクション','アイテム','ロケーション'];
-  TYPES.forEach(type => {
-    const count = Object.entries(currentDeck.cards ?? {}).reduce((sum, [id, n]) => {
-      const c = allCards.find(x => x.id === id);
-      return sum + (c && (c.type ?? []).includes(type) ? n : 0);
-    }, 0);
-    const cell = document.createElement('div'); cell.className = 'dstats-cell';
-    const lbl = document.createElement('div'); lbl.className = 'dstats-cell-label'; lbl.textContent = type;
-    const val = document.createElement('div'); val.className = 'dstats-cell-val'; val.textContent = count;
-    cell.appendChild(lbl); cell.appendChild(val);
-    statsGrid.appendChild(cell);
-  });
-  // Song count (🎵) — action cards with 歌 classification
-  const songCount = Object.entries(currentDeck.cards ?? {}).reduce((sum, [id, n]) => {
-    const c = allCards.find(x => x.id === id); if (!c) return sum;
-    const isAction = (c.type ?? []).includes('アクション');
-    return sum + (isAction && (c.classifications ?? []).includes('歌') ? n : 0);
-  }, 0);
-  const songCell = document.createElement('div'); songCell.className = 'dstats-cell';
-  const songLbl = document.createElement('div'); songLbl.className = 'dstats-cell-label'; songLbl.textContent = '🎵';
-  const songVal = document.createElement('div'); songVal.className = 'dstats-cell-val'; songVal.textContent = songCount;
-  songCell.appendChild(songLbl); songCell.appendChild(songVal); statsGrid.appendChild(songCell);
-  // Non-inkwell count (◇) — cards without inkwell symbol
-  const noInkCount = Object.entries(currentDeck.cards ?? {}).reduce((sum, [id, n]) => {
-    const c = allCards.find(x => x.id === id);
-    return sum + (c && !c.inkwell ? n : 0);
-  }, 0);
-  const noInkCell = document.createElement('div'); noInkCell.className = 'dstats-cell';
-  const noInkLbl = document.createElement('div'); noInkLbl.className = 'dstats-cell-label'; noInkLbl.textContent = '◇';
-  const noInkVal = document.createElement('div'); noInkVal.className = 'dstats-cell-val'; noInkVal.textContent = noInkCount;
-  noInkCell.appendChild(noInkLbl); noInkCell.appendChild(noInkVal); statsGrid.appendChild(noInkCell);
-
-  // Ink row — total box leftmost, then ink cells
-  const inkRow = document.getElementById('dstatsInkRow');
-  inkRow.innerHTML = '';
-  const totalCell = document.createElement('div'); totalCell.className = 'dstats-total-box';
-  const numDiv = document.createElement('div'); numDiv.className = 'dstats-total-num'; numDiv.textContent = total;
-  const labelDiv = document.createElement('div'); labelDiv.className = 'dstats-total-label'; labelDiv.textContent = '/ 60枚';
-  totalCell.appendChild(numDiv); totalCell.appendChild(labelDiv); inkRow.appendChild(totalCell);
-  inks.forEach(ink => {
-    const count = Object.entries(currentDeck.cards ?? {}).reduce((sum, [id, n]) => {
-      const c = allCards.find(x => x.id === id);
-      if (!c) return sum;
-      const ci = c.inks ?? (c.ink ? [c.ink] : []);
-      return sum + (ci.includes(ink) ? n : 0);
-    }, 0);
-    const cell = document.createElement('div'); cell.className = 'dstats-cell';
-    const lbl = document.createElement('div'); lbl.className = 'dstats-cell-label';
-    const img = document.createElement('img'); img.src = INK_IMG[ink]; img.alt = ink;
-    lbl.appendChild(img); lbl.appendChild(document.createTextNode(ink));
-    const val = document.createElement('div'); val.className = 'dstats-cell-val'; val.textContent = count;
-    cell.appendChild(lbl); cell.appendChild(val);
-    inkRow.appendChild(cell);
-  });
-
-  // Cost chart — all counts at same level above bars, bars taller, bottom-aligned
-  const costChart = document.getElementById('dstatsCostChart');
-  costChart.innerHTML = '';
+function _renderCostChart(chartEl) {
+  chartEl.innerHTML = '';
   const costCounts = {};
   Object.entries(currentDeck.cards ?? {}).forEach(([id, n]) => {
     const c = allCards.find(x => x.id === id);
@@ -1506,9 +1443,128 @@ function renderDeckStats() {
     const label = document.createElement('div'); label.className = 'dstats-cost-label'; label.textContent = i;
     countsRow.appendChild(countDiv); barsRow.appendChild(bar); labelsRow.appendChild(label);
   }
-  costChart.appendChild(countsRow); costChart.appendChild(barsRow); costChart.appendChild(labelsRow);
+  chartEl.appendChild(countsRow); chartEl.appendChild(barsRow); chartEl.appendChild(labelsRow);
+}
 
-  // Card grid (3-column portrait images, sorted by cost)
+function refreshDeckStatsNumbers() {
+  const total = deckTotal();
+  const inks = currentDeck.inkFilter?.length > 0 ? currentDeck.inkFilter : deckInks();
+
+  // 合計枚数
+  const totalEl = document.querySelector('#dstatsInkRow .dstats-total-box .dstats-total-num');
+  if (totalEl) totalEl.textContent = total + '枚';
+
+  // タイプ別カウント
+  const TYPES = ['キャラクター','アクション','アイテム','ロケーション'];
+  TYPES.forEach(type => {
+    const cell = document.querySelector(`#dstatsGrid [data-stat-type="${CSS.escape(type)}"]`);
+    if (!cell) return;
+    const count = Object.entries(currentDeck.cards ?? {}).reduce((sum, [id, n]) => {
+      const c = allCards.find(x => x.id === id);
+      return sum + (c && (c.type ?? []).includes(type) ? n : 0);
+    }, 0);
+    cell.querySelector('.dstats-cell-val').textContent = count;
+  });
+
+  // ソング・非インクウェル
+  const songEl = document.querySelector('#dstatsGridExtra [data-stat="song"] .dstats-cell-val');
+  if (songEl) songEl.textContent = Object.entries(currentDeck.cards ?? {}).reduce((sum, [id, n]) => {
+    const c = allCards.find(x => x.id === id); if (!c) return sum;
+    return sum + ((c.type ?? []).includes('アクション') && (c.classifications ?? []).includes('歌') ? n : 0);
+  }, 0);
+  const noinkEl = document.querySelector('#dstatsGridExtra [data-stat="noink"] .dstats-cell-val');
+  if (noinkEl) noinkEl.textContent = Object.entries(currentDeck.cards ?? {}).reduce((sum, [id, n]) => {
+    const c = allCards.find(x => x.id === id);
+    return sum + (c && !c.inkwell ? n : 0);
+  }, 0);
+
+  // インク別カウント
+  inks.forEach(ink => {
+    const cell = document.querySelector(`#dstatsInkRow [data-ink="${CSS.escape(ink)}"]`);
+    if (!cell) return;
+    const count = Object.entries(currentDeck.cards ?? {}).reduce((sum, [id, n]) => {
+      const c = allCards.find(x => x.id === id); if (!c) return sum;
+      const ci = c.inks ?? (c.ink ? [c.ink] : []);
+      return sum + (ci.includes(ink) ? n : 0);
+    }, 0);
+    cell.querySelector('.dstats-cell-val').textContent = count;
+  });
+
+  // コスト分布
+  const costChart = document.getElementById('dstatsCostChart');
+  if (costChart) _renderCostChart(costChart);
+
+  renderDeckBuilderFooter();
+}
+
+function renderDeckStats() {
+  const total = deckTotal();
+  const inks = currentDeck.inkFilter?.length > 0 ? currentDeck.inkFilter : deckInks();
+
+  // タイプグリッド（上段4セル）
+  const statsGrid = document.getElementById('dstatsGrid');
+  statsGrid.innerHTML = '';
+  const TYPES = ['キャラクター','アクション','アイテム','ロケーション'];
+  TYPES.forEach(type => {
+    const count = Object.entries(currentDeck.cards ?? {}).reduce((sum, [id, n]) => {
+      const c = allCards.find(x => x.id === id);
+      return sum + (c && (c.type ?? []).includes(type) ? n : 0);
+    }, 0);
+    const cell = document.createElement('div'); cell.className = 'dstats-cell';
+    cell.setAttribute('data-stat-type', type);
+    const lbl = document.createElement('div'); lbl.className = 'dstats-cell-label'; lbl.textContent = type;
+    const val = document.createElement('div'); val.className = 'dstats-cell-val'; val.textContent = count;
+    cell.appendChild(lbl); cell.appendChild(val); statsGrid.appendChild(cell);
+  });
+
+  // グリッド下段（🎵/◇）
+  const gridExtra = document.getElementById('dstatsGridExtra');
+  gridExtra.innerHTML = '';
+  const songCount = Object.entries(currentDeck.cards ?? {}).reduce((sum, [id, n]) => {
+    const c = allCards.find(x => x.id === id); if (!c) return sum;
+    return sum + ((c.type ?? []).includes('アクション') && (c.classifications ?? []).includes('歌') ? n : 0);
+  }, 0);
+  const songCell = document.createElement('div'); songCell.className = 'dstats-cell';
+  songCell.setAttribute('data-stat', 'song');
+  const songLbl = document.createElement('div'); songLbl.className = 'dstats-cell-label'; songLbl.textContent = '🎵';
+  const songVal = document.createElement('div'); songVal.className = 'dstats-cell-val'; songVal.textContent = songCount;
+  songCell.appendChild(songLbl); songCell.appendChild(songVal); gridExtra.appendChild(songCell);
+
+  const noInkCount = Object.entries(currentDeck.cards ?? {}).reduce((sum, [id, n]) => {
+    const c = allCards.find(x => x.id === id);
+    return sum + (c && !c.inkwell ? n : 0);
+  }, 0);
+  const noInkCell = document.createElement('div'); noInkCell.className = 'dstats-cell';
+  noInkCell.setAttribute('data-stat', 'noink');
+  const noInkLbl = document.createElement('div'); noInkLbl.className = 'dstats-cell-label'; noInkLbl.textContent = '◇';
+  const noInkVal = document.createElement('div'); noInkVal.className = 'dstats-cell-val'; noInkVal.textContent = noInkCount;
+  noInkCell.appendChild(noInkLbl); noInkCell.appendChild(noInkVal); gridExtra.appendChild(noInkCell);
+
+  // インク行（合計 + インク別）
+  const inkRow = document.getElementById('dstatsInkRow');
+  inkRow.innerHTML = '';
+  const totalCell = document.createElement('div'); totalCell.className = 'dstats-total-box';
+  const totalNum = document.createElement('div'); totalNum.className = 'dstats-total-num'; totalNum.textContent = total + '枚';
+  totalCell.appendChild(totalNum); inkRow.appendChild(totalCell);
+  inks.forEach(ink => {
+    const count = Object.entries(currentDeck.cards ?? {}).reduce((sum, [id, n]) => {
+      const c = allCards.find(x => x.id === id); if (!c) return sum;
+      const ci = c.inks ?? (c.ink ? [c.ink] : []);
+      return sum + (ci.includes(ink) ? n : 0);
+    }, 0);
+    const cell = document.createElement('div'); cell.className = 'dstats-cell';
+    cell.setAttribute('data-ink', ink);
+    const lbl = document.createElement('div'); lbl.className = 'dstats-cell-label';
+    const img = document.createElement('img'); img.src = INK_IMG[ink]; img.alt = ink;
+    lbl.appendChild(img); lbl.appendChild(document.createTextNode(ink));
+    const val = document.createElement('div'); val.className = 'dstats-cell-val'; val.textContent = count;
+    cell.appendChild(lbl); cell.appendChild(val); inkRow.appendChild(cell);
+  });
+
+  // コスト分布チャート
+  _renderCostChart(document.getElementById('dstatsCostChart'));
+
+  // カードリスト（+/−ボタン付き）
   const cardList = document.getElementById('dstatsCardList');
   cardList.innerHTML = '';
   const entries = Object.entries(currentDeck.cards ?? {}).filter(([,n]) => n > 0);
@@ -1526,13 +1582,30 @@ function renderDeckStats() {
     if (card.inks && card.inks.length > 1) nameDiv.appendChild(makeDualInkDot(card.inks));
     else nameDiv.appendChild(makeInkDot(card.ink ?? (card.inks?.[0] ?? '')));
     nameDiv.appendChild(document.createTextNode(card.name));
-    const subDiv = document.createElement('div'); subDiv.className = 'card-sub';
-    subDiv.textContent = card.version || '';
-    info.appendChild(nameDiv); info.appendChild(subDiv);
-    div.appendChild(info);
-    const badge = document.createElement('div'); badge.className = 'db-badge';
-    badge.textContent = '×' + count;
+    const subDiv = document.createElement('div'); subDiv.className = 'card-sub'; subDiv.textContent = card.version || '';
+    info.appendChild(nameDiv); info.appendChild(subDiv); div.appendChild(info);
+    const badge = document.createElement('div'); badge.className = 'db-badge'; badge.textContent = '×' + count;
     div.appendChild(badge);
+    const minusBtn = document.createElement('button'); minusBtn.className = 'db-minus';
+    minusBtn.textContent = '−';
+    minusBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      const cur = currentDeck.cards[cardId] ?? 0;
+      if (cur <= 1) { delete currentDeck.cards[cardId]; div.remove(); }
+      else { currentDeck.cards[cardId] = cur - 1; badge.textContent = '×' + (cur - 1); plusBtn.disabled = false; }
+      refreshDeckStatsNumbers();
+    });
+    div.appendChild(minusBtn);
+    const plusBtn = document.createElement('button'); plusBtn.className = 'db-plus';
+    plusBtn.textContent = '+'; plusBtn.disabled = count >= 4;
+    plusBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      const cur = currentDeck.cards[cardId] ?? 0;
+      if (cur >= 4) return;
+      currentDeck.cards[cardId] = cur + 1; badge.textContent = '×' + (cur + 1); plusBtn.disabled = (cur + 1) >= 4;
+      refreshDeckStatsNumbers();
+    });
+    div.appendChild(plusBtn);
     div.addEventListener('click', () => openCardModal(card));
     cardList.appendChild(div);
   });
