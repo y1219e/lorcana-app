@@ -1135,8 +1135,12 @@ document.getElementById('deckInkChooseBtn').addEventListener('click', () => {
 });
 
 // ── Panel 2: Deck Builder ──
+document.getElementById('dbBackBtn').addEventListener('click', closeDeckEditor);
+document.getElementById('dbSearchInput').addEventListener('input', debounce(() => renderDeckBuilderGrid(), 300));
+
 function openDeckBuilder(inkFilter) {
   currentDeck.inkFilter = inkFilter;
+  document.getElementById('dbSearchInput').value = '';
   showPanel('dbView');
   renderDeckBuilderFooter();
   renderDeckBuilderGrid();
@@ -1170,9 +1174,15 @@ function renderDeckBuilderGrid() {
   const scrollTop = grid.scrollTop;
 
   const inkFilter = currentDeck.inkFilter ?? [];
-  const cards = inkFilter.length > 0
-    ? allCards.filter(c => { const ci = c.inks ?? (c.ink ? [c.ink] : []); return ci.some(i => inkFilter.includes(i)); })
-    : allCards;
+  const q = (document.getElementById('dbSearchInput')?.value ?? '').toLowerCase();
+  const cards = allCards.filter(c => {
+    if (inkFilter.length > 0) {
+      const ci = c.inks ?? (c.ink ? [c.ink] : []);
+      if (!ci.some(i => inkFilter.includes(i))) return false;
+    }
+    if (q && !c.name?.toLowerCase().includes(q) && !c.version?.toLowerCase().includes(q)) return false;
+    return true;
+  });
 
   grid.innerHTML = '';
   const total = deckTotal();

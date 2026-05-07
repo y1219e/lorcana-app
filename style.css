@@ -259,6 +259,8 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 /* ─── Deck Builder (#dbView) ─── */
 #dbView { display:none; flex-direction:column; flex:1; overflow:hidden; }
 #dbView.active { display:flex; }
+.db-header { display:flex; align-items:center; gap:6px; padding:8px 10px; background:var(--surface); border-bottom:1px solid var(--border); flex-shrink:0; }
+.db-search-input { flex:1; background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:5px 10px; color:var(--text); font-size:0.82rem; }
 .db-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; padding:8px 8px 80px; overflow-y:auto; flex:1; }
 .db-card { position:relative; border-radius:8px; overflow:hidden; background:var(--surface2); }
 .db-card img { width:100%; aspect-ratio:2/3; object-fit:cover; display:block; }
