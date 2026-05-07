@@ -267,6 +267,7 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 .db-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; padding:10px 10px 80px; }
 .in-deck { border-color: var(--accent) !important; }
 .db-badge { position:absolute; top:4px; left:4px; background:rgba(124,109,250,0.9); color:#fff; font-size:0.65rem; font-weight:bold; padding:2px 5px; border-radius:6px; pointer-events:none; z-index:1; }
+.db-count { position:absolute; bottom:34px; left:50%; transform:translateX(-50%); font-size:0.8rem; font-weight:bold; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.9); z-index:1; pointer-events:none; white-space:nowrap; }
 .db-minus { position:absolute; bottom:34px; left:4px; width:26px; height:26px; border-radius:50%; background:rgba(231,76,60,0.85); color:#fff; border:none; font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; font-weight:bold; z-index:1; }
 .db-plus { position:absolute; bottom:34px; right:4px; width:26px; height:26px; border-radius:50%; background:rgba(124,109,250,0.85); color:#fff; border:none; font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; font-weight:bold; z-index:1; }
 .db-plus:disabled { opacity:0.3; cursor:default; }
@@ -297,7 +298,7 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 .dstats-cost-counts { display:flex; gap:2px; margin-bottom:1px; }
 .dstats-cost-count { flex:1; font-size:0.48rem; color:var(--text2); text-align:center; }
 .dstats-cost-bars { display:flex; align-items:flex-end; gap:2px; height:52px; }
-.dstats-cost-bar { flex:1; background:var(--accent); border-radius:2px 2px 0 0; min-height:2px; }
+.dstats-cost-bar { flex:1; background:var(--accent); border-radius:2px 2px 0 0; min-height:0; }
 .dstats-cost-labels { display:flex; gap:2px; margin-top:1px; }
 .dstats-cost-label { flex:1; font-size:0.48rem; color:var(--text2); text-align:center; }
 /* Type grids: right side, both rows same width for column alignment */
