@@ -1774,10 +1774,14 @@ async function importBackup(file) {
       // 現在の表示をゴーストとして絶対配置（アウトゴーイングパネル）
       const ghost = grid.cloneNode(true);
       ghost.removeAttribute('id');
-      ghost.style.cssText =
-        `position:absolute;top:0;left:0;width:100%;margin:0;` +
-        `pointer-events:none;transition:none;` +
-        `transform:translateX(${startDx}px);`;
+      ghost.style.position = 'absolute';
+      ghost.style.top = '0';
+      ghost.style.left = '0';
+      ghost.style.width = '100%';
+      ghost.style.margin = '0';
+      ghost.style.pointerEvents = 'none';
+      ghost.style.transition = 'none';
+      ghost.style.transform = `translateX(${startDx}px)`;
       wrap.appendChild(ghost);
 
       // 新タブのコンテンツをオフスクリーンに描画
@@ -1789,14 +1793,15 @@ async function importBackup(file) {
       grid.style.transform = `translateX(${inDir})`;
       renderCardGrid();
 
-      // ゴーストと新グリッドを同時にアニメーション
-      requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      // レイアウト確定を強制してからアニメーション開始（単一rAF）
+      void grid.offsetWidth;
+      requestAnimationFrame(()=>{
         ghost.style.transition = `transform ${DUR}ms ease`;
         ghost.style.transform  = `translateX(${outDir})`;
         grid.style.transition  = `transform ${DUR}ms ease`;
         grid.style.transform   = 'translateX(0)';
-        setTimeout(()=>{ ghost.remove(); busy=false; }, DUR);
-      }));
+        setTimeout(()=>{ try { ghost.remove(); } catch(e){} busy=false; }, DUR + 50);
+      });
     }
 
     page.addEventListener('touchstart', e=>{
