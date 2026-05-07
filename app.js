@@ -1232,8 +1232,40 @@ function _makeDbCard(card, total) {
   div.className = 'card-item' + (count > 0 ? ' in-deck' : '');
   div.dataset.cardId = card.id;
 
-  // Use makeImg (async src) — identical to main card grid, ensures aspect-ratio:429/600 works on iOS Safari
-  div.appendChild(makeImg(card));
+  // Wrapper: padding-bottom creates the intrinsic ratio height (reliable across all browsers)
+  const imgWrap = document.createElement('div');
+  imgWrap.className = 'db-img-wrap';
+  imgWrap.appendChild(makeImg(card));
+
+  if (count > 0) {
+    const badge = document.createElement('div');
+    badge.className = 'db-badge';
+    badge.textContent = '×' + count;
+    imgWrap.appendChild(badge);
+    const minusBtn = document.createElement('button');
+    minusBtn.className = 'db-minus';
+    minusBtn.textContent = '−';
+    minusBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      currentDeck.cards[card.id] = Math.max(0, (currentDeck.cards[card.id] ?? 0) - 1);
+      if (currentDeck.cards[card.id] === 0) delete currentDeck.cards[card.id];
+      renderDeckBuilderGridUpdate();
+    });
+    imgWrap.appendChild(minusBtn);
+  }
+
+  const plusBtn = document.createElement('button');
+  plusBtn.className = 'db-plus';
+  plusBtn.textContent = '+';
+  plusBtn.disabled = total >= 60 || count >= 4;
+  plusBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    if ((currentDeck.cards[card.id] ?? 0) >= 4 || deckTotal() >= 60) return;
+    currentDeck.cards[card.id] = (currentDeck.cards[card.id] ?? 0) + 1;
+    renderDeckBuilderGridUpdate();
+  });
+  imgWrap.appendChild(plusBtn);
+  div.appendChild(imgWrap);
 
   // Card info (same as main grid)
   const info = document.createElement('div'); info.className = 'card-info';
@@ -1248,7 +1280,7 @@ function _makeDbCard(card, total) {
   info.appendChild(nameDiv); info.appendChild(subDiv);
   div.appendChild(info);
 
-  // Owned count badge (top-right)
+  // Owned count badge (top-right of card-item, over image area)
   const ownedCount = ownedTotal(card.id);
   if (ownedCount > 0) {
     const o = getOwned(card.id);
@@ -1256,36 +1288,6 @@ function _makeDbCard(card, total) {
     ob.textContent = o.normal + o.foil;
     div.appendChild(ob);
   }
-
-  // Deck count badge (top-left)
-  if (count > 0) {
-    const badge = document.createElement('div');
-    badge.className = 'db-badge';
-    badge.textContent = '×' + count;
-    div.appendChild(badge);
-    const minusBtn = document.createElement('button');
-    minusBtn.className = 'db-minus';
-    minusBtn.textContent = '−';
-    minusBtn.addEventListener('click', e => {
-      e.stopPropagation();
-      currentDeck.cards[card.id] = Math.max(0, (currentDeck.cards[card.id] ?? 0) - 1);
-      if (currentDeck.cards[card.id] === 0) delete currentDeck.cards[card.id];
-      renderDeckBuilderGridUpdate();
-    });
-    div.appendChild(minusBtn);
-  }
-
-  const plusBtn = document.createElement('button');
-  plusBtn.className = 'db-plus';
-  plusBtn.textContent = '+';
-  plusBtn.disabled = total >= 60 || count >= 4;
-  plusBtn.addEventListener('click', e => {
-    e.stopPropagation();
-    if ((currentDeck.cards[card.id] ?? 0) >= 4 || deckTotal() >= 60) return;
-    currentDeck.cards[card.id] = (currentDeck.cards[card.id] ?? 0) + 1;
-    renderDeckBuilderGridUpdate();
-  });
-  div.appendChild(plusBtn);
 
   return div;
 }
@@ -1341,21 +1343,22 @@ function renderDeckBuilderGridUpdate() {
   grid.querySelectorAll('[data-card-id]').forEach(div => {
     const cardId = div.dataset.cardId;
     const count = currentDeck.cards[cardId] ?? 0;
+    const imgWrap = div.querySelector('.db-img-wrap');
 
-    let badge = div.querySelector('.db-badge');
-    let minusBtn = div.querySelector('.db-minus');
-    const plusBtn = div.querySelector('.db-plus');
+    let badge = imgWrap?.querySelector('.db-badge');
+    let minusBtn = imgWrap?.querySelector('.db-minus');
+    const plusBtn = imgWrap?.querySelector('.db-plus');
 
     if (count > 0) {
       div.classList.add('in-deck');
-      if (!badge) {
+      if (!badge && imgWrap) {
         badge = document.createElement('div');
         badge.className = 'db-badge';
-        div.appendChild(badge);
+        imgWrap.appendChild(badge);
       }
-      badge.textContent = '×' + count;
+      if (badge) badge.textContent = '×' + count;
 
-      if (!minusBtn) {
+      if (!minusBtn && imgWrap) {
         minusBtn = document.createElement('button');
         minusBtn.className = 'db-minus';
         minusBtn.textContent = '−';
@@ -1365,7 +1368,7 @@ function renderDeckBuilderGridUpdate() {
           if (currentDeck.cards[cardId] === 0) delete currentDeck.cards[cardId];
           renderDeckBuilderGridUpdate();
         });
-        div.appendChild(minusBtn);
+        imgWrap.appendChild(minusBtn);
       }
     } else {
       div.classList.remove('in-deck');
