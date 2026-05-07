@@ -796,7 +796,7 @@ function openDeckCardModal(card) {
   _deckModalCard = card;
   const img = document.getElementById('deckModalImg');
   img.src = '';
-  resolveImgSrc(card).then(src => { img.src = src; });
+  resolveImgSrc(IMG_HOST + card.card_file + '.png').then(src => { img.src = src; });
   _updateDeckModalCount();
   if (!document.getElementById('deckCardModal').classList.contains('open')) pushModalState();
   document.getElementById('deckCardModal').classList.add('open');
