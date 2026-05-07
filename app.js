@@ -1429,47 +1429,9 @@ function renderDeckStats() {
   const total = deckTotal();
   const inks = currentDeck.inkFilter && currentDeck.inkFilter.length > 0 ? currentDeck.inkFilter : deckInks();
 
-  // Total box
-  const totalBox = document.getElementById('dstatsTotalBox');
-  totalBox.innerHTML = '';
-  const numDiv = document.createElement('div'); numDiv.className = 'dstats-total-num'; numDiv.textContent = total;
-  const labelDiv = document.createElement('div'); labelDiv.className = 'dstats-total-label'; labelDiv.textContent = '/ 60枚';
-  const inkDiv = document.createElement('div'); inkDiv.className = 'dstats-total-ink';
-  if (inks.length >= 2) {
-    const sorted = [...inks].sort((a,b) => INK_ORDER_LIST.indexOf(a) - INK_ORDER_LIST.indexOf(b));
-    const key = sorted.join('_');
-    const src = DUAL_INK_IMG[key];
-    if (src) { const img = document.createElement('img'); img.src = src; img.alt = key; inkDiv.appendChild(img); }
-  } else {
-    inks.forEach(ink => { const img = document.createElement('img'); img.src = INK_IMG[ink]; img.alt = ink; inkDiv.appendChild(img); });
-  }
-  totalBox.appendChild(numDiv);
-  totalBox.appendChild(labelDiv);
-  totalBox.appendChild(inkDiv);
-
-  // Stats grid (ink breakdown + type breakdown)
+  // Stats grid — type counts only (キャラクター/アクション/アイテム/ロケーション)
   const statsGrid = document.getElementById('dstatsGrid');
   statsGrid.innerHTML = '';
-
-  // Ink counts
-  inks.forEach(ink => {
-    const count = Object.entries(currentDeck.cards ?? {}).reduce((sum, [id, n]) => {
-      const c = allCards.find(x => x.id === id);
-      if (!c) return sum;
-      const ci = c.inks ?? (c.ink ? [c.ink] : []);
-      return sum + (ci.includes(ink) ? n : 0);
-    }, 0);
-    const cell = document.createElement('div'); cell.className = 'dstats-cell';
-    const lbl = document.createElement('div'); lbl.className = 'dstats-cell-label';
-    const img = document.createElement('img'); img.src = INK_IMG[ink]; img.alt = ink;
-    lbl.appendChild(img);
-    lbl.appendChild(document.createTextNode(ink));
-    const val = document.createElement('div'); val.className = 'dstats-cell-val'; val.textContent = count;
-    cell.appendChild(lbl); cell.appendChild(val);
-    statsGrid.appendChild(cell);
-  });
-
-  // Type counts
   const TYPES = ['キャラクター','アクション','アイテム','ロケーション'];
   TYPES.forEach(type => {
     const count = Object.entries(currentDeck.cards ?? {}).reduce((sum, [id, n]) => {
@@ -1483,11 +1445,35 @@ function renderDeckStats() {
     statsGrid.appendChild(cell);
   });
 
-  // Cost chart
+  // Ink row — ink counts below the type grid
+  const inkRow = document.getElementById('dstatsInkRow');
+  inkRow.innerHTML = '';
+  inks.forEach(ink => {
+    const count = Object.entries(currentDeck.cards ?? {}).reduce((sum, [id, n]) => {
+      const c = allCards.find(x => x.id === id);
+      if (!c) return sum;
+      const ci = c.inks ?? (c.ink ? [c.ink] : []);
+      return sum + (ci.includes(ink) ? n : 0);
+    }, 0);
+    const cell = document.createElement('div'); cell.className = 'dstats-cell';
+    const lbl = document.createElement('div'); lbl.className = 'dstats-cell-label';
+    const img = document.createElement('img'); img.src = INK_IMG[ink]; img.alt = ink;
+    lbl.appendChild(img); lbl.appendChild(document.createTextNode(ink));
+    const val = document.createElement('div'); val.className = 'dstats-cell-val'; val.textContent = count;
+    cell.appendChild(lbl); cell.appendChild(val);
+    inkRow.appendChild(cell);
+  });
+
+  // Total box — simple "60 / 60枚" at the bottom (no ink icon)
+  const totalBox = document.getElementById('dstatsTotalBox');
+  totalBox.innerHTML = '';
+  const numDiv = document.createElement('div'); numDiv.className = 'dstats-total-num'; numDiv.textContent = total;
+  const labelDiv = document.createElement('div'); labelDiv.className = 'dstats-total-label'; labelDiv.textContent = '/ 60枚';
+  totalBox.appendChild(numDiv); totalBox.appendChild(labelDiv);
+
+  // Cost chart (no title, always show count including 0)
   const costChart = document.getElementById('dstatsCostChart');
   costChart.innerHTML = '';
-  const title = document.createElement('div'); title.className = 'dstats-cost-title'; title.textContent = 'コスト分布';
-  costChart.appendChild(title);
   const bars = document.createElement('div'); bars.className = 'dstats-cost-bars';
   const costCounts = {};
   Object.entries(currentDeck.cards ?? {}).forEach(([id, n]) => {
@@ -1498,7 +1484,7 @@ function renderDeckStats() {
   for (let i = 1; i <= 10; i++) {
     const cnt = costCounts[i] ?? 0;
     const wrap = document.createElement('div'); wrap.className = 'dstats-cost-bar-wrap';
-    const countLbl = document.createElement('div'); countLbl.className = 'dstats-cost-bar-count'; countLbl.textContent = cnt > 0 ? cnt : '';
+    const countLbl = document.createElement('div'); countLbl.className = 'dstats-cost-bar-count'; countLbl.textContent = cnt;
     const bar = document.createElement('div'); bar.className = 'dstats-cost-bar'; bar.style.height = (cnt / maxCount * 100) + '%';
     const lbl = document.createElement('div'); lbl.className = 'dstats-cost-bar-label'; lbl.textContent = i;
     wrap.appendChild(countLbl); wrap.appendChild(bar); wrap.appendChild(lbl);
