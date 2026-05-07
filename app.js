@@ -1748,42 +1748,55 @@ async function importBackup(file) {
     });
   });
 
-  // カードタブのスワイプ切り替え（スライドアニメーション付き）
+  // カードタブのスワイプ切り替え（ゴースト同時スライド）
   (function(){
     const TAB_ORDER = ['all','collection','wishlist'];
     const page = document.getElementById('pageCards');
     const grid = document.getElementById('cardGrid');
     let sx=0, sy=0, isDragging=false, busy=false;
 
-    function switchTab(delta){
+    function switchTab(delta, startDx){
       const nextIdx = TAB_ORDER.indexOf(cardView) + delta;
       if(nextIdx < 0 || nextIdx >= TAB_ORDER.length){
-        grid.style.transition = 'transform 0.2s ease';
+        // 端タブ：スナップバック
+        grid.style.transition = 'transform 0.25s ease';
         grid.style.transform = 'translateX(0)';
-        setTimeout(()=>{ busy=false; }, 200);
+        setTimeout(()=>{ busy=false; }, 250);
         return;
       }
-      // トップにスクロールしてからアニメーション
       window.scrollTo(0, 0);
       scrollPositions['pageCards'] = 0;
-      const slideOut = delta > 0 ? '-100%' : '100%';
-      const slideIn  = delta > 0 ? '100%'  : '-100%';
-      grid.style.transition = 'transform 0.25s ease';
-      grid.style.transform = `translateX(${slideOut})`;
-      setTimeout(()=>{
-        const nextView = TAB_ORDER[nextIdx];
-        document.querySelectorAll('.view-tab').forEach(b=>b.classList.remove('active'));
-        document.querySelector(`.view-tab[data-view="${nextView}"]`).classList.add('active');
-        cardView = nextView;
-        grid.style.transition = 'none';
-        grid.style.transform = `translateX(${slideIn})`;
-        renderCardGrid();
-        requestAnimationFrame(()=>requestAnimationFrame(()=>{
-          grid.style.transition = 'transform 0.25s ease';
-          grid.style.transform = 'translateX(0)';
-          setTimeout(()=>{ busy=false; }, 250);
-        }));
-      }, 250);
+      const wrap = document.getElementById('cardGridWrap');
+      const outDir = delta > 0 ? '-100%' : '100%';
+      const inDir  = delta > 0 ?  '100%' : '-100%';
+      const DUR = 280;
+
+      // 現在の表示をゴーストとして絶対配置（アウトゴーイングパネル）
+      const ghost = grid.cloneNode(true);
+      ghost.removeAttribute('id');
+      ghost.style.cssText =
+        `position:absolute;top:0;left:0;width:100%;margin:0;` +
+        `pointer-events:none;transition:none;` +
+        `transform:translateX(${startDx}px);`;
+      wrap.appendChild(ghost);
+
+      // 新タブのコンテンツをオフスクリーンに描画
+      const nextView = TAB_ORDER[nextIdx];
+      document.querySelectorAll('.view-tab').forEach(b=>b.classList.remove('active'));
+      document.querySelector(`.view-tab[data-view="${nextView}"]`).classList.add('active');
+      cardView = nextView;
+      grid.style.transition = 'none';
+      grid.style.transform = `translateX(${inDir})`;
+      renderCardGrid();
+
+      // ゴーストと新グリッドを同時にアニメーション
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{
+        ghost.style.transition = `transform ${DUR}ms ease`;
+        ghost.style.transform  = `translateX(${outDir})`;
+        grid.style.transition  = `transform ${DUR}ms ease`;
+        grid.style.transform   = 'translateX(0)';
+        setTimeout(()=>{ ghost.remove(); busy=false; }, DUR);
+      }));
     }
 
     page.addEventListener('touchstart', e=>{
@@ -1810,9 +1823,9 @@ async function importBackup(file) {
       const dy=e.changedTouches[0].clientY-sy;
       if(Math.abs(dx)>=60 && Math.abs(dx)>=Math.abs(dy)*1.5){
         busy=true;
-        switchTab(dx<0?1:-1);
+        switchTab(dx<0?1:-1, dx);
       } else {
-        grid.style.transition='transform 0.2s ease';
+        grid.style.transition='transform 0.25s ease';
         grid.style.transform='translateX(0)';
       }
     },{passive:true});
