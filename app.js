@@ -1226,52 +1226,15 @@ let _dbCards = [];
 let _dbRendered = 0;
 let _dbObserver = null;
 
-function _makeDbCard(card, total, imgHeight) {
+function _makeDbCard(card, total) {
   const count = currentDeck.cards[card.id] ?? 0;
   const div = document.createElement('div');
   div.className = 'card-item' + (count > 0 ? ' in-deck' : '');
   div.dataset.cardId = card.id;
 
-  const imgWrap = document.createElement('div');
-  imgWrap.className = 'db-img-wrap';
-  // Use JS-computed pixel height — no CSS tricks, works regardless of any layout context
-  imgWrap.style.cssText = `position:relative;width:100%;height:${imgHeight}px;overflow:hidden;background:var(--surface2);`;
+  // Identical structure to _makeCardItem — img with aspect-ratio:429/600 from CSS
+  div.appendChild(makeImg(card));
 
-  const dbImg = makeImg(card);
-  dbImg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;';
-  imgWrap.appendChild(dbImg);
-
-  if (count > 0) {
-    const badge = document.createElement('div');
-    badge.className = 'db-badge';
-    badge.textContent = '×' + count;
-    imgWrap.appendChild(badge);
-    const minusBtn = document.createElement('button');
-    minusBtn.className = 'db-minus';
-    minusBtn.textContent = '−';
-    minusBtn.addEventListener('click', e => {
-      e.stopPropagation();
-      currentDeck.cards[card.id] = Math.max(0, (currentDeck.cards[card.id] ?? 0) - 1);
-      if (currentDeck.cards[card.id] === 0) delete currentDeck.cards[card.id];
-      renderDeckBuilderGridUpdate();
-    });
-    imgWrap.appendChild(minusBtn);
-  }
-
-  const plusBtn = document.createElement('button');
-  plusBtn.className = 'db-plus';
-  plusBtn.textContent = '+';
-  plusBtn.disabled = total >= 60 || count >= 4;
-  plusBtn.addEventListener('click', e => {
-    e.stopPropagation();
-    if ((currentDeck.cards[card.id] ?? 0) >= 4 || deckTotal() >= 60) return;
-    currentDeck.cards[card.id] = (currentDeck.cards[card.id] ?? 0) + 1;
-    renderDeckBuilderGridUpdate();
-  });
-  imgWrap.appendChild(plusBtn);
-  div.appendChild(imgWrap);
-
-  // Card info (same as main grid)
   const info = document.createElement('div'); info.className = 'card-info';
   const nameDiv = document.createElement('div'); nameDiv.className = 'card-name';
   const inkDot = card.inks && card.inks.length > 1 ? makeDualInkDot(card.inks) : makeInkDot(card.ink ?? (card.inks?.[0] ?? ''));
@@ -1284,7 +1247,7 @@ function _makeDbCard(card, total, imgHeight) {
   info.appendChild(nameDiv); info.appendChild(subDiv);
   div.appendChild(info);
 
-  // Owned count badge (top-right of card-item, over image area)
+  // Owned count badge (top-right)
   const ownedCount = ownedTotal(card.id);
   if (ownedCount > 0) {
     const o = getOwned(card.id);
@@ -1293,6 +1256,33 @@ function _makeDbCard(card, total, imgHeight) {
     div.appendChild(ob);
   }
 
+  // Deck count badge (top-left) + minus button
+  if (count > 0) {
+    const badge = document.createElement('div'); badge.className = 'db-badge';
+    badge.textContent = '×' + count;
+    div.appendChild(badge);
+    const minusBtn = document.createElement('button'); minusBtn.className = 'db-minus';
+    minusBtn.textContent = '−';
+    minusBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      currentDeck.cards[card.id] = Math.max(0, (currentDeck.cards[card.id] ?? 0) - 1);
+      if (currentDeck.cards[card.id] === 0) delete currentDeck.cards[card.id];
+      renderDeckBuilderGridUpdate();
+    });
+    div.appendChild(minusBtn);
+  }
+
+  const plusBtn = document.createElement('button'); plusBtn.className = 'db-plus';
+  plusBtn.textContent = '+';
+  plusBtn.disabled = total >= 60 || count >= 4;
+  plusBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    if ((currentDeck.cards[card.id] ?? 0) >= 4 || deckTotal() >= 60) return;
+    currentDeck.cards[card.id] = (currentDeck.cards[card.id] ?? 0) + 1;
+    renderDeckBuilderGridUpdate();
+  });
+  div.appendChild(plusBtn);
+
   return div;
 }
 
@@ -1300,11 +1290,8 @@ function _renderNextDbBatch(grid) {
   const end = Math.min(_dbRendered + DB_PAGE_SIZE, _dbCards.length);
   if (_dbRendered >= end) return;
   const total = deckTotal();
-  // Measure actual column width to compute pixel-exact image height
-  const colWidth = Math.floor((grid.offsetWidth - 36) / 3); // 10px*2 padding + 8px*2 gap
-  const imgHeight = colWidth > 0 ? Math.round(colWidth * 600 / 429) : 165;
   const frag = document.createDocumentFragment();
-  for (let i = _dbRendered; i < end; i++) frag.appendChild(_makeDbCard(_dbCards[i], total, imgHeight));
+  for (let i = _dbRendered; i < end; i++) frag.appendChild(_makeDbCard(_dbCards[i], total));
   _dbRendered = end;
   const sentinel = grid.querySelector('#dbSentinel');
   if (sentinel) grid.insertBefore(frag, sentinel); else grid.appendChild(frag);
@@ -1316,19 +1303,21 @@ function _setupDbSentinel(grid) {
   const sentinel = document.createElement('div');
   sentinel.id = 'dbSentinel';
   grid.appendChild(sentinel);
+  const scroller = grid.parentElement; // #dbScrollWrap
   _dbObserver = new IntersectionObserver(entries => {
     if (!entries[0].isIntersecting) return;
     _renderNextDbBatch(grid);
     if (_dbRendered >= _dbCards.length) {
       _dbObserver.disconnect(); _dbObserver = null; sentinel.remove();
     }
-  }, { rootMargin: '300px' });
+  }, { root: scroller, rootMargin: '300px' });
   _dbObserver.observe(sentinel);
 }
 
 function renderDeckBuilderGrid() {
   const grid = document.getElementById('dbGrid');
-  const scrollTop = grid.scrollTop;
+  const scroller = grid.parentElement; // #dbScrollWrap handles scrolling
+  const scrollTop = scroller.scrollTop;
 
   _dbCards = dbFilteredCards();
 
@@ -1339,35 +1328,32 @@ function renderDeckBuilderGrid() {
   _renderNextDbBatch(grid);
   _setupDbSentinel(grid);
 
-  grid.scrollTop = scrollTop;
+  scroller.scrollTop = scrollTop;
 }
 
 function renderDeckBuilderGridUpdate() {
   const grid = document.getElementById('dbGrid');
-  const scrollTop = grid.scrollTop;
+  const scroller = grid.parentElement; // #dbScrollWrap handles scrolling
+  const scrollTop = scroller.scrollTop;
   const total = deckTotal();
 
   grid.querySelectorAll('[data-card-id]').forEach(div => {
     const cardId = div.dataset.cardId;
     const count = currentDeck.cards[cardId] ?? 0;
-    const imgWrap = div.querySelector('.db-img-wrap');
 
-    let badge = imgWrap?.querySelector('.db-badge');
-    let minusBtn = imgWrap?.querySelector('.db-minus');
-    const plusBtn = imgWrap?.querySelector('.db-plus');
+    let badge = div.querySelector('.db-badge');
+    let minusBtn = div.querySelector('.db-minus');
+    const plusBtn = div.querySelector('.db-plus');
 
     if (count > 0) {
       div.classList.add('in-deck');
-      if (!badge && imgWrap) {
-        badge = document.createElement('div');
-        badge.className = 'db-badge';
-        imgWrap.appendChild(badge);
+      if (!badge) {
+        badge = document.createElement('div'); badge.className = 'db-badge';
+        div.appendChild(badge);
       }
-      if (badge) badge.textContent = '×' + count;
-
-      if (!minusBtn && imgWrap) {
-        minusBtn = document.createElement('button');
-        minusBtn.className = 'db-minus';
+      badge.textContent = '×' + count;
+      if (!minusBtn) {
+        minusBtn = document.createElement('button'); minusBtn.className = 'db-minus';
         minusBtn.textContent = '−';
         minusBtn.addEventListener('click', e => {
           e.stopPropagation();
@@ -1375,7 +1361,7 @@ function renderDeckBuilderGridUpdate() {
           if (currentDeck.cards[cardId] === 0) delete currentDeck.cards[cardId];
           renderDeckBuilderGridUpdate();
         });
-        imgWrap.appendChild(minusBtn);
+        div.appendChild(minusBtn);
       }
     } else {
       div.classList.remove('in-deck');
@@ -1383,12 +1369,10 @@ function renderDeckBuilderGridUpdate() {
       if (minusBtn) minusBtn.remove();
     }
 
-    if (plusBtn) {
-      plusBtn.disabled = total >= 60 || count >= 4;
-    }
+    if (plusBtn) plusBtn.disabled = total >= 60 || count >= 4;
   });
 
-  grid.scrollTop = scrollTop;
+  scroller.scrollTop = scrollTop;
   renderDeckBuilderFooter();
 }
 

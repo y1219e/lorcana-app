@@ -261,15 +261,12 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 #dbView.active { display:flex; }
 .db-header { display:flex; align-items:center; gap:6px; padding:8px 10px; background:var(--surface); border-bottom:1px solid var(--border); flex-shrink:0; }
 .db-search-input { flex:1; background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:5px 10px; color:var(--text); font-size:0.82rem; }
-.db-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; padding:10px 10px 80px; overflow-y:auto; flex:1; }
+#dbScrollWrap { flex:1; overflow-y:auto; }
+.db-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; padding:10px 10px 80px; }
 .in-deck { border-color: var(--accent) !important; }
-/* padding-bottom:139.86% = 600/429×100% = card aspect ratio, works on all browsers */
-.db-img-wrap { position:relative; width:100%; padding-bottom:139.86%; overflow:hidden; background:var(--surface2); }
-/* inset:0 stretches to fill the padding box — unlike height:100% which fails when parent height is auto */
-.db-img-wrap img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; aspect-ratio:auto; }
 .db-badge { position:absolute; top:4px; left:4px; background:rgba(124,109,250,0.9); color:#fff; font-size:0.65rem; font-weight:bold; padding:2px 5px; border-radius:6px; pointer-events:none; z-index:1; }
-.db-minus { position:absolute; bottom:4px; left:4px; width:26px; height:26px; border-radius:50%; background:rgba(231,76,60,0.85); color:#fff; border:none; font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; font-weight:bold; z-index:1; }
-.db-plus { position:absolute; bottom:4px; right:4px; width:26px; height:26px; border-radius:50%; background:rgba(124,109,250,0.85); color:#fff; border:none; font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; font-weight:bold; z-index:1; }
+.db-minus { position:absolute; bottom:34px; left:4px; width:26px; height:26px; border-radius:50%; background:rgba(231,76,60,0.85); color:#fff; border:none; font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; font-weight:bold; z-index:1; }
+.db-plus { position:absolute; bottom:34px; right:4px; width:26px; height:26px; border-radius:50%; background:rgba(124,109,250,0.85); color:#fff; border:none; font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; font-weight:bold; z-index:1; }
 .db-plus:disabled { opacity:0.3; cursor:default; }
 .db-footer { position:fixed; bottom:0; left:0; right:0; background:var(--surface); border-top:1px solid var(--border); display:flex; align-items:center; gap:8px; padding:8px 12px; z-index:200; }
 .db-footer-ink { display:flex; align-items:center; gap:2px; flex-shrink:0; }
