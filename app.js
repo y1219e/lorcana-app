@@ -1429,7 +1429,7 @@ function renderDeckStats() {
   const total = deckTotal();
   const inks = currentDeck.inkFilter && currentDeck.inkFilter.length > 0 ? currentDeck.inkFilter : deckInks();
 
-  // Stats grid — type counts only (キャラクター/アクション/アイテム/ロケーション)
+  // Stats grid — type counts (2×3: キャラ/アクション/アイテム/ロケ/🎵ソング/◇非インクウェル)
   const statsGrid = document.getElementById('dstatsGrid');
   statsGrid.innerHTML = '';
   const TYPES = ['キャラクター','アクション','アイテム','ロケーション'];
@@ -1444,10 +1444,33 @@ function renderDeckStats() {
     cell.appendChild(lbl); cell.appendChild(val);
     statsGrid.appendChild(cell);
   });
+  // Song count (🎵) — action cards with 歌 classification
+  const songCount = Object.entries(currentDeck.cards ?? {}).reduce((sum, [id, n]) => {
+    const c = allCards.find(x => x.id === id); if (!c) return sum;
+    const isAction = (c.type ?? []).includes('アクション');
+    return sum + (isAction && (c.classifications ?? []).includes('歌') ? n : 0);
+  }, 0);
+  const songCell = document.createElement('div'); songCell.className = 'dstats-cell';
+  const songLbl = document.createElement('div'); songLbl.className = 'dstats-cell-label'; songLbl.textContent = '🎵';
+  const songVal = document.createElement('div'); songVal.className = 'dstats-cell-val'; songVal.textContent = songCount;
+  songCell.appendChild(songLbl); songCell.appendChild(songVal); statsGrid.appendChild(songCell);
+  // Non-inkwell count (◇) — cards without inkwell symbol
+  const noInkCount = Object.entries(currentDeck.cards ?? {}).reduce((sum, [id, n]) => {
+    const c = allCards.find(x => x.id === id);
+    return sum + (c && !c.inkwell ? n : 0);
+  }, 0);
+  const noInkCell = document.createElement('div'); noInkCell.className = 'dstats-cell';
+  const noInkLbl = document.createElement('div'); noInkLbl.className = 'dstats-cell-label'; noInkLbl.textContent = '◇';
+  const noInkVal = document.createElement('div'); noInkVal.className = 'dstats-cell-val'; noInkVal.textContent = noInkCount;
+  noInkCell.appendChild(noInkLbl); noInkCell.appendChild(noInkVal); statsGrid.appendChild(noInkCell);
 
-  // Ink row — ink counts below the type grid
+  // Ink row — total box leftmost, then ink cells
   const inkRow = document.getElementById('dstatsInkRow');
   inkRow.innerHTML = '';
+  const totalCell = document.createElement('div'); totalCell.className = 'dstats-total-box';
+  const numDiv = document.createElement('div'); numDiv.className = 'dstats-total-num'; numDiv.textContent = total;
+  const labelDiv = document.createElement('div'); labelDiv.className = 'dstats-total-label'; labelDiv.textContent = '/ 60枚';
+  totalCell.appendChild(numDiv); totalCell.appendChild(labelDiv); inkRow.appendChild(totalCell);
   inks.forEach(ink => {
     const count = Object.entries(currentDeck.cards ?? {}).reduce((sum, [id, n]) => {
       const c = allCards.find(x => x.id === id);
@@ -1464,33 +1487,26 @@ function renderDeckStats() {
     inkRow.appendChild(cell);
   });
 
-  // Total box — simple "60 / 60枚" at the bottom (no ink icon)
-  const totalBox = document.getElementById('dstatsTotalBox');
-  totalBox.innerHTML = '';
-  const numDiv = document.createElement('div'); numDiv.className = 'dstats-total-num'; numDiv.textContent = total;
-  const labelDiv = document.createElement('div'); labelDiv.className = 'dstats-total-label'; labelDiv.textContent = '/ 60枚';
-  totalBox.appendChild(numDiv); totalBox.appendChild(labelDiv);
-
-  // Cost chart (no title, always show count including 0)
+  // Cost chart — all counts at same level above bars, bars taller, bottom-aligned
   const costChart = document.getElementById('dstatsCostChart');
   costChart.innerHTML = '';
-  const bars = document.createElement('div'); bars.className = 'dstats-cost-bars';
   const costCounts = {};
   Object.entries(currentDeck.cards ?? {}).forEach(([id, n]) => {
     const c = allCards.find(x => x.id === id);
     if (c && c.cost != null) costCounts[c.cost] = (costCounts[c.cost] ?? 0) + n;
   });
   const maxCount = Math.max(1, ...Object.values(costCounts));
+  const countsRow = document.createElement('div'); countsRow.className = 'dstats-cost-counts';
+  const barsRow = document.createElement('div'); barsRow.className = 'dstats-cost-bars';
+  const labelsRow = document.createElement('div'); labelsRow.className = 'dstats-cost-labels';
   for (let i = 1; i <= 10; i++) {
     const cnt = costCounts[i] ?? 0;
-    const wrap = document.createElement('div'); wrap.className = 'dstats-cost-bar-wrap';
-    const countLbl = document.createElement('div'); countLbl.className = 'dstats-cost-bar-count'; countLbl.textContent = cnt;
+    const countDiv = document.createElement('div'); countDiv.className = 'dstats-cost-count'; countDiv.textContent = cnt;
     const bar = document.createElement('div'); bar.className = 'dstats-cost-bar'; bar.style.height = (cnt / maxCount * 100) + '%';
-    const lbl = document.createElement('div'); lbl.className = 'dstats-cost-bar-label'; lbl.textContent = i;
-    wrap.appendChild(countLbl); wrap.appendChild(bar); wrap.appendChild(lbl);
-    bars.appendChild(wrap);
+    const label = document.createElement('div'); label.className = 'dstats-cost-label'; label.textContent = i;
+    countsRow.appendChild(countDiv); barsRow.appendChild(bar); labelsRow.appendChild(label);
   }
-  costChart.appendChild(bars);
+  costChart.appendChild(countsRow); costChart.appendChild(barsRow); costChart.appendChild(labelsRow);
 
   // Card grid (3-column portrait images, sorted by cost)
   const cardList = document.getElementById('dstatsCardList');
@@ -1565,25 +1581,16 @@ document.getElementById('statsSaveBtn').addEventListener('click', async () => {
     await dbPut('decks', currentDeck);
     const idx = decks.findIndex(d => d.id === currentDeck.id);
     if (idx >= 0) decks[idx] = currentDeck; else decks.push(currentDeck);
-    document.getElementById('dbFooterName').textContent = currentDeck.name;
     renderDeckList();
+    closeDeckEditor();
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelector('[data-page="pageDecks"]').classList.add('active');
+    document.getElementById('pageDecks').classList.add('active');
     showToast('保存しました', 'warn');
   } catch(e) {
     console.error('[deck] save failed:', e);
     showToast('デッキの保存に失敗しました');
-  }
-});
-
-document.getElementById('statsDeleteBtn').addEventListener('click', async () => {
-  if (!await showConfirm(`「${currentDeck.name || '名称未設定'}」を削除しますか？`)) return;
-  try {
-    await dbDelete('decks', currentDeck.id);
-    decks = decks.filter(d => d.id !== currentDeck.id);
-    renderDeckList();
-    closeDeckEditor();
-  } catch(e) {
-    console.error('[deck] delete failed:', e);
-    showToast('デッキの削除に失敗しました');
   }
 });
 
