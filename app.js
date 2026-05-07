@@ -1296,7 +1296,6 @@ function _makeDbCard(card, total) {
 
   return div;
 }
-}
 
 function _renderNextDbBatch(grid) {
   const end = Math.min(_dbRendered + DB_PAGE_SIZE, _dbCards.length);
