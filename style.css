@@ -261,6 +261,7 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 #dbView.active { display:flex; }
 .db-header { display:flex; align-items:center; gap:6px; padding:8px 10px; background:var(--surface); border-bottom:1px solid var(--border); flex-shrink:0; }
 .db-search-input { flex:1; background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:5px 10px; color:var(--text); font-size:0.82rem; }
+#dbAdvBtn { position:fixed; bottom:80px; right:16px; width:52px; height:52px; border-radius:50%; background:var(--accent); border:none; color:#fff; font-size:1.4rem; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.4); z-index:10000; display:flex; align-items:center; justify-content:center; }
 /* position:fixed is the only reliable way to scroll inside a fixed overlay on iOS Safari */
 #dbScrollWrap { position:fixed; top:46px; left:0; right:0; bottom:0; overflow-y:scroll; -webkit-overflow-scrolling:touch; }
 .db-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; padding:10px 10px 80px; }
@@ -332,6 +333,7 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
   .card-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important; }
   /* FAB・プリフェッチバーの位置調整 */
   #advSearchBtn { bottom: 16px; }
+  #dbAdvBtn { bottom: 16px; }
   #prefetchBar { left: 200px; bottom: 0; }
   /* 詳細検索モーダルをPC向けに中央配置 */
   .adv-modal-box { border-radius: 16px; max-width: 620px; width: 90%; }
