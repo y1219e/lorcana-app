@@ -940,7 +940,6 @@ document.getElementById('newDeckModal').addEventListener('click', e => {
   if (e.target === document.getElementById('newDeckModal')) closeNewDeckModal();
 });
 document.getElementById('newDeckByCardBtn').addEventListener('click', () => {
-  // デッキエディタへの遷移: history.back() を使わず replaceState でクリア
   document.getElementById('newDeckModal').classList.remove('open');
   if (history.state?.hasModal) history.replaceState(null, '');
   openDeckEditor(null);
@@ -1058,102 +1057,375 @@ function deckInks(){
   return [...new Set(Object.keys(currentDeck.cards??{}).filter(id=>(currentDeck.cards[id]??0)>0).flatMap(id=>{ const c=allCards.find(x=>x.id===id); return c?.inks ?? (c?.ink?[c.ink]:[]); }).filter(Boolean))];
 }
 
-function openDeckEditor(deck){
-  currentDeck=deck?{...deck,cards:{...(deck.cards??{})}}:{id:crypto.randomUUID(),name:'',cards:{}};
-  document.getElementById('deckNameInput').value=currentDeck.name??'';
-  document.getElementById('editorDel').style.display=deck?'':'none';
+// ═══════════════════════════════════════════
+// 新デッキエディタ（3パネル構造）
+// ═══════════════════════════════════════════
+
+const INK_EN = { 'アンバー':'Amber','アメジスト':'Amethyst','エメラルド':'Emerald','ルビー':'Ruby','サファイア':'Sapphire','スティール':'Steel' };
+const INK_ORDER_LIST = ['アンバー','アメジスト','エメラルド','ルビー','サファイア','スティール'];
+
+function showPanel(id) {
+  ['dip','dbView','dpStats'].forEach(p => {
+    const el = document.getElementById(p);
+    el.classList.toggle('active', p === id);
+  });
+}
+
+function openDeckEditor(deck) {
+  currentDeck = deck ? { ...deck, cards: { ...(deck.cards ?? {}) } } : { id: crypto.randomUUID(), name: '', cards: {} };
+  currentDeck.inkFilter = currentDeck.inkFilter ?? [];
   document.getElementById('deckEditor').classList.add('open');
   document.body.classList.add('deck-editing');
-  document.getElementById('editorSearch').value='';
-  document.getElementById('sleevePicker').classList.remove('open');
-  renderSleeveGrid();
-  renderDeckEditor();
+  if (deck) {
+    // 既存デッキ: builder を直接開く
+    const inkFilter = (currentDeck.inkFilter && currentDeck.inkFilter.length > 0) ? currentDeck.inkFilter : deckInks();
+    openDeckBuilder(inkFilter);
+  } else {
+    openInkPicker();
+  }
 }
-function renderSleeveGrid(){
-  const grid=document.getElementById('sleeveGrid');
-  grid.innerHTML='';
-  // なしオプション
-  const none=document.createElement('div'); none.className='sleeve-option-none'+(currentDeck.sleeveId==null?' selected':''); none.textContent='✕';
-  none.addEventListener('click',()=>{ currentDeck.sleeveId=null; renderSleeveGrid(); });
+
+function closeDeckEditor() {
+  document.getElementById('deckEditor').classList.remove('open');
+  document.body.classList.remove('deck-editing');
+  currentDeck = null;
+}
+
+// ── Panel 1: Ink Picker ──
+function openInkPicker() {
+  showPanel('dip');
+  renderInkPicker();
+}
+
+function renderInkPicker() {
+  const grid = document.getElementById('dipGrid');
+  grid.innerHTML = '';
+  const selected = currentDeck.inkFilter ?? [];
+  INK_ORDER_LIST.forEach(ink => {
+    const btn = document.createElement('button');
+    btn.className = 'dip-btn' + (selected.includes(ink) ? ' selected' : '');
+    btn.dataset.ink = ink;
+    const img = document.createElement('img');
+    img.className = 'dip-icon';
+    img.src = INK_IMG[ink];
+    img.alt = ink;
+    const span = document.createElement('span');
+    span.className = 'dip-name';
+    span.textContent = INK_EN[ink];
+    btn.appendChild(img);
+    btn.appendChild(span);
+    btn.addEventListener('click', () => {
+      const sel = currentDeck.inkFilter ?? [];
+      const idx = sel.indexOf(ink);
+      if (idx >= 0) { currentDeck.inkFilter = sel.filter(i => i !== ink); }
+      else if (sel.length < 2) { currentDeck.inkFilter = [...sel, ink]; }
+      renderInkPicker();
+    });
+    grid.appendChild(btn);
+  });
+  const sel = currentDeck.inkFilter ?? [];
+  const selEl = document.getElementById('dipSelection');
+  selEl.textContent = sel.length > 0 ? sel.map(i => INK_EN[i].toUpperCase()).join(' & ') : '選択してください';
+  document.getElementById('deckInkChooseBtn').disabled = sel.length === 0;
+}
+
+document.getElementById('dipBack').addEventListener('click', closeDeckEditor);
+document.getElementById('deckInkChooseBtn').addEventListener('click', () => {
+  openDeckBuilder(currentDeck.inkFilter ?? []);
+});
+
+// ── Panel 2: Deck Builder ──
+document.getElementById('dbBackBtn').addEventListener('click', closeDeckEditor);
+document.getElementById('dbSearchInput').addEventListener('input', debounce(() => renderDeckBuilderGrid(), 300));
+
+function openDeckBuilder(inkFilter) {
+  currentDeck.inkFilter = inkFilter;
+  document.getElementById('dbSearchInput').value = '';
+  showPanel('dbView');
+  renderDeckBuilderFooter();
+  renderDeckBuilderGrid();
+}
+
+function renderDeckBuilderFooter() {
+  const total = deckTotal();
+  const inks = currentDeck.inkFilter ?? [];
+  document.getElementById('dbTotalCount').textContent = total;
+  document.getElementById('dbFooterName').textContent = currentDeck.name || 'デッキ名未設定';
+  const inkEl = document.getElementById('dbFooterInk');
+  inkEl.innerHTML = '';
+  if (inks.length >= 2) {
+    const sorted = [...inks].sort((a,b) => INK_ORDER_LIST.indexOf(a) - INK_ORDER_LIST.indexOf(b));
+    const key = sorted.join('_');
+    const src = DUAL_INK_IMG[key];
+    if (src) { const img = document.createElement('img'); img.src = src; img.alt = key; inkEl.appendChild(img); }
+  } else {
+    inks.forEach(ink => {
+      const img = document.createElement('img'); img.src = INK_IMG[ink]; img.alt = ink;
+      inkEl.appendChild(img);
+    });
+  }
+}
+
+function renderDeckBuilderGrid() {
+  const grid = document.getElementById('dbGrid');
+  const scrollEl = grid; // grid itself scrolls via overflow-y:auto in CSS, but dbGrid is inside dbView
+  // dbView has overflow:hidden, the actual scroll is on db-grid which has overflow-y:auto via flex:1
+  // Save scroll position
+  const scrollTop = grid.scrollTop;
+
+  const inkFilter = currentDeck.inkFilter ?? [];
+  const q = (document.getElementById('dbSearchInput')?.value ?? '').toLowerCase();
+  const cards = allCards.filter(c => {
+    if (inkFilter.length > 0) {
+      const ci = c.inks ?? (c.ink ? [c.ink] : []);
+      if (!ci.some(i => inkFilter.includes(i))) return false;
+    }
+    if (q && !c.name?.toLowerCase().includes(q) && !c.version?.toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  grid.innerHTML = '';
+  const total = deckTotal();
+
+  cards.forEach(card => {
+    const count = currentDeck.cards[card.id] ?? 0;
+    const div = document.createElement('div');
+    div.className = 'db-card';
+    div.dataset.cardId = card.id;
+
+    const img = makeImg(card);
+    div.appendChild(img);
+
+    if (count > 0) {
+      const badge = document.createElement('div');
+      badge.className = 'db-badge';
+      badge.textContent = '×' + count;
+      div.appendChild(badge);
+
+      const minusBtn = document.createElement('button');
+      minusBtn.className = 'db-minus';
+      minusBtn.textContent = '−';
+      minusBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        currentDeck.cards[card.id] = Math.max(0, (currentDeck.cards[card.id] ?? 0) - 1);
+        if (currentDeck.cards[card.id] === 0) delete currentDeck.cards[card.id];
+        renderDeckBuilderGridUpdate();
+      });
+      div.appendChild(minusBtn);
+    }
+
+    const canAdd = total < 60 && count < 4;
+    const plusBtn = document.createElement('button');
+    plusBtn.className = 'db-plus';
+    plusBtn.textContent = '+';
+    plusBtn.disabled = !canAdd;
+    plusBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      if ((currentDeck.cards[card.id] ?? 0) >= 4 || deckTotal() >= 60) return;
+      currentDeck.cards[card.id] = (currentDeck.cards[card.id] ?? 0) + 1;
+      renderDeckBuilderGridUpdate();
+    });
+    div.appendChild(plusBtn);
+
+    grid.appendChild(div);
+  });
+
+  // Restore scroll
+  grid.scrollTop = scrollTop;
+}
+
+function renderDeckBuilderGridUpdate() {
+  const grid = document.getElementById('dbGrid');
+  const scrollTop = grid.scrollTop;
+  const total = deckTotal();
+
+  grid.querySelectorAll('.db-card').forEach(div => {
+    const cardId = div.dataset.cardId;
+    const count = currentDeck.cards[cardId] ?? 0;
+
+    let badge = div.querySelector('.db-badge');
+    let minusBtn = div.querySelector('.db-minus');
+    const plusBtn = div.querySelector('.db-plus');
+
+    if (count > 0) {
+      if (!badge) {
+        badge = document.createElement('div');
+        badge.className = 'db-badge';
+        div.appendChild(badge);
+      }
+      badge.textContent = '×' + count;
+
+      if (!minusBtn) {
+        minusBtn = document.createElement('button');
+        minusBtn.className = 'db-minus';
+        minusBtn.textContent = '−';
+        minusBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          currentDeck.cards[cardId] = Math.max(0, (currentDeck.cards[cardId] ?? 0) - 1);
+          if (currentDeck.cards[cardId] === 0) delete currentDeck.cards[cardId];
+          renderDeckBuilderGridUpdate();
+        });
+        div.appendChild(minusBtn);
+      }
+    } else {
+      if (badge) badge.remove();
+      if (minusBtn) minusBtn.remove();
+    }
+
+    if (plusBtn) {
+      plusBtn.disabled = total >= 60 || count >= 4;
+    }
+  });
+
+  grid.scrollTop = scrollTop;
+  renderDeckBuilderFooter();
+}
+
+document.getElementById('showDeckStatsBtn').addEventListener('click', () => {
+  openDeckStats();
+});
+
+// ── Panel 3: Deck Stats ──
+function openDeckStats() {
+  showPanel('dpStats');
+  document.getElementById('deckNameInput').value = currentDeck.name ?? '';
+  document.getElementById('statsSleevePicker').classList.remove('open');
+  renderStatsSleeveGrid();
+  renderDeckStats();
+}
+
+function renderStatsSleeveGrid() {
+  const grid = document.getElementById('statsSleeveGrid');
+  grid.innerHTML = '';
+  const none = document.createElement('div');
+  none.className = 'sleeve-option-none' + (currentDeck.sleeveId == null ? ' selected' : '');
+  none.textContent = '✕';
+  none.addEventListener('click', () => { currentDeck.sleeveId = null; renderStatsSleeveGrid(); });
   grid.appendChild(none);
-  // 各スリーブ
-  DECK_SLEEVES.forEach(s=>{
-    const img=document.createElement('img'); img.className='sleeve-option'+(currentDeck.sleeveId===s.id?' selected':'');
-    img.src=s.src; img.alt=s.id; img.loading='lazy';
-    img.addEventListener('click',()=>{ currentDeck.sleeveId=s.id; renderSleeveGrid(); });
+  DECK_SLEEVES.forEach(s => {
+    const img = document.createElement('img');
+    img.className = 'sleeve-option' + (currentDeck.sleeveId === s.id ? ' selected' : '');
+    img.src = s.src; img.alt = s.id; img.loading = 'lazy';
+    img.addEventListener('click', () => { currentDeck.sleeveId = s.id; renderStatsSleeveGrid(); });
     grid.appendChild(img);
   });
 }
-function closeDeckEditor(){ document.getElementById('deckEditor').classList.remove('open'); document.body.classList.remove('deck-editing'); currentDeck=null; }
 
-function renderDeckEditor(){
-  const total=deckTotal(); const inks=deckInks();
-  document.getElementById('deckTotal').innerHTML=`<span>${total}</span> / 60枚`;
-  document.getElementById('inkWarning').style.display=inks.length>2?'':'none';
-  const dl=document.getElementById('deckCardList'); dl.innerHTML='';
-  const entries=Object.entries(currentDeck.cards??{}).filter(([,v])=>v>0);
-  if(!entries.length){ dl.innerHTML='<div style="padding:12px;font-size:0.75rem;color:var(--text2);">右から追加してください</div>'; }
-  entries.forEach(([cardId,count])=>{
-    const card=allCards.find(c=>c.id===cardId); if(!card) return;
-    const row=document.createElement('div'); row.className='deck-card-row';
-    const rowImg=makeImg(card,'width:36px;height:50px;border-radius:4px;flex-shrink:0;'); row.appendChild(rowImg);
-    const di=document.createElement('div'); di.className='dc-info';
-    const dn=document.createElement('div'); dn.className='dc-name'; dn.textContent=card.name;
-    const ds=document.createElement('div'); ds.className='dc-sub'; if(card.version) ds.textContent=card.version;
-    di.appendChild(dn); di.appendChild(ds);
-    row.appendChild(di);
-    const db2=document.createElement('div'); db2.className='dc-btns';
-    const remBtn=document.createElement('button'); remBtn.className='dc-btn rem'; remBtn.textContent='－';
-    const cntSpan=document.createElement('span'); cntSpan.className='dc-count'; cntSpan.textContent=count;
-    const addBtn=document.createElement('button'); addBtn.className='dc-btn add'; addBtn.textContent='＋';
-    remBtn.addEventListener('click',()=>{ currentDeck.cards[cardId]=Math.max(0,count-1); renderDeckEditor(); });
-    db2.appendChild(remBtn); db2.appendChild(cntSpan); db2.appendChild(addBtn);
-    addBtn.addEventListener('click',()=>{
-      if(total>=60||count>=4) return;
-      const cardInks=card.inks??(card.ink?[card.ink]:[]);
-      const curInks=deckInks();
-      const newInks=[...new Set([...curInks,...cardInks])];
-      if(newInks.length>2) return;
-      currentDeck.cards[cardId]=count+1; renderDeckEditor();
-    });
-    row.appendChild(db2);
-    dl.appendChild(row);
+function renderDeckStats() {
+  const total = deckTotal();
+  const inks = currentDeck.inkFilter && currentDeck.inkFilter.length > 0 ? currentDeck.inkFilter : deckInks();
+
+  // Total box
+  const totalBox = document.getElementById('dstatsTotalBox');
+  totalBox.innerHTML = '';
+  const numDiv = document.createElement('div'); numDiv.className = 'dstats-total-num'; numDiv.textContent = total;
+  const labelDiv = document.createElement('div'); labelDiv.className = 'dstats-total-label'; labelDiv.textContent = '/ 60枚';
+  const inkDiv = document.createElement('div'); inkDiv.className = 'dstats-total-ink';
+  if (inks.length >= 2) {
+    const sorted = [...inks].sort((a,b) => INK_ORDER_LIST.indexOf(a) - INK_ORDER_LIST.indexOf(b));
+    const key = sorted.join('_');
+    const src = DUAL_INK_IMG[key];
+    if (src) { const img = document.createElement('img'); img.src = src; img.alt = key; inkDiv.appendChild(img); }
+  } else {
+    inks.forEach(ink => { const img = document.createElement('img'); img.src = INK_IMG[ink]; img.alt = ink; inkDiv.appendChild(img); });
+  }
+  totalBox.appendChild(numDiv);
+  totalBox.appendChild(labelDiv);
+  totalBox.appendChild(inkDiv);
+
+  // Stats grid (ink breakdown + type breakdown)
+  const statsGrid = document.getElementById('dstatsGrid');
+  statsGrid.innerHTML = '';
+
+  // Ink counts
+  inks.forEach(ink => {
+    const count = Object.entries(currentDeck.cards ?? {}).reduce((sum, [id, n]) => {
+      const c = allCards.find(x => x.id === id);
+      if (!c) return sum;
+      const ci = c.inks ?? (c.ink ? [c.ink] : []);
+      return sum + (ci.includes(ink) ? n : 0);
+    }, 0);
+    const cell = document.createElement('div'); cell.className = 'dstats-cell';
+    const lbl = document.createElement('div'); lbl.className = 'dstats-cell-label';
+    const img = document.createElement('img'); img.src = INK_IMG[ink]; img.alt = ink;
+    lbl.appendChild(img);
+    lbl.appendChild(document.createTextNode(INK_EN[ink]));
+    const val = document.createElement('div'); val.className = 'dstats-cell-val'; val.textContent = count;
+    cell.appendChild(lbl); cell.appendChild(val);
+    statsGrid.appendChild(cell);
   });
-  renderEditorCardList();
+
+  // Type counts
+  const TYPES = ['キャラクター','アクション','アイテム','ロケーション'];
+  TYPES.forEach(type => {
+    const count = Object.entries(currentDeck.cards ?? {}).reduce((sum, [id, n]) => {
+      const c = allCards.find(x => x.id === id);
+      return sum + (c && (c.type ?? []).includes(type) ? n : 0);
+    }, 0);
+    const cell = document.createElement('div'); cell.className = 'dstats-cell';
+    const lbl = document.createElement('div'); lbl.className = 'dstats-cell-label'; lbl.textContent = type;
+    const val = document.createElement('div'); val.className = 'dstats-cell-val'; val.textContent = count;
+    cell.appendChild(lbl); cell.appendChild(val);
+    statsGrid.appendChild(cell);
+  });
+
+  // Cost chart
+  const costChart = document.getElementById('dstatsCostChart');
+  costChart.innerHTML = '';
+  const title = document.createElement('div'); title.className = 'dstats-cost-title'; title.textContent = 'コスト分布';
+  costChart.appendChild(title);
+  const bars = document.createElement('div'); bars.className = 'dstats-cost-bars';
+  const costCounts = {};
+  Object.entries(currentDeck.cards ?? {}).forEach(([id, n]) => {
+    const c = allCards.find(x => x.id === id);
+    if (c && c.cost != null) costCounts[c.cost] = (costCounts[c.cost] ?? 0) + n;
+  });
+  const maxCount = Math.max(1, ...Object.values(costCounts));
+  for (let i = 1; i <= 10; i++) {
+    const cnt = costCounts[i] ?? 0;
+    const wrap = document.createElement('div'); wrap.className = 'dstats-cost-bar-wrap';
+    const countLbl = document.createElement('div'); countLbl.className = 'dstats-cost-bar-count'; countLbl.textContent = cnt > 0 ? cnt : '';
+    const bar = document.createElement('div'); bar.className = 'dstats-cost-bar'; bar.style.height = (cnt / maxCount * 100) + '%';
+    const lbl = document.createElement('div'); lbl.className = 'dstats-cost-bar-label'; lbl.textContent = i;
+    wrap.appendChild(countLbl); wrap.appendChild(bar); wrap.appendChild(lbl);
+    bars.appendChild(wrap);
+  }
+  costChart.appendChild(bars);
+
+  // Card list
+  const cardList = document.getElementById('dstatsCardList');
+  cardList.innerHTML = '';
+  const entries = Object.entries(currentDeck.cards ?? {}).filter(([,n]) => n > 0);
+  entries.sort(([aId], [bId]) => {
+    const a = allCards.find(x => x.id === aId), b = allCards.find(x => x.id === bId);
+    if (!a || !b) return 0;
+    return (a.cost ?? 0) - (b.cost ?? 0) || a.name.localeCompare(b.name, 'ja');
+  });
+  entries.forEach(([cardId, count]) => {
+    const card = allCards.find(c => c.id === cardId); if (!card) return;
+    const row = document.createElement('div'); row.className = 'dstats-card-row';
+    const img = makeImg(card); img.style.cssText = 'width:32px;height:44px;border-radius:4px;object-fit:cover;flex-shrink:0;';
+    const info = document.createElement('div'); info.className = 'dstats-card-info';
+    const name = document.createElement('div'); name.className = 'dstats-card-name'; name.textContent = card.name;
+    const sub = document.createElement('div'); sub.className = 'dstats-card-sub'; sub.textContent = card.version || '';
+    info.appendChild(name); info.appendChild(sub);
+    const cnt = document.createElement('div'); cnt.className = 'dstats-card-count'; cnt.textContent = '×' + count;
+    row.appendChild(img); row.appendChild(info); row.appendChild(cnt);
+    cardList.appendChild(row);
+  });
 }
 
-function renderEditorCardList(){
-  const q=document.getElementById('editorSearch').value.toLowerCase();
-  const list=document.getElementById('editorCardList'); list.innerHTML='';
-  const total=deckTotal(); const inks=deckInks();
-  allCards.filter(c=>!q||(c.name?.toLowerCase().includes(q)||c.version?.toLowerCase().includes(q))).slice(0,60).forEach(card=>{
-    const count=currentDeck.cards[card.id]??0;
-    const cardInks=card.inks??(card.ink?[card.ink]:[]);
-    const newInks=[...new Set([...inks,...cardInks])];
-    const canAdd=total<60&&count<4&&newInks.length<=2;
-    const row=document.createElement('div'); row.className='deck-card-row';
-    const rowImg=makeImg(card,'width:36px;height:50px;border-radius:4px;flex-shrink:0;'); row.appendChild(rowImg);
-    const di=document.createElement('div'); di.className='dc-info';
-    const dn=document.createElement('div'); dn.className='dc-name';
-    dn.textContent=card.name;
-    const ds=document.createElement('div'); ds.className='dc-sub';
-    if(card.version) ds.textContent=card.version;
-    di.appendChild(dn); di.appendChild(ds);
-    row.appendChild(di);
-    const db2=document.createElement('div'); db2.className='dc-btns';
-    const ab=document.createElement('button'); ab.className='dc-btn add'; ab.textContent='＋'; ab.disabled=!canAdd; ab.style.opacity=canAdd?'1':'0.3';
-    ab.addEventListener('click',()=>{ if(!canAdd) return; currentDeck.cards[card.id]=(currentDeck.cards[card.id]??0)+1; renderDeckEditor(); });
-    const cs=document.createElement('span'); cs.className='dc-count'; cs.textContent=count||'';
-    db2.appendChild(ab); db2.appendChild(cs); row.appendChild(db2);
-    list.appendChild(row);
-  });
-}
+document.getElementById('statsBackBtn').addEventListener('click', () => {
+  showPanel('dbView');
+  renderDeckBuilderFooter();
+});
 
-document.getElementById('editorSearch').addEventListener('input', debounce(renderEditorCardList, 300));
-document.getElementById('sleevePickerBtn').addEventListener('click',()=>document.getElementById('sleevePicker').classList.toggle('open'));
-document.getElementById('editorBack').addEventListener('click',closeDeckEditor);
-document.getElementById('exportDeckCodeBtn').addEventListener('click', async () => {
-  const btn = document.getElementById('exportDeckCodeBtn');
+document.getElementById('statsSleeveBtn').addEventListener('click', () => {
+  document.getElementById('statsSleevePicker').classList.toggle('open');
+});
+
+document.getElementById('statsExportBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('statsExportBtn');
   btn.textContent = '発行中...'; btn.disabled = true;
   try {
     const code = await exportDeckCode();
@@ -1161,31 +1433,39 @@ document.getElementById('exportDeckCodeBtn').addEventListener('click', async () 
   } catch(e) {
     await showAlert(`エラー: ${e.message}`);
   } finally {
-    btn.textContent = '🔢 コード発行'; btn.disabled = false;
+    btn.textContent = '🔢 デッキコード発行'; btn.disabled = false;
   }
 });
-document.getElementById('editorSave').addEventListener('click',async()=>{
-  currentDeck.name=document.getElementById('deckNameInput').value||'名称未設定';
-  // sleeveIdはcurrentDeckに既に格納済み
+
+document.getElementById('statsSaveBtn').addEventListener('click', async () => {
+  currentDeck.name = document.getElementById('deckNameInput').value || '名称未設定';
+  currentDeck.inkFilter = currentDeck.inkFilter ?? [];
   try {
-    await dbPut('decks',currentDeck);
-    const idx=decks.findIndex(d=>d.id===currentDeck.id); if(idx>=0) decks[idx]=currentDeck; else decks.push(currentDeck);
-    renderDeckList(); closeDeckEditor();
+    await dbPut('decks', currentDeck);
+    const idx = decks.findIndex(d => d.id === currentDeck.id);
+    if (idx >= 0) decks[idx] = currentDeck; else decks.push(currentDeck);
+    document.getElementById('dbFooterName').textContent = currentDeck.name;
+    renderDeckList();
+    showToast('保存しました', 'warn');
   } catch(e) {
     console.error('[deck] save failed:', e);
     showToast('デッキの保存に失敗しました');
   }
 });
-document.getElementById('editorDel').addEventListener('click',async()=>{
-  if(!await showConfirm(`「${currentDeck.name}」を削除しますか？`)) return;
+
+document.getElementById('statsDeleteBtn').addEventListener('click', async () => {
+  if (!await showConfirm(`「${currentDeck.name || '名称未設定'}」を削除しますか？`)) return;
   try {
-    await dbDelete('decks',currentDeck.id); decks=decks.filter(d=>d.id!==currentDeck.id);
-    renderDeckList(); closeDeckEditor();
+    await dbDelete('decks', currentDeck.id);
+    decks = decks.filter(d => d.id !== currentDeck.id);
+    renderDeckList();
+    closeDeckEditor();
   } catch(e) {
     console.error('[deck] delete failed:', e);
     showToast('デッキの削除に失敗しました');
   }
 });
+
 document.getElementById('addDeckBtn').addEventListener('click', openNewDeckModal);
 
 const scrollPositions = {};
