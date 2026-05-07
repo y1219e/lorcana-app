@@ -79,12 +79,11 @@
     <div class="dstats-header">
       <input type="text" id="deckNameInput" placeholder="デッキ名" class="dstats-name-input">
       <button class="btn-sm btn-save" id="statsSaveBtn">保存</button>
-      <button class="btn-sm btn-del" id="statsDeleteBtn">削除</button>
     </div>
     <div class="dstats-actions">
       <button class="btn-sm btn-back" id="statsBackBtn">＋ カードを追加</button>
-      <button class="btn-sm" id="statsExportBtn">🔢 デッキコード発行</button>
       <button class="btn-sm" id="statsSleeveBtn">🖼️ スリーブを選ぶ</button>
+      <button class="btn-sm" id="statsExportBtn">🔢 デッキコード発行</button>
     </div>
     <div id="statsSleevePicker" class="dstats-sleeve-picker">
       <div style="font-size:0.7rem;color:var(--text2);margin-bottom:6px;">スリーブ画像を選択</div>
@@ -94,11 +93,12 @@
       <div id="dpScrollWrap">
         <div class="dstats-summary">
           <div class="dstats-summary-body">
-            <div class="dstats-cost-chart" id="dstatsCostChart"></div>
+            <div class="dstats-cost-section">
+              <div class="dstats-cost-chart" id="dstatsCostChart"></div>
+              <div class="dstats-ink-row" id="dstatsInkRow"></div>
+            </div>
             <div class="dstats-grid" id="dstatsGrid"></div>
           </div>
-          <div class="dstats-ink-row" id="dstatsInkRow"></div>
-          <div class="dstats-total-box" id="dstatsTotalBox"></div>
         </div>
         <div class="dstats-card-grid" id="dstatsCardList"></div>
       </div>
