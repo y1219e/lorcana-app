@@ -1232,10 +1232,15 @@ function _makeDbCard(card, total) {
   div.className = 'card-item' + (count > 0 ? ' in-deck' : '');
   div.dataset.cardId = card.id;
 
-  // Wrapper: padding-bottom creates the intrinsic ratio height (reliable across all browsers)
+  // Wrapper: inline styles guarantee height regardless of CSS caching
   const imgWrap = document.createElement('div');
   imgWrap.className = 'db-img-wrap';
-  imgWrap.appendChild(makeImg(card));
+  imgWrap.style.cssText = 'position:relative;width:100%;padding-bottom:139.86%;overflow:hidden;background:var(--surface2);';
+
+  const dbImg = makeImg(card);
+  // top/left/right/bottom:0 fills the wrapper's padding box — does not depend on height:100%
+  dbImg.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;object-fit:cover;display:block;aspect-ratio:auto;';
+  imgWrap.appendChild(dbImg);
 
   if (count > 0) {
     const badge = document.createElement('div');
