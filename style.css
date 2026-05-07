@@ -104,10 +104,10 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, sa
 
 #sleevePicker { display: none; }
 #sleevePicker.open { display: block !important; }
-.sleeve-option { width: 56px; height: 77px; border-radius: 5px; object-fit: cover; object-position: center top; cursor: pointer; border: 2px solid transparent; transition: border-color 0.15s; }
-.sleeve-option.selected { border-color: var(--accent); }
-.sleeve-option-none { width: 56px; height: 77px; border-radius: 5px; background: var(--surface); border: 2px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
-.sleeve-option-none.selected { border-color: var(--accent); }
+.sleeve-option { width: 56px; height: 77px; border-radius: 5px; object-fit: cover; object-position: center top; cursor: pointer; border: 2px solid transparent; transition: border-color 0.15s, opacity 0.15s; opacity: 0.45; }
+.sleeve-option.selected { border-color: var(--accent); opacity: 1; }
+.sleeve-option-none { width: 56px; height: 77px; border-radius: 5px; background: var(--surface); border: 2px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; opacity: 0.45; transition: opacity 0.15s; }
+.sleeve-option-none.selected { border-color: var(--accent); opacity: 1; }
 .deck-sleeve { width: 48px; height: 66px; border-radius: 5px; object-fit: cover; object-position: center top; flex-shrink: 0; background: var(--surface2); }
 .deck-sleeve-placeholder { width: 48px; height: 66px; border-radius: 5px; background: var(--surface2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
 .deck-card h3 { font-size: 0.9rem; }
@@ -265,9 +265,11 @@ body.deck-editing .page, body.deck-editing nav { display: none !important; }
 /* position:fixed is the only reliable way to scroll inside a fixed overlay on iOS Safari */
 #dbScrollWrap { position:fixed; top:46px; left:0; right:0; bottom:0; overflow-y:scroll; -webkit-overflow-scrolling:touch; }
 .db-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; padding:10px 10px 80px; }
-.in-deck { border-color: var(--accent) !important; }
+/* デッキビルダー: 未追加は半透明、追加済みは紫枠なしで不透明 */
+#dbGrid .card-item { opacity: 0.45; transition: opacity 0.15s; }
+#dbGrid .card-item.in-deck { opacity: 1; border-color: transparent !important; }
 .db-badge { position:absolute; top:4px; left:4px; background:rgba(124,109,250,0.9); color:#fff; font-size:0.65rem; font-weight:bold; padding:2px 5px; border-radius:6px; pointer-events:none; z-index:1; }
-.db-count { position:absolute; bottom:34px; left:50%; transform:translateX(-50%); font-size:0.8rem; font-weight:bold; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.9); z-index:1; pointer-events:none; white-space:nowrap; }
+.db-count { position:absolute; bottom:34px; left:50%; transform:translateX(-50%); font-size:0.8rem; font-weight:bold; color:#fff; background:rgba(124,109,250,0.9); padding:1px 6px; border-radius:6px; z-index:1; pointer-events:none; white-space:nowrap; }
 .db-minus { position:absolute; bottom:34px; left:4px; width:26px; height:26px; border-radius:50%; background:rgba(231,76,60,0.85); color:#fff; border:none; font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; font-weight:bold; z-index:1; }
 .db-plus { position:absolute; bottom:34px; right:4px; width:26px; height:26px; border-radius:50%; background:rgba(124,109,250,0.85); color:#fff; border:none; font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; font-weight:bold; z-index:1; }
 .db-plus:disabled { opacity:0.3; cursor:default; }
