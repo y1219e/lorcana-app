@@ -1111,7 +1111,7 @@ function renderInkPicker() {
     img.alt = ink;
     const span = document.createElement('span');
     span.className = 'dip-name';
-    span.textContent = INK_EN[ink];
+    span.textContent = ink;
     btn.appendChild(img);
     btn.appendChild(span);
     btn.addEventListener('click', () => {
@@ -1125,7 +1125,7 @@ function renderInkPicker() {
   });
   const sel = currentDeck.inkFilter ?? [];
   const selEl = document.getElementById('dipSelection');
-  selEl.textContent = sel.length > 0 ? sel.map(i => INK_EN[i].toUpperCase()).join(' & ') : '選択してください';
+  selEl.textContent = sel.length > 0 ? sel.join(' & ') : '選択してください';
   document.getElementById('deckInkChooseBtn').disabled = sel.length === 0;
 }
 
@@ -1349,7 +1349,7 @@ function renderDeckStats() {
     const lbl = document.createElement('div'); lbl.className = 'dstats-cell-label';
     const img = document.createElement('img'); img.src = INK_IMG[ink]; img.alt = ink;
     lbl.appendChild(img);
-    lbl.appendChild(document.createTextNode(INK_EN[ink]));
+    lbl.appendChild(document.createTextNode(ink));
     const val = document.createElement('div'); val.className = 'dstats-cell-val'; val.textContent = count;
     cell.appendChild(lbl); cell.appendChild(val);
     statsGrid.appendChild(cell);
