@@ -1226,20 +1226,19 @@ let _dbCards = [];
 let _dbRendered = 0;
 let _dbObserver = null;
 
-function _makeDbCard(card, total) {
+function _makeDbCard(card, total, imgHeight) {
   const count = currentDeck.cards[card.id] ?? 0;
   const div = document.createElement('div');
   div.className = 'card-item' + (count > 0 ? ' in-deck' : '');
   div.dataset.cardId = card.id;
 
-  // Wrapper: inline styles guarantee height regardless of CSS caching
   const imgWrap = document.createElement('div');
   imgWrap.className = 'db-img-wrap';
-  imgWrap.style.cssText = 'position:relative;width:100%;padding-bottom:139.86%;overflow:hidden;background:var(--surface2);';
+  // Use JS-computed pixel height — no CSS tricks, works regardless of any layout context
+  imgWrap.style.cssText = `position:relative;width:100%;height:${imgHeight}px;overflow:hidden;background:var(--surface2);`;
 
   const dbImg = makeImg(card);
-  // top/left/right/bottom:0 fills the wrapper's padding box — does not depend on height:100%
-  dbImg.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;object-fit:cover;display:block;aspect-ratio:auto;';
+  dbImg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;';
   imgWrap.appendChild(dbImg);
 
   if (count > 0) {
@@ -1301,8 +1300,11 @@ function _renderNextDbBatch(grid) {
   const end = Math.min(_dbRendered + DB_PAGE_SIZE, _dbCards.length);
   if (_dbRendered >= end) return;
   const total = deckTotal();
+  // Measure actual column width to compute pixel-exact image height
+  const colWidth = Math.floor((grid.offsetWidth - 36) / 3); // 10px*2 padding + 8px*2 gap
+  const imgHeight = colWidth > 0 ? Math.round(colWidth * 600 / 429) : 165;
   const frag = document.createDocumentFragment();
-  for (let i = _dbRendered; i < end; i++) frag.appendChild(_makeDbCard(_dbCards[i], total));
+  for (let i = _dbRendered; i < end; i++) frag.appendChild(_makeDbCard(_dbCards[i], total, imgHeight));
   _dbRendered = end;
   const sentinel = grid.querySelector('#dbSentinel');
   if (sentinel) grid.insertBefore(frag, sentinel); else grid.appendChild(frag);
