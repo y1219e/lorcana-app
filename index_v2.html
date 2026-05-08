@@ -205,7 +205,13 @@
 <!-- デッキ内カードモーダル -->
 <div class="modal-overlay" id="deckCardModal" style="z-index:10000;">
   <div class="modal">
-    <img id="deckModalImg" class="modal-slide-img" src="" alt="" style="width:100%;max-width:320px;border-radius:12px;margin-bottom:12px;">
+    <div class="modal-carousel-wrap" id="deckModalCarouselWrap">
+      <div class="modal-carousel" id="deckModalCarousel">
+        <div class="modal-slide"><img id="deckModalImgPrev" class="modal-slide-img" src="" alt=""></div>
+        <div class="modal-slide"><img id="deckModalImg"     class="modal-slide-img" src="" alt=""></div>
+        <div class="modal-slide"><img id="deckModalImgNext" class="modal-slide-img" src="" alt=""></div>
+      </div>
+    </div>
     <div style="width:100%;background:var(--surface);border-radius:12px;overflow:hidden;margin-bottom:8px;">
       <div class="count-row">
         <label>デッキに追加</label>

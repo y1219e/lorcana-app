@@ -763,8 +763,44 @@ function updateNavCardIcon() {
   },{passive:true});
 })();
 
-
-
+// デッキカードモーダルのスワイプ
+(function(){
+  const wrap = document.getElementById('deckModalCarouselWrap');
+  const carousel = document.getElementById('deckModalCarousel');
+  let sx = 0, sy = 0, dragging = false, busy = false;
+  wrap.addEventListener('touchstart', e => {
+    if (busy) return;
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY;
+    dragging = false;
+    carousel.style.transition = 'none';
+  }, {passive: true});
+  wrap.addEventListener('touchmove', e => {
+    if (busy) return;
+    const dx = e.touches[0].clientX - sx;
+    const dy = e.touches[0].clientY - sy;
+    if (!dragging) {
+      if (Math.abs(dy) > Math.abs(dx)) return;
+      dragging = true;
+    }
+    const w = wrap.offsetWidth;
+    carousel.style.transform = `translateX(${-w + dx}px)`;
+  }, {passive: true});
+  wrap.addEventListener('touchend', e => {
+    if (busy || !dragging) return;
+    const dx = e.changedTouches[0].clientX - sx;
+    const w = wrap.offsetWidth;
+    if (Math.abs(dx) > 50) {
+      busy = true;
+      const delta = dx < 0 ? 1 : -1;
+      carousel.style.transition = 'transform 0.25s ease';
+      carousel.style.transform = `translateX(${delta === 1 ? -2 * w : 0}px)`;
+      setTimeout(() => { _navigateDeckModal(delta); busy = false; }, 250);
+    } else {
+      carousel.style.transition = 'transform 0.25s ease';
+      carousel.style.transform = `translateX(${-w}px)`;
+    }
+  }, {passive: true});
+})();
 
 function closeCardModal(){
   const scrollTarget = currentCard;
@@ -791,15 +827,37 @@ document.getElementById('modalClose').addEventListener('click',closeCardModal);
 
 // ─── デッキ専用カードモーダル ───────────────────────
 let _deckModalCard = null;
+let _deckModalCards = [];
 
 function openDeckCardModal(card) {
   _deckModalCard = card;
-  const img = document.getElementById('deckModalImg');
-  img.src = '';
-  resolveImgSrc(IMG_HOST + card.card_file + '.png').then(src => { img.src = src; });
+
+  const carousel = document.getElementById('deckModalCarousel');
+  carousel.style.transition = 'none';
+  carousel.style.transform = 'translateX(-33.3333%)';
+
+  const mi = document.getElementById('deckModalImg');
+  mi.src = '';
+  if (card.card_file) resolveImgSrc(IMG_HOST + card.card_file + '.png').then(src => { mi.src = src; });
+
+  const idx = _deckModalCards.findIndex(c => c.id === card.id);
+  const prev = idx >= 0 ? _deckModalCards[(idx - 1 + _deckModalCards.length) % _deckModalCards.length] : null;
+  const next = idx >= 0 ? _deckModalCards[(idx + 1) % _deckModalCards.length] : null;
+  const miP = document.getElementById('deckModalImgPrev');
+  const miN = document.getElementById('deckModalImgNext');
+  if (prev?.card_file) resolveImgSrc(IMG_HOST + prev.card_file + '.png').then(s => { miP.src = s; }); else miP.src = '';
+  if (next?.card_file) resolveImgSrc(IMG_HOST + next.card_file + '.png').then(s => { miN.src = s; }); else miN.src = '';
+
   _updateDeckModalCount();
   if (!document.getElementById('deckCardModal').classList.contains('open')) pushModalState();
   document.getElementById('deckCardModal').classList.add('open');
+}
+
+function _navigateDeckModal(delta) {
+  if (!_deckModalCard || !_deckModalCards.length) return;
+  const idx = _deckModalCards.findIndex(c => c.id === _deckModalCard.id);
+  if (idx === -1) return;
+  openDeckCardModal(_deckModalCards[(idx + delta + _deckModalCards.length) % _deckModalCards.length]);
 }
 
 function closeDeckCardModal() {
@@ -1355,7 +1413,7 @@ function _makeDbCard(card, total) {
   });
   div.appendChild(plusBtn);
 
-  div.addEventListener('click', () => openDeckCardModal(card));
+  div.addEventListener('click', () => { _deckModalCards = _dbCards.slice(); openDeckCardModal(card); });
 
   return div;
 }
@@ -1646,6 +1704,7 @@ function renderDeckStats() {
     if (!a || !b) return 0;
     return (a.cost ?? 0) - (b.cost ?? 0) || a.name.localeCompare(b.name, 'ja');
   });
+  _deckModalCards = entries.map(([id]) => allCards.find(c => c.id === id)).filter(Boolean);
   entries.forEach(([cardId, count]) => {
     const card = allCards.find(c => c.id === cardId); if (!card) return;
     const div = document.createElement('div'); div.className = 'card-item'; div.dataset.cardId = cardId;
