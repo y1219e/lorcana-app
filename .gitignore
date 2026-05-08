@@ -8,3 +8,10 @@ package.json
 icons/package-lock.json
 icons/package.json
 icons/source_new.png
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
