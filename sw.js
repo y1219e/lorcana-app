@@ -1,4 +1,4 @@
-const SHELL_CACHE = 'loreca-shell-v13';
+const SHELL_CACHE = 'loreca-shell-v14';
 const BASE = self.registration.scope;
 const SHELL = ['index_v2.html', 'style.css', 'app.js', 'loreca_config.json']
   .map(f => new URL(f, BASE).href);
